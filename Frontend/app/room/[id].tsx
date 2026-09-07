@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Heart, Share2, Star, MapPin, Award, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, Heart, Share2, Star, MapPin, Award, ShieldCheck, TrendingDown } from 'lucide-react-native';
 import { MOCK_STAYS } from '../../constants/mockStays';
 import { ImageCarousel } from '../../components/room/ImageCarousel';
 import { AmenityGrid } from '../../components/room/AmenityGrid';
 import { PriceFooter } from '../../components/room/PriceFooter';
+import { ComparePricesModal } from '../../components/room/ComparePricesModal';
 import { COLORS } from '../../constants/colors';
 
 export default function RoomDetailScreen() {
   const { id } = useLocalSearchParams();
   const stay = MOCK_STAYS.find((s) => s.id === id) || MOCK_STAYS[0];
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   return (
     <View className="flex-1 bg-white">
@@ -61,8 +63,28 @@ export default function RoomDetailScreen() {
             </Text>
           </View>
 
+          {/* Compare Prices Button Trigger */}
+          {stay.priceComparisons && stay.priceComparisons.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setShowCompareModal(true)}
+              activeOpacity={0.85}
+              className="my-3 p-3.5 bg-red-50/70 border border-primary/30 rounded-2xl flex-row items-center justify-between shadow-sm"
+            >
+              <View className="flex-row items-center flex-1">
+                <TrendingDown size={18} color={COLORS.primary} />
+                <View className="ml-2.5">
+                  <Text className="text-xs font-bold text-primary">So sánh giá giữa các nhà cung cấp</Text>
+                  <Text className="text-[11px] text-gray-500">Giá tốt nhất từ 850.000 đ/đêm</Text>
+                </View>
+              </View>
+              <View className="bg-primary px-3 py-1 rounded-xl">
+                <Text className="text-white text-xs font-bold">Xem giá</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
           {/* Capacity Stats */}
-          <View className="py-4 border-b border-gray-100 flex-row items-center justify-around bg-gray-50 rounded-2xl my-3 px-3">
+          <View className="py-4 border-b border-gray-100 flex-row items-center justify-around bg-gray-50 rounded-2xl my-2 px-3">
             <View className="items-center">
               <Text className="text-xs text-gray-400">Tối đa</Text>
               <Text className="text-sm font-bold text-gray-800">{stay.maxGuests} khách</Text>
@@ -115,8 +137,8 @@ export default function RoomDetailScreen() {
 
           {/* Protection policy */}
           <View className="mt-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex-row items-center">
-            <ShieldCheck size={24} color="#059669" className="mr-3" />
-            <View className="flex-1 ml-2">
+            <ShieldCheck size={24} color="#059669" />
+            <View className="flex-1 ml-3">
               <Text className="text-xs font-bold text-emerald-900">Bảo vệ StayFinder Cover</Text>
               <Text className="text-xs text-emerald-700 mt-0.5">
                 Được bảo vệ hoàn tiền nếu chủ nhà hủy phòng đột xuất hoặc thông tin sai lệch.
@@ -128,6 +150,15 @@ export default function RoomDetailScreen() {
 
       {/* Sticky Bottom Price & Reserve Bar */}
       <PriceFooter stayId={stay.id} pricePerNight={stay.pricePerNight} />
+
+      {/* Compare Prices Bottom Sheet Modal */}
+      <ComparePricesModal
+        visible={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        stayId={stay.id}
+        stayTitle={stay.title}
+        comparisons={stay.priceComparisons || []}
+      />
     </View>
   );
 }

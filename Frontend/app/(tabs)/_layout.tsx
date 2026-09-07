@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Compass, Search, Calendar, User } from 'lucide-react-native';
+import { Home, Search, Calendar, Heart, User } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 
 export default function TabsLayout() {
@@ -12,12 +12,12 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: COLORS.border,
-          height: 60,
-          paddingBottom: 8,
+          height: 64,
+          paddingBottom: 10,
           paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -25,29 +25,36 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Khám phá',
-          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
+          title: 'Trang chủ',
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Tìm kiếm',
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Search color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
           title: 'Chuyến đi',
-          tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Calendar color={color} size={size - 2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wishlist"
+        options={{
+          title: 'Yêu thích',
+          tabBarIcon: ({ color, size }) => <Heart color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Hồ sơ',
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} />,
         }}
       />
     </Tabs>

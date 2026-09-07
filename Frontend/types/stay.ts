@@ -22,16 +22,39 @@ export interface Review {
   comment: string;
 }
 
+export interface RoomTier {
+  id: string;
+  name: string;
+  description: string;
+  sizeSqm: number;
+  bedType: string;
+  pricePerNight: number;
+  originalPrice?: number;
+  maxGuests: number;
+  includesBreakfast: boolean;
+  cancellationPolicy: string;
+  availableCount: number;
+}
+
+export interface PriceProviderComparison {
+  providerName: string;
+  logoUrl?: string;
+  pricePerNight: number;
+  isBestValue?: boolean;
+}
+
 export interface Stay {
   id: string;
   title: string;
   description: string;
   tagline: string;
-  type: 'Homestay' | 'Villa' | 'Apartment' | 'Cabin' | 'Resort';
-  category: 'Beachfront' | 'Cabins' | 'Mountain' | 'Luxury' | 'Lakefront' | 'Trending';
+  type: 'Hotel' | 'Homestay' | 'Resort' | 'Villas';
+  category: 'Trending' | 'Beachfront' | 'Cabins' | 'Mountain' | 'Luxury' | 'Lakefront';
   pricePerNight: number;
   cleaningFee: number;
   serviceFee: number;
+  distanceKm?: number;
+  cityArea?: string;
   location: {
     city: string;
     province: string;
@@ -49,5 +72,9 @@ export interface Stay {
   amenities: Amenity[];
   host: Host;
   reviews?: Review[];
+  roomTiers?: RoomTier[];
+  priceComparisons?: PriceProviderComparison[];
   isFeatured?: boolean;
+  isRecommended?: boolean;
+  isPopularNearYou?: boolean;
 }

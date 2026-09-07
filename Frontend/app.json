@@ -7,9 +7,9 @@
     "icon": "./assets/icon.png",
     "scheme": "stayfinder",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true
