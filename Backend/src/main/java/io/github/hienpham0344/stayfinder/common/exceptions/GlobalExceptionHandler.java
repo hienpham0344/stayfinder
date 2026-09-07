@@ -10,5 +10,5 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = RuntimeException.class)
     ResponseEntity<String> handlingRuntimeException(RuntimeException exception){
         return ResponseEntity.badRequest().body(exception.getMessage());
-    }
+    }   
 }
