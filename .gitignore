@@ -2,8 +2,18 @@
 .idea/
 *.iml
 
+# Codex local project agents/config
+.codex/
+.superpower/
+.superpowers/
+
+# Local documentation/agent notes
+docs/
+
 # Environment
 .env
+.env.*
+!.env.example
 
 # OS
 .DS_Store
