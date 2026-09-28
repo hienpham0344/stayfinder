@@ -3,6 +3,7 @@ import { View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'rea
 import { Heart, Star } from 'lucide-react-native';
 import { Stay } from '../../types/stay';
 import { router } from 'expo-router';
+import { COLORS } from '../../constants/tokens';
 
 interface StayCardProps {
   stay: Stay;
@@ -56,7 +57,7 @@ export const StayCard: React.FC<StayCardProps> = ({ stay }) => {
           onPress={() => setIsLiked(!isLiked)}
           className="absolute top-3 right-3 p-2 bg-white/80 rounded-full"
         >
-          <Heart size={20} color={isLiked ? '#FF385C' : '#222222'} fill={isLiked ? '#FF385C' : 'transparent'} />
+          <Heart size={20} color={isLiked ? COLORS.primary : COLORS.dark} fill={isLiked ? COLORS.primary : 'transparent'} />
         </TouchableOpacity>
 
         {/* Badge tag if featured */}

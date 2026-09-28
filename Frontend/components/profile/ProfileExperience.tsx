@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, CircleHelp, Globe2, Heart, LogOut, Settings, Star, Wallet } from 'lucide-react-native';
+import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, CircleHelp, Globe2, Heart, LayoutGrid, LogOut, Settings, Star, Wallet } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { BottomSheetWrapper } from '../ui/BottomSheetWrapper';
@@ -62,6 +62,7 @@ export function ProfileExperience() {
         <MenuRow title="Ngôn ngữ" icon={Globe2} value="Tiếng Việt" onPress={() => setDialog('language')} />
         <MenuRow title="Cài đặt" icon={Settings} onPress={() => { setDraftNotifications(notifications); setDialog('settings'); }} />
         <MenuRow title="Báo cáo sự cố" icon={CircleHelp} onPress={() => { setError(''); setDialog('report'); }} />
+        <MenuRow title="Thư viện giao diện USER" icon={LayoutGrid} onPress={() => router.push('/ui-gallery')} />
         <MenuRow title="Xem đăng xuất demo" icon={LogOut} onPress={() => router.push('/auth/demo?mode=signed-out' as never)} />
       </View>
       <Text style={styles.demoFooter}>Các thay đổi tài khoản ở đây chỉ là bản demo.</Text>

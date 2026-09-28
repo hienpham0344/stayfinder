@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
+import { COLORS, RADII, SIZES, TYPOGRAPHY } from '../../constants/tokens';
 
 interface ButtonProps {
   title: string;
@@ -69,6 +69,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }}
       activeOpacity={0.8}
       onPress={onPress}
       disabled={disabled || loading}
@@ -82,11 +85,11 @@ export const Button: React.FC<ButtonProps> = ({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : COLORS.primary} />
+        <ActivityIndicator color={variant === 'primary' ? COLORS.bgWhite : COLORS.primary} />
       ) : (
         <>
-          {icon}
           <Text style={[styles.textBase, getTextStyle(), textStyle]}>{title}</Text>
+          {icon}
         </>
       )}
     </TouchableOpacity>
@@ -122,12 +125,12 @@ const styles = StyleSheet.create({
   lg: {
     paddingVertical: 14,
     paddingHorizontal: 24,
-    height: 52,
+    height: SIZES.button,
   },
 
   // Variants
   primary: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryActive,
   },
   secondary: {
     backgroundColor: COLORS.bgSecondary,
@@ -143,12 +146,12 @@ const styles = StyleSheet.create({
 
   // Text
   textBase: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.semibold,
     fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
+    lineHeight: TYPOGRAPHY.lineHeights.base,
   },
   textPrimary: {
-    color: '#FFFFFF',
+    color: COLORS.bgWhite,
   },
   textSecondary: {
     color: COLORS.dark,

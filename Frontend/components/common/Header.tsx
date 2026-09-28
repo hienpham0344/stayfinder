@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Search, SlidersHorizontal, Sparkles } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { COLORS } from '../../constants/tokens';
 
 export const Header: React.FC = () => {
   return (
@@ -10,7 +11,7 @@ export const Header: React.FC = () => {
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
           <Text className="text-2xl font-black text-primary tracking-tight">StayFinder</Text>
-          <Sparkles size={16} color="#FF385C" className="ml-1" />
+          <Sparkles size={16} color={COLORS.primary} className="ml-1" />
         </View>
       </View>
 
