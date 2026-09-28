@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { COLORS, RADII, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
@@ -12,11 +12,12 @@ interface PromoBannerProps {
 
 export const PromoBanner: React.FC<PromoBannerProps> = ({
   title = 'Ưu đãi 25% cho lần đặt phòng đầu tiên',
-  subtitle = 'Giảm đến 500k cho thành viên lần đầu đặt homestay & villa',
+  subtitle,
   tagline = 'ƯU ĐÃI ĐẶC BIỆT',
   onPress,
-}) => (
-  <TouchableOpacity
+}) => {
+  const { width } = useWindowDimensions();
+  return <TouchableOpacity
     activeOpacity={0.9}
     accessibilityRole="button"
     accessibilityLabel={title}
@@ -40,12 +41,12 @@ export const PromoBanner: React.FC<PromoBannerProps> = ({
       </Svg>
       <View style={styles.copy}>
         <Text style={styles.badge}>{tagline}</Text>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={[styles.title, width <= 350 && styles.titleCompact]}>{title}</Text>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
     </ImageBackground>
-  </TouchableOpacity>
-);
+  </TouchableOpacity>;
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -83,6 +84,10 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.families.bold,
     fontSize: TYPOGRAPHY.sizes.xxl,
     lineHeight: TYPOGRAPHY.lineHeights.xxl,
+  },
+  titleCompact: {
+    fontSize: TYPOGRAPHY.sizes.xl,
+    lineHeight: TYPOGRAPHY.lineHeights.xl,
   },
   subtitle: {
     color: COLORS.bgWhite,
