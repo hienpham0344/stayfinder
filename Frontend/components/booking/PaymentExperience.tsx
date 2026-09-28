@@ -27,9 +27,9 @@ export function PaymentExperience() {
   const { roomTotal, fees, total } = calculateBookingPrice(stay.pricePerNight, nights, stay.cleaningFee, stay.serviceFee);
   useEffect(() => {
     if (!processing) return;
-    const timer = setTimeout(() => router.replace('/(tabs)/bookings'), 1500);
+    const timer = setTimeout(() => router.replace(`/booking/confirmation?id=${stay.id}` as never), 1500);
     return () => clearTimeout(timer);
-  }, [processing]);
+  }, [processing, stay.id]);
 
   if (processing) return <View style={[styles.screen, { paddingTop: insets.top }]}><View style={styles.processingHeader}><Text style={styles.headerTitle}>StayFinder</Text></View><View style={styles.processingCenter}><View style={styles.processingCard}><View style={styles.spinnerCircle}><ActivityIndicator size="large" color={COLORS.actionTeal} /></View><Text style={styles.processingTitle}>Đang xác nhận đặt phòng</Text><Text style={styles.processingText}>Vui lòng chờ trong giây lát. Đây là luồng thanh toán mô phỏng.</Text><Text style={styles.processingHint}>Vui lòng giữ màn hình này mở</Text></View></View></View>;
 
