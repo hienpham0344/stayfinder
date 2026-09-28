@@ -1,9 +1,11 @@
 import { Tabs, usePathname } from 'expo-router';
 import { Home, Search, Heart, Calendar, User } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   // Home ('/' hoặc '/index') và Wishlist ('/wishlist') dùng bottomNavStrong (alpha 0.20)
   // Search ('/search'), Bookings ('/bookings'), Profile ('/profile') dùng bottomNavLight (alpha 0.04)
@@ -20,9 +22,11 @@ export default function TabsLayout() {
           backgroundColor: COLORS.bgWhite,
           borderTopWidth: 1,
           borderTopColor: COLORS.borderLight,
-          height: 64,
-          paddingBottom: 8,
+          height: 72 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
           elevation: activeShadow.elevation,
           shadowColor: activeShadow.shadowColor,
           shadowOffset: activeShadow.shadowOffset,
@@ -31,7 +35,7 @@ export default function TabsLayout() {
           ...(activeShadow.boxShadow ? { boxShadow: activeShadow.boxShadow } : {}),
         },
         tabBarLabelStyle: {
-          fontFamily: TYPOGRAPHY.fontFamily,
+          fontFamily: TYPOGRAPHY.families.medium,
           fontSize: TYPOGRAPHY.sizes.xs,
           fontWeight: TYPOGRAPHY.weights.medium as any,
           lineHeight: TYPOGRAPHY.lineHeights.xs,
@@ -54,17 +58,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="wishlist"
-        options={{
-          title: 'Yêu thích',
-          tabBarIcon: ({ color }) => <Heart color={color} size={22} />,
-        }}
-      />
-      <Tabs.Screen
         name="bookings"
         options={{
           title: 'Đặt phòng',
           tabBarIcon: ({ color }) => <Calendar color={color} size={22} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wishlist"
+        options={{
+          title: 'Yêu thích',
+          tabBarIcon: ({ color }) => <Heart color={color} size={22} />,
         }}
       />
       <Tabs.Screen

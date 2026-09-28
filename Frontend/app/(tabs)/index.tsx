@@ -5,9 +5,9 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { HomeHeader } from '../../components/home/HomeHeader';
 import { PromoBanner } from '../../components/home/PromoBanner';
@@ -15,7 +15,7 @@ import { CategoryScroll } from '../../components/home/CategoryScroll';
 import { PropertyCardHorizontal } from '../../components/home/PropertyCardHorizontal';
 import { PropertyCardVertical } from '../../components/home/PropertyCardVertical';
 import { MOCK_STAYS } from '../../constants/mockStays';
-import { COLORS, TYPOGRAPHY } from '../../constants/tokens';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -114,35 +114,33 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgMain,
   },
   scrollContent: {
-    paddingBottom: 90,
+    paddingBottom: 96,
   },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: SPACING.section,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     marginBottom: 14,
   },
   sectionTitle: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.bold,
     fontSize: TYPOGRAPHY.sizes.lg, // 20px
-    fontWeight: '700',
     color: COLORS.dark,
   },
   seeAllText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.semibold,
     fontSize: TYPOGRAPHY.sizes.sm, // 13px
-    fontWeight: '600',
     color: COLORS.primary,
   },
   horizontalScrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     gap: 14,
   },
   verticalListContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
   },
 });

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { Search, MapPin, SlidersHorizontal } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Bell, MapPin, SlidersHorizontal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { COLORS, RADII, SPACING, SIZES, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
 
 interface HomeHeaderProps {
   locationName?: string;
@@ -16,116 +16,119 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onFilterPress,
 }) => {
   const router = useRouter();
-
-  const handleSearchClick = () => {
-    if (onSearchPress) {
-      onSearchPress();
-    } else {
-      router.push('/search');
-    }
-  };
+  const openSearch = onSearchPress || (() => router.push('/search'));
 
   return (
     <View style={styles.container}>
-      {/* Top Row: Brand Logo "StayFinder" + Location Subtitle */}
       <View style={styles.topRow}>
-        <View style={styles.brandWrapper}>
-          <Text style={styles.brandTitle}>StayFinder</Text>
-          <View style={styles.locationBadge}>
-            <MapPin size={13} color={COLORS.primary} />
-            <Text style={styles.locationText}>{locationName}</Text>
-          </View>
+        <View>
+          <Text style={styles.greeting}>Chào buổi sáng</Text>
+          <Text style={styles.location}>{locationName}</Text>
+        </View>
+        <View style={styles.notification}>
+          <Bell size={20} color={COLORS.primary} />
         </View>
       </View>
-
-      {/* Search Bar Input */}
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={handleSearchClick}
-        style={styles.searchBarContainer}
-      >
-        <Search size={20} color={COLORS.textMuted} style={styles.searchIcon} />
-        <TextInput
-          placeholder="Bạn muốn đi đâu? (Điểm đến, khách sạn...)"
-          placeholderTextColor={COLORS.textPlaceholder}
-          style={styles.searchInput}
-          editable={false}
-          pointerEvents="none"
-        />
+      <Text style={styles.brand}>StayFinder</Text>
+      <View style={styles.searchBar}>
         <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={onFilterPress || handleSearchClick}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Tìm chỗ ở"
+          onPress={openSearch}
+          style={styles.searchMain}
         >
-          <SlidersHorizontal size={18} color={COLORS.bgWhite} />
+          <MapPin size={20} color={COLORS.textMuted} />
+          <Text style={styles.searchPlaceholder} numberOfLines={1}>Bạn muốn ở đâu?</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+        <View style={styles.divider} />
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Bộ lọc"
+          onPress={onFilterPress || openSearch}
+          style={styles.filterButton}
+        >
+          <SlidersHorizontal size={20} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.section,
     backgroundColor: COLORS.bgMain,
   },
   topRow: {
+    height: SIZES.iconButton,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  brandWrapper: {
-    flex: 1,
-  },
-  brandTitle: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: 26, // Heading 1 brand title in Figma Node 13:1040
-    fontWeight: '800',
-    color: COLORS.dark,
-    letterSpacing: -0.5,
-    marginBottom: 2,
-  },
-  locationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  locationText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+  greeting: {
+    fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '500',
+    lineHeight: TYPOGRAPHY.lineHeights.xs,
     color: COLORS.textMuted,
   },
-  searchBarContainer: {
+  location: {
+    fontFamily: TYPOGRAPHY.families.semibold,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
+    color: COLORS.dark,
+  },
+  notification: {
+    width: SIZES.iconButton,
+    height: SIZES.iconButton,
+    borderRadius: RADII.full,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brand: {
+    fontFamily: TYPOGRAPHY.families.bold,
+    fontSize: 26,
+    lineHeight: 32,
+    color: COLORS.primary,
+    marginBottom: 12,
+  },
+  searchBar: {
+    height: SIZES.button,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.bgWhite,
-    borderRadius: RADII.xl, // 32px
-    paddingLeft: 16,
-    paddingRight: 6,
-    paddingVertical: 6,
-    height: 54,
+    borderRadius: RADII.full,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
     ...SHADOWS.cardSoft,
   },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
+  searchMain: {
     flex: 1,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base,
-    color: COLORS.dark,
+    minWidth: 0,
+    height: SIZES.button,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingLeft: SPACING.lg,
   },
-  filterBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: RADII.full,
-    backgroundColor: COLORS.primary,
+  searchPlaceholder: {
+    flex: 1,
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
+    color: COLORS.textPlaceholder,
+  },
+  divider: {
+    height: 32,
+    width: 1,
+    backgroundColor: COLORS.borderLight,
+  },
+  filterButton: {
+    height: SIZES.iconButton,
+    width: SIZES.iconButton,
     alignItems: 'center',
     justifyContent: 'center',
   },

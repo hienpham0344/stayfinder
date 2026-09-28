@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Building2, Home, Trees, Castle, Flame } from 'lucide-react-native';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { COLORS, RADII, TYPOGRAPHY, SHADOWS, SPACING } from '../../constants/tokens';
 
 export interface CategoryItem {
   id: string;
@@ -28,7 +28,7 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
   onSelectCategory,
 }) => {
   const renderIcon = (iconName: string, isSelected: boolean) => {
-    const iconColor = isSelected ? '#FFFFFF' : COLORS.textMuted;
+    const iconColor = isSelected ? COLORS.bgWhite : COLORS.primaryActive;
     const iconSize = 18;
 
     switch (iconName) {
@@ -84,39 +84,39 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: SPACING.section,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    gap: 10,
+    gap: SPACING.lg,
   },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: RADII.xl, // 32px pill
-    gap: 8,
+    paddingHorizontal: SPACING.xl,
+    height: 54,
+    borderRadius: RADII.full,
+    gap: SPACING.sm,
     borderWidth: 1,
+    justifyContent: 'center',
   },
   chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryActive,
+    borderColor: COLORS.primaryActive,
     ...SHADOWS.cardSubtle,
   },
   chipUnselected: {
     backgroundColor: COLORS.bgWhite,
-    borderColor: COLORS.borderLight,
+    borderColor: COLORS.borderDefault,
   },
   categoryText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
   },
   textSelected: {
-    color: '#FFFFFF',
+    color: COLORS.bgWhite,
   },
   textUnselected: {
-    color: COLORS.textSecondary,
+    color: COLORS.primaryActive,
   },
 });

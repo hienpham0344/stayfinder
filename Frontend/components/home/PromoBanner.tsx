@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Sparkles, ArrowRight } from 'lucide-react-native';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { COLORS, RADII, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
 interface PromoBannerProps {
   title?: string;
@@ -11,123 +11,84 @@ interface PromoBannerProps {
 }
 
 export const PromoBanner: React.FC<PromoBannerProps> = ({
-  title = 'Ưu Đãi Đặt Phòng 25%',
+  title = 'Ưu đãi 25% cho lần đặt phòng đầu tiên',
   subtitle = 'Giảm đến 500k cho thành viên lần đầu đặt homestay & villa',
   tagline = 'ƯU ĐÃI ĐẶC BIỆT',
   onPress,
-}) => {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={onPress}
-      style={styles.container}
+}) => (
+  <TouchableOpacity
+    activeOpacity={0.9}
+    accessibilityRole="button"
+    accessibilityLabel={title}
+    onPress={onPress}
+    style={styles.container}
+  >
+    <ImageBackground
+      source={require('../../assets/figma/home-promo.jpeg')}
+      resizeMode="cover"
+      style={styles.image}
+      imageStyle={styles.imageContent}
     >
-      {/* Decorative accent elements */}
-      <View style={styles.decorativeCircle} />
-      <View style={styles.decorativeCircle2} />
-
-      <View style={styles.contentWrapper}>
-        <View style={styles.tagBadge}>
-          <Sparkles size={12} color={COLORS.primarySoft} />
-          <Text style={styles.tagText}>{tagline}</Text>
-        </View>
-
-        <Text style={styles.titleText}>{title}</Text>
-        <Text style={styles.subtitleText}>{subtitle}</Text>
-
-        <View style={styles.ctaRow}>
-          <Text style={styles.ctaText}>Khám phá ngay</Text>
-          <View style={styles.ctaIconBg}>
-            <ArrowRight size={14} color={COLORS.primary} />
-          </View>
-        </View>
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="promoShade" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={COLORS.overlayBlack} stopOpacity={0.72} />
+            <Stop offset="1" stopColor={COLORS.overlayBlack} stopOpacity={0.08} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#promoShade)" />
+      </Svg>
+      <View style={styles.copy}>
+        <Text style={styles.badge}>{tagline}</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
-    </TouchableOpacity>
-  );
-};
+    </ImageBackground>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: RADII.lg, // 16px
-    backgroundColor: COLORS.primary,
-    padding: 20,
+    marginHorizontal: SPACING.xl,
+    marginBottom: SPACING.section,
     overflow: 'hidden',
-    position: 'relative',
-    ...SHADOWS.cardSoft,
+    borderRadius: RADII.promo,
   },
-  decorativeCircle: {
-    position: 'absolute',
-    right: -20,
-    top: -20,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(152, 243, 227, 0.15)', // primaryLight alpha
+  image: {
+    height: 212,
+    width: '100%',
+    justifyContent: 'flex-start',
   },
-  decorativeCircle2: {
-    position: 'absolute',
-    right: 40,
-    bottom: -40,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  imageContent: {
+    width: '100%',
   },
-  contentWrapper: {
-    zIndex: 1,
+  copy: {
+    padding: SPACING.xxl,
+    maxWidth: '94%',
   },
-  tagBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0, 32, 28, 0.4)', // primaryContainer translucent
+  badge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADII.full,
-    marginBottom: 10,
-  },
-  tagText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    backgroundColor: COLORS.accentOrange,
+    color: COLORS.bgWhite,
+    paddingHorizontal: 12,
+    paddingVertical: SPACING.xs,
+    borderRadius: 16,
+    fontFamily: TYPOGRAPHY.families.medium,
     fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '700',
-    color: COLORS.primarySoft,
-    letterSpacing: 0.5,
+    lineHeight: TYPOGRAPHY.lineHeights.xs,
+    marginBottom: SPACING.lg,
   },
-  titleText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.lg, // 20px
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 6,
+  title: {
+    color: COLORS.bgWhite,
+    fontFamily: TYPOGRAPHY.families.bold,
+    fontSize: TYPOGRAPHY.sizes.xxl,
+    lineHeight: TYPOGRAPHY.lineHeights.xxl,
   },
-  subtitleText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.sm, // 13px
-    color: COLORS.primarySoft,
-    lineHeight: TYPOGRAPHY.lineHeights.sm,
-    marginBottom: 16,
-    maxWidth: '85%',
-  },
-  ctaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  ctaText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  ctaIconBg: {
-    width: 24,
-    height: 24,
-    borderRadius: RADII.full,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+  subtitle: {
+    color: COLORS.bgWhite,
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.xs,
+    lineHeight: TYPOGRAPHY.lineHeights.xs,
+    marginTop: SPACING.sm,
   },
 });
