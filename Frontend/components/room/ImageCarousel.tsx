@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
-import { View, Image, ScrollView, Dimensions, Text } from 'react-native';
+import { View, Image, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { COLORS, RADII } from '../../constants/tokens';
 
 interface ImageCarouselProps {
   images: string[];
+  onOpen?: () => void;
 }
 
-const { width } = Dimensions.get('window');
-
-export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images }) => {
+export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onOpen }) => {
+  const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <View className="relative h-72 w-full bg-gray-900">
+    <View style={styles.container}>
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={(e) => {
-          const slide = Math.ceil(
+          const slide = Math.round(
             e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width
           );
           if (slide !== activeIndex) {
@@ -27,21 +28,22 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images }) => {
         scrollEventThrottle={16}
       >
         {images.map((img, idx) => (
-          <Image
-            key={idx}
-            source={{ uri: img }}
-            style={{ width, height: 288 }}
-            resizeMode="cover"
-          />
+          <Pressable key={idx} onPress={onOpen} accessibilityLabel={`Mở ảnh ${idx + 1} trên ${images.length}`}>
+            <Image source={{ uri: img }} style={{ width, height: 256 }} resizeMode="cover" />
+          </Pressable>
         ))}
       </ScrollView>
 
-      {/* Image Counter Badge */}
-      <View className="absolute bottom-4 right-4 bg-black/70 px-3 py-1 rounded-full">
-        <Text className="text-white text-xs font-bold">
-          {activeIndex + 1} / {images.length}
-        </Text>
+      <View style={styles.dots}>
+        {images.map((_, index) => <View key={index} style={[styles.dot, index === activeIndex && styles.activeDot]} />)}
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { height: 256, backgroundColor: COLORS.bgSecondary },
+  dots: { position: 'absolute', bottom: 15, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 },
+  dot: { width: 8, height: 8, borderRadius: RADII.full, backgroundColor: COLORS.borderSage },
+  activeDot: { backgroundColor: COLORS.bgWhite },
+});

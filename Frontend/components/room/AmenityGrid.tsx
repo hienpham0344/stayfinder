@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Amenity } from '../../types/stay';
 import {
   Wifi,
@@ -17,7 +17,7 @@ import {
   Tv,
   CheckCircle2,
 } from 'lucide-react-native';
-import { COLORS } from '../../constants/colors';
+import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 
 interface AmenityGridProps {
   amenities: Amenity[];
@@ -41,17 +41,17 @@ const ICON_MAP: Record<string, any> = {
 
 export const AmenityGrid: React.FC<AmenityGridProps> = ({ amenities }) => {
   return (
-    <View className="py-4 border-b border-gray-100">
-      <Text className="text-base font-bold text-gray-900 mb-3">Nơi này có những gì cho bạn</Text>
-      <View className="flex-row flex-wrap">
+    <View style={styles.container}>
+      <Text style={styles.title}>Tiện nghi nổi bật</Text>
+      <View style={styles.items}>
         {amenities.map((item) => {
           const IconComp = ICON_MAP[item.icon] || CheckCircle2;
           return (
-            <View key={item.id} className="w-1/2 flex-row items-center mb-3 pr-2">
-              <View className="p-2 rounded-lg bg-gray-100 mr-2.5">
-                <IconComp size={18} color={COLORS.dark} />
+            <View key={item.id} style={styles.item}>
+              <View style={styles.iconCircle}>
+                <IconComp size={24} color={COLORS.primary} />
               </View>
-              <Text className="text-sm text-gray-700 font-medium flex-1">{item.name}</Text>
+              <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
             </View>
           );
         })}
@@ -59,3 +59,12 @@ export const AmenityGrid: React.FC<AmenityGridProps> = ({ amenities }) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { paddingVertical: 24 },
+  title: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, marginBottom: 16 },
+  items: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', gap: 12 },
+  item: { width: '22%', alignItems: 'center', gap: 8 },
+  iconCircle: { width: 48, height: 48, borderRadius: RADII.full, backgroundColor: COLORS.bgSecondary, alignItems: 'center', justifyContent: 'center' },
+  name: { color: COLORS.inkSoft, fontFamily: TYPOGRAPHY.families.regular, fontSize: 11, textAlign: 'center' },
+});

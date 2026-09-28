@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 
 interface BottomSheetWrapperProps {
@@ -16,6 +17,7 @@ export const BottomSheetWrapper: React.FC<BottomSheetWrapperProps> = ({
   title,
   children,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -27,7 +29,7 @@ export const BottomSheetWrapper: React.FC<BottomSheetWrapperProps> = ({
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
 
-      <View style={styles.sheetContainer}>
+      <View style={[styles.sheetContainer, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
         <View style={styles.dragHandle} />
 
         {title && (
@@ -83,7 +85,10 @@ const styles = StyleSheet.create({
     color: COLORS.dark,
   },
   closeButton: {
-    padding: 4,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     width: '100%',

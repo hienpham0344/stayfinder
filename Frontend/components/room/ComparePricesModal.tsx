@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { X, ArrowRight, TrendingDown } from 'lucide-react-native';
-import { PriceProviderComparison } from '../../types/stay';
-import { COLORS } from '../../constants/colors';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { ArrowRight, TrendingDown } from 'lucide-react-native';
+import { BottomSheetWrapper } from '../ui/BottomSheetWrapper';
+import { PriceProviderComparison } from '../../types/stay';
+import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 
 interface ComparePricesModalProps {
   visible: boolean;
@@ -13,87 +14,47 @@ interface ComparePricesModalProps {
   comparisons: PriceProviderComparison[];
 }
 
-export const ComparePricesModal: React.FC<ComparePricesModalProps> = ({
-  visible,
-  onClose,
-  stayId,
-  stayTitle,
-  comparisons,
-}) => {
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount);
+export const ComparePricesModal: React.FC<ComparePricesModalProps> = ({ visible, onClose, stayId, stayTitle, comparisons }) => {
+  const goToRoom = () => {
+    onClose();
+    router.push(('/room/select?id=' + stayId) as never);
   };
-
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-black/60 justify-end">
-        <View className="bg-white rounded-t-3xl p-5 max-h-[80%] border-t border-gray-200">
-          {/* Sheet Handle */}
-          <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-3" />
-
-          {/* Header */}
-          <View className="flex-row items-center justify-between pb-3 border-b border-gray-100">
-            <View className="flex-row items-center">
-              <TrendingDown size={20} color={COLORS.primary} />
-              <Text className="text-base font-extrabold text-gray-900 ml-2">
-                So sánh giá giữa các đối tác
-              </Text>
+    <BottomSheetWrapper visible={visible} onClose={onClose} title="So sánh giá">
+      <Text style={styles.subtitle}>{stayTitle} · Giá tham khảo mỗi đêm</Text>
+      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        {comparisons.map((item) => (
+          <View key={item.providerName} style={[styles.row, item.isBestValue && styles.bestRow]}>
+            <View style={[styles.providerIcon, item.isBestValue && styles.bestIcon]}><TrendingDown size={20} color={item.isBestValue ? COLORS.bgWhite : COLORS.primary} /></View>
+            <View style={styles.providerInfo}>
+              <Text numberOfLines={1} style={styles.providerName}>{item.providerName}</Text>
+              {item.isBestValue && <Text style={styles.bestLabel}>GIÁ TỐT NHẤT</Text>}
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1 rounded-full bg-gray-100">
-              <X size={18} color={COLORS.gray} />
-            </TouchableOpacity>
+            <View style={styles.priceColumn}>
+              <Text style={styles.price}>{new Intl.NumberFormat('vi-VN').format(item.pricePerNight)}đ</Text>
+              <Pressable onPress={goToRoom} style={styles.selectButton}><Text style={styles.selectText}>Chọn phòng</Text><ArrowRight size={13} color={COLORS.bgWhite} /></Pressable>
+            </View>
           </View>
-
-          <Text className="text-xs text-gray-500 mt-2 mb-4">
-            Giá công khai cho <Text className="font-bold text-gray-800">{stayTitle}</Text>
-          </Text>
-
-          <ScrollView className="space-y-3">
-            {comparisons.map((comp, idx) => (
-              <View
-                key={idx}
-                className={`p-4 rounded-2xl border flex-row items-center justify-between mb-2.5 ${
-                  comp.isBestValue
-                    ? 'bg-red-50/60 border-primary shadow-sm'
-                    : 'bg-gray-50 border-gray-200'
-                }`}
-              >
-                <View className="flex-1 mr-2">
-                  <View className="flex-row items-center">
-                    <Text className="text-sm font-bold text-gray-900">{comp.providerName}</Text>
-                    {comp.isBestValue && (
-                      <View className="bg-primary px-2 py-0.5 rounded-full ml-2">
-                        <Text className="text-[10px] font-bold text-white uppercase">
-                          Giá tốt nhất
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text className="text-xs text-gray-500 mt-0.5">
-                    Đã bao gồm thuế & phí dịch vụ
-                  </Text>
-                </View>
-
-                <View className="items-end">
-                  <Text className="text-base font-black text-primary">
-                    {formatPrice(comp.pricePerNight)} đ
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      onClose();
-                      router.push(`/room/select?id=${stayId}` as any);
-                    }}
-                    className="mt-1 flex-row items-center bg-primary px-3 py-1.5 rounded-xl"
-                  >
-                    <Text className="text-white text-xs font-bold mr-1">Chọn phòng</Text>
-                    <ArrowRight size={12} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+        ))}
+      </ScrollView>
+      <Text style={styles.note}>Các mức giá là dữ liệu demo. Bạn sẽ chọn phòng trong StayFinder.</Text>
+    </BottomSheetWrapper>
   );
 };
+
+const styles = StyleSheet.create({
+  subtitle: { color: COLORS.inkSoft, fontFamily: TYPOGRAPHY.families.regular, fontSize: 13, marginBottom: 16 },
+  list: { maxHeight: 430 },
+  row: { minHeight: 94, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: COLORS.borderTealSoft, backgroundColor: COLORS.bgWhite },
+  bestRow: { borderColor: COLORS.actionTeal, borderLeftWidth: 4, backgroundColor: COLORS.surfaceSage },
+  providerIcon: { width: 38, height: 38, borderRadius: RADII.full, backgroundColor: COLORS.bgSecondary, alignItems: 'center', justifyContent: 'center' },
+  bestIcon: { backgroundColor: COLORS.actionTeal },
+  providerInfo: { flex: 1, minWidth: 0 },
+  providerName: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 13 },
+  bestLabel: { color: COLORS.actionTeal, fontFamily: TYPOGRAPHY.families.bold, fontSize: 10, marginTop: 4 },
+  priceColumn: { alignItems: 'flex-end', gap: 6 },
+  price: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 15 },
+  selectButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, borderRadius: RADII.full, backgroundColor: COLORS.actionTeal },
+  selectText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 11 },
+  note: { color: COLORS.inkSubtle, fontFamily: TYPOGRAPHY.families.regular, fontSize: 11, lineHeight: 16, marginTop: 8 },
+});
