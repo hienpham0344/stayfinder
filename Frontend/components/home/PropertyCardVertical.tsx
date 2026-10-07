@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Heart, Star, MapPin } from 'lucide-react-native';
+import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Heart, Star, ImageOff } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Stay } from '../../types/stay';
 import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
@@ -16,6 +17,10 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
 }) => {
   const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const { width } = useUserWindowDimensions();
+  const isCompact = width <= 340;
+  const imageSource = useMemo(() => ({ uri: stay.images[0] }), [stay.images[0]]);
 
   const handleCardPress = () => {
     if (onPress) {
@@ -31,23 +36,42 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
   };
 
   const formattedPrice = new Intl.NumberFormat('vi-VN').format(stay.pricePerNight);
+  const locationLabel = stay.cityArea?.match(/\(([^)]+)\)/)?.[1]
+    ?? stay.cityArea
+    ?? `${stay.location.city}, ${stay.location.province}`;
 
   return (
+    <View style={styles.card}>
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={handleCardPress}
-      style={styles.card}
+      accessibilityRole="button"
+      accessibilityLabel={stay.title}
+      style={styles.cardTap}
     >
       {/* Thumbnail Left */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: stay.images[0] }}
+          source={imageSource}
           style={styles.image}
           resizeMode="cover"
+          accessibilityLabel={stay.title}
+          onLoad={() => setImageState('loaded')}
+          onError={() => setImageState('error')}
         />
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeText}>{stay.type}</Text>
-        </View>
+        {imageState !== 'loaded' ? (
+          <View
+            accessibilityRole="image"
+            accessibilityLabel={imageState === 'error' ? 'Không thể tải ảnh chỗ ở' : 'Đang tải ảnh chỗ ở'}
+            style={styles.imageFallback}
+          >
+            {imageState === 'error' ? (
+              <ImageOff size={20} color={COLORS.textMuted} />
+            ) : (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            )}
+          </View>
+        ) : null}
       </View>
 
       {/* Info Right */}
@@ -57,48 +81,45 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
             {stay.title}
           </Text>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={toggleWishlist}
-            style={styles.wishlistBtn}
-          >
-            <Heart
-              size={18}
-              color={isWishlisted ? COLORS.accentRed : COLORS.textMuted}
-              fill={isWishlisted ? COLORS.accentRed : 'transparent'}
-            />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.locationRow}>
-          <MapPin size={13} color={COLORS.textMuted} />
           <Text style={styles.locationText} numberOfLines={1}>
-            {stay.cityArea || `${stay.location.city}, ${stay.location.province}`}
-            {stay.distanceKm ? ` • Cách ${stay.distanceKm} km` : ''}
+            {locationLabel}
           </Text>
         </View>
 
         <View style={styles.ratingRow}>
-          <Star size={13} color="#F59E0B" fill="#F59E0B" />
+          <Star size={12} color={COLORS.starGold} fill={COLORS.starGold} />
           <Text style={styles.ratingText}>{stay.rating.toFixed(1)}</Text>
-          <Text style={styles.reviewText}>({stay.reviewCount} đánh giá)</Text>
+          <Text style={styles.reviewText} numberOfLines={1}>({stay.reviewCount} đánh giá)</Text>
         </View>
 
         <View style={styles.priceRow}>
-          <Text style={styles.priceText}>{formattedPrice}đ</Text>
-          <Text style={styles.perNightText}> / đêm</Text>
+          <Text style={[styles.priceText, isCompact && styles.priceTextCompact]}>{formattedPrice}đ</Text>
+          <Text style={[styles.perNightText, isCompact && styles.perNightTextCompact]}> / đêm</Text>
         </View>
       </View>
     </TouchableOpacity>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={toggleWishlist}
+      style={styles.wishlistBtn}
+      accessibilityRole="button"
+      accessibilityLabel={isWishlisted ? 'Bỏ lưu chỗ ở' : 'Lưu chỗ ở'}
+    >
+      <Heart size={15} color={COLORS.primary} fill={isWishlisted ? COLORS.primary : 'transparent'} />
+    </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
     width: '100%',
-    padding: 10,
-    borderRadius: RADII.lg, // 16px
+    height: 128,
+    padding: 16,
+    borderRadius: RADII.promo,
     backgroundColor: COLORS.bgWhite,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
@@ -106,10 +127,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...SHADOWS.cardSoft,
   },
+  cardTap: { flex: 1, width: '100%', flexDirection: 'row', alignItems: 'center' },
   imageContainer: {
-    width: 106,
-    height: 106,
-    borderRadius: RADII.md, // 12px
+    width: 96,
+    height: 96,
+    borderRadius: RADII.xl,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: COLORS.bgSecondary,
@@ -118,84 +140,108 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  typeBadge: {
+  imageFallback: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: 'rgba(24, 29, 27, 0.7)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: RADII.xs,
-  },
-  typeText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: COLORS.bgSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
-    marginLeft: 12,
-    justifyContent: 'space-between',
-    height: 106,
-    paddingVertical: 2,
+    minWidth: 0,
+    marginLeft: 16,
+    justifyContent: 'flex-start',
+    height: 96,
+    paddingTop: 4,
+    position: 'relative',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingRight: 32,
   },
   title: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base, // 14px
-    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.families.semibold,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.dark,
     flex: 1,
     marginRight: 6,
   },
   wishlistBtn: {
-    padding: 2,
+    position: 'absolute',
+    right: 2,
+    top: 10,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   locationRow: {
+    position: 'absolute',
+    left: 0,
+    right: 108,
+    bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   locationText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.textMuted,
     flex: 1,
   },
   ratingRow: {
+    height: 24,
+    marginTop: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   ratingText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.dark,
   },
   reviewText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.xs,
+    flexShrink: 1,
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.textMuted,
   },
   priceRow: {
+    position: 'absolute',
+    right: 0,
+    bottom: 12,
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   priceText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.md, // 16px
-    fontWeight: '700',
-    color: COLORS.primary,
+    fontFamily: TYPOGRAPHY.families.bold,
+    fontSize: TYPOGRAPHY.sizes.lg,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
+    color: COLORS.dark,
+  },
+  priceTextCompact: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.base,
   },
   perNightText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.xs,
+    lineHeight: TYPOGRAPHY.lineHeights.sm,
     color: COLORS.textMuted,
+  },
+  perNightTextCompact: {
+    fontSize: 10,
+    lineHeight: 14,
   },
 });

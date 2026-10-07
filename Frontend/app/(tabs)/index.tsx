@@ -121,24 +121,26 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
     marginBottom: 14,
   },
   sectionTitle: {
-    fontFamily: TYPOGRAPHY.families.bold,
+    fontFamily: TYPOGRAPHY.families.semibold,
     fontSize: TYPOGRAPHY.sizes.lg, // 20px
+    lineHeight: TYPOGRAPHY.lineHeights.lg,
     color: COLORS.dark,
   },
   seeAllText: {
-    fontFamily: TYPOGRAPHY.families.semibold,
-    fontSize: TYPOGRAPHY.sizes.sm, // 13px
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.primary,
   },
   horizontalScrollContent: {
     paddingHorizontal: SPACING.xl,
-    gap: 14,
+    gap: SPACING.lg,
   },
   verticalListContainer: {
     paddingHorizontal: SPACING.xl,

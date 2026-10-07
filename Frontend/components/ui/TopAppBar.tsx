@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Se121SharedAsset } from './Se121SharedAssets';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
@@ -30,8 +31,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   return (
     <View style={styles.container}>
       {showBack ? (
-        <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Quay lại">
+          <Se121SharedAsset source={require('../../assets/figma/shared/135-9-imgContainer.svg')} width={16} nativeFallback={<Ionicons name="arrow-back" size={16} color={COLORS.primary} />} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />

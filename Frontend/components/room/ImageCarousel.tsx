@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Image, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Image, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { ImageOff } from 'lucide-react-native';
 import { COLORS, RADII } from '../../constants/tokens';
 
 interface ImageCarouselProps {
@@ -7,17 +8,45 @@ interface ImageCarouselProps {
   onOpen?: () => void;
 }
 
+function CarouselSlide({ uri, width, index, count, onOpen }: { uri: string; width: number; index: number; count: number; onOpen?: () => void }) {
+  const [failed, setFailed] = useState(false);
+  return <Pressable onPress={onOpen} style={[styles.slide, { width }]} accessibilityRole="button" accessibilityLabel={`Mở ảnh ${index + 1} trên ${count}`}>
+    {failed ? <ImageOff size={28} color={COLORS.textMuted} /> : <Image source={{ uri }} style={styles.image} resizeMode="cover" onError={() => setFailed(true)} />}
+  </Pressable>;
+}
+
 export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onOpen }) => {
-  const { width } = useWindowDimensions();
+  const [galleryWidth, setGalleryWidth] = useState(390);
   const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const pendingPage = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (pendingPage.current === null) return;
+    const page = pendingPage.current;
+    const frame = requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ x: page * galleryWidth, animated: false });
+      setActiveIndex(page);
+      pendingPage.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [galleryWidth]);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={(event) => {
+      const measuredWidth = event.nativeEvent.layout.width;
+      if (measuredWidth > 0 && measuredWidth !== galleryWidth) {
+        pendingPage.current = activeIndex;
+        setGalleryWidth(measuredWidth);
+      }
+    }}>
       <ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={(e) => {
+          if (pendingPage.current !== null || e.nativeEvent.layoutMeasurement.width <= 0) return;
           const slide = Math.round(
             e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width
           );
@@ -27,11 +56,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onOpen }) 
         }}
         scrollEventThrottle={16}
       >
-        {images.map((img, idx) => (
-          <Pressable key={idx} onPress={onOpen} accessibilityLabel={`Mở ảnh ${idx + 1} trên ${images.length}`}>
-            <Image source={{ uri: img }} style={{ width, height: 256 }} resizeMode="cover" />
-          </Pressable>
-        ))}
+        {images.map((img, idx) => <CarouselSlide key={img} uri={img} width={galleryWidth} index={idx} count={images.length} onOpen={onOpen} />)}
       </ScrollView>
 
       <View style={styles.dots}>
@@ -43,7 +68,9 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onOpen }) 
 
 const styles = StyleSheet.create({
   container: { height: 256, backgroundColor: COLORS.bgSecondary },
-  dots: { position: 'absolute', bottom: 15, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 },
-  dot: { width: 8, height: 8, borderRadius: RADII.full, backgroundColor: COLORS.borderSage },
-  activeDot: { backgroundColor: COLORS.bgWhite },
+  slide: { height: 256, flexShrink: 0, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center' },
+  image: { width: '100%', height: '100%' },
+  dots: { position: 'absolute', bottom: 16, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  dot: { width: 8, height: 8, borderRadius: RADII.full, backgroundColor: COLORS.bgWhite, opacity: 0.5 },
+  activeDot: { opacity: 1 },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { COLORS, RADII, SIZES, TYPOGRAPHY } from '../../constants/tokens';
 
 interface ButtonProps {
@@ -68,20 +68,20 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={title}
-      accessibilityState={{ disabled: disabled || loading }}
-      activeOpacity={0.8}
+      accessibilityState={{ disabled: disabled || loading }} aria-disabled={disabled || loading} aria-busy={loading}
       onPress={onPress}
       disabled={disabled || loading}
-      style={[
+      style={({ pressed }) => [
         styles.base,
         getVariantStyle(),
         getSizeStyle(),
         fullWidth && styles.fullWidth,
         disabled && styles.disabled,
         style,
+        pressed && !disabled && !loading && (variant === 'primary' ? styles.primaryPressed : styles.pressed),
       ]}
     >
       {loading ? (
@@ -92,7 +92,7 @@ export const Button: React.FC<ButtonProps> = ({
           {icon}
         </>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -110,6 +110,8 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
+  primaryPressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
+  pressed: { opacity: 0.8 },
 
   // Sizes
   sm: {

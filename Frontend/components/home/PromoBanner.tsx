@@ -1,7 +1,9 @@
 import React from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { COLORS, RADII, SPACING, TYPOGRAPHY } from '../../constants/tokens';
+import { COLORS, RADII, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/tokens';
+
+const promoImage = require('../../assets/figma/se121-parity/home/promo-banner.png');
 
 interface PromoBannerProps {
   title?: string;
@@ -16,16 +18,15 @@ export const PromoBanner: React.FC<PromoBannerProps> = ({
   tagline = 'ƯU ĐÃI ĐẶC BIỆT',
   onPress,
 }) => {
-  const { width } = useWindowDimensions();
   return <TouchableOpacity
     activeOpacity={0.9}
     accessibilityRole="button"
-    accessibilityLabel={title}
+    accessibilityLabel="Special offer: save 20 percent on your first booking"
     onPress={onPress}
     style={styles.container}
   >
     <ImageBackground
-      source={require('../../assets/figma/home-promo.jpeg')}
+      source={promoImage}
       resizeMode="cover"
       style={styles.image}
       imageStyle={styles.imageContent}
@@ -40,9 +41,8 @@ export const PromoBanner: React.FC<PromoBannerProps> = ({
         <Rect width="100%" height="100%" fill="url(#promoShade)" />
       </Svg>
       <View style={styles.copy}>
-        <Text style={styles.badge}>{tagline}</Text>
-        <Text style={[styles.title, width <= 350 && styles.titleCompact]}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={styles.badge}>SPECIAL OFFER</Text>
+        <Text style={styles.title}>Save 20% on{'\n'}your first booking</Text>
       </View>
     </ImageBackground>
   </TouchableOpacity>;
@@ -50,50 +50,43 @@ export const PromoBanner: React.FC<PromoBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    aspectRatio: 350 / 212,
     marginHorizontal: SPACING.xl,
     marginBottom: SPACING.section,
     overflow: 'hidden',
     borderRadius: RADII.promo,
+    ...SHADOWS.cardSoft,
   },
   image: {
-    height: 212,
-    width: '100%',
-    justifyContent: 'flex-start',
+    flex: 1,
   },
   imageContent: {
-    width: '100%',
+    borderRadius: RADII.promo,
   },
   copy: {
+    flex: 1,
+    alignItems: 'flex-start',
     padding: SPACING.xxl,
-    maxWidth: '94%',
   },
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.accentOrange,
     color: COLORS.bgWhite,
-    paddingHorizontal: 12,
+    overflow: 'hidden',
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: 16,
+    borderRadius: RADII.full,
     fontFamily: TYPOGRAPHY.families.medium,
     fontSize: TYPOGRAPHY.sizes.xs,
+    letterSpacing: 0.6,
     lineHeight: TYPOGRAPHY.lineHeights.xs,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   title: {
     color: COLORS.bgWhite,
     fontFamily: TYPOGRAPHY.families.bold,
     fontSize: TYPOGRAPHY.sizes.xxl,
+    letterSpacing: -0.64,
     lineHeight: TYPOGRAPHY.lineHeights.xxl,
-  },
-  titleCompact: {
-    fontSize: TYPOGRAPHY.sizes.xl,
-    lineHeight: TYPOGRAPHY.lineHeights.xl,
-  },
-  subtitle: {
-    color: COLORS.bgWhite,
-    fontFamily: TYPOGRAPHY.families.regular,
-    fontSize: TYPOGRAPHY.sizes.xs,
-    lineHeight: TYPOGRAPHY.lineHeights.xs,
-    marginTop: SPACING.sm,
   },
 });

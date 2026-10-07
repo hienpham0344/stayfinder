@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, ImageSourcePropType, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Animated, Easing, Image, ImageSourcePropType, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, CalendarDays, Check, ChevronRight, Heart, Home, MapPin, Search, Star, User, Wifi } from 'lucide-react-native';
+import { ArrowLeft, CalendarCheck, Check, ChevronRight, Heart, Home, MapPin, Search, Star, User, Wifi } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../ui/Button';
 import { TopAppBar } from '../ui/TopAppBar';
+import { Se121SharedAsset, componentNavigationAsset } from '../ui/Se121SharedAssets';
+import { ComparePricesModal } from '../room/ComparePricesModal';
 import { MOCK_STAYS } from '../../constants/mockStays';
 import { COLORS, RADII, SHADOWS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
@@ -71,14 +74,14 @@ const RESULT_NAMES = ['Villa Azure Retreat', 'Colline Hotel', 'Terracotta Hotel 
 const RESULT_NODES = [['282:1111', '282:1139'], ['282:1167', '282:1191'], ['282:1215', '282:1241']] as const;
 const NAV = [
   { label: 'Trang chủ', icon: Home }, { label: 'Tìm kiếm', icon: Search },
-  { label: 'Đặt phòng', icon: CalendarDays }, { label: 'Yêu thích', icon: Heart },
+  { label: 'Đặt phòng', icon: CalendarCheck }, { label: 'Yêu thích', icon: Heart },
   { label: 'Tài khoản', icon: User },
 ] as const;
 const money = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)}đ`;
 
 function Selector({ items, selected, onSelect }: { items: { id: string; label: string }[]; selected: string; onSelect: (id: string) => void }) {
   return <ScrollView horizontal style={s.selectorScroll} showsHorizontalScrollIndicator={false} contentContainerStyle={s.selector}>
-    {items.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityState={{ selected: selected === item.id }} onPress={() => onSelect(item.id)} style={[s.chip, selected === item.id && s.chipActive]}><Text style={[s.chipText, selected === item.id && s.chipTextActive]}>{item.label}</Text></Pressable>)}
+    {items.map((item) => <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked: selected === item.id }} aria-checked={selected === item.id} onPress={() => onSelect(item.id)} style={[s.chip, selected === item.id && s.chipActive]}><Text style={[s.chipText, selected === item.id && s.chipTextActive]}>{item.label}</Text></Pressable>)}
   </ScrollView>;
 }
 
@@ -86,34 +89,60 @@ function SkeletonRows({ compare = false }: { compare?: boolean }) {
   const opacity = useRef(new Animated.Value(0.62)).current;
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
-      Animated.timing(opacity, { toValue: 0.92, duration: 550, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 0.62, duration: 550, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0.92, duration: 550, ...(compare ? { easing: Easing.bezier(0, 0, 0.58, 1) } : {}), useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0.62, duration: 550, ...(compare ? { easing: Easing.bezier(0, 0, 0.58, 1) } : {}), useNativeDriver: true }),
+      ...(compare ? [Animated.delay(900)] : []),
     ]));
     loop.start();
     return () => loop.stop();
-  }, [opacity]);
-  return <View style={compare ? s.compareRows : s.skeletonRows}>{[0, 1, 2].map((index) => <View key={index} style={[s.skeletonCard, compare && s.compareCard]}><Animated.View style={[s.skeletonImage, compare && s.compareImage, { opacity }]} /><View style={s.skeletonCopy}><Animated.View style={[s.skeletonLine, { opacity }]} /><Animated.View style={[s.skeletonLine, s.skeletonShort, { opacity }]} /></View></View>)}</View>;
+  }, [compare, opacity]);
+  if (compare) return <ScrollView style={s.compareRows} contentContainerStyle={s.compareRowsContent} showsVerticalScrollIndicator={false} nestedScrollEnabled>{[0, 1, 2, 3, 4].map((index) => <View key={index} style={[s.compareCard, index === 4 && s.compareLastCard]}><Animated.View style={[s.compareImage, { opacity }]} /><Animated.View style={[s.compareName, { opacity }]} /><Animated.View style={[s.comparePrice, { opacity }]} /></View>)}</ScrollView>;
+  return <View style={s.skeletonRows}>{[0, 1, 2].map((index) => <View key={index} style={s.skeletonCard}><Animated.View style={[s.skeletonImage, { opacity }]} /><View style={s.skeletonCopy}><Animated.View style={[s.skeletonLine, { opacity }]} /><Animated.View style={[s.skeletonLine, s.skeletonShort, { opacity }]} /></View></View>)}</View>;
+}
+
+function CompareLoadingPreview() {
+  const [visible, setVisible] = useState(true);
+  const [pricesVisible, setPricesVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+  const stay = MOCK_STAYS[0];
+  return <>
+    <View style={s.overlayLaunch}><Text style={s.cardBody}>Xem trạng thái so sánh giá mẫu trên màn hình.</Text><Button title="Mở bản xem" size="lg" onPress={() => setVisible(true)} /></View>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={() => setVisible(false)}>
+      <View style={s.compareModalRoot}>
+        <Pressable style={s.compareBackdrop} onPress={() => setVisible(false)} accessibilityLabel="Đóng bản xem so sánh" />
+        <View style={s.compareSheet}>
+          <View style={s.compareHandleArea}><View style={[s.handle, { marginBottom: 0 }]} /></View>
+          <View style={s.compareHead}><Text style={s.compareTitle}>Đang so sánh giá...</Text><Text style={s.compareBody}>Dữ liệu chỗ ở mẫu</Text></View>
+          <SkeletonRows compare />
+        </View>
+        <View style={[s.compareFallback, { paddingBottom: Math.max(16, insets.bottom) }]}>
+          <Pressable style={s.compareFallbackButton} onPress={() => { setVisible(false); setPricesVisible(true); }} accessibilityRole="button"><Text style={s.compareFallbackText}>Xem giá có sẵn</Text></Pressable>
+        </View>
+      </View>
+    </Modal>
+    <ComparePricesModal visible={pricesVisible} onClose={() => setPricesVisible(false)} stayId={stay.id} stayTitle={stay.title} comparisons={stay.priceComparisons || []} />
+  </>;
 }
 
 function StatePreview({ id, onNotice }: { id: string; onNotice: (message: string) => void }) {
   if (id === 'search-loading') return <View style={s.stateFrame}><View style={s.searchHeader}><ArrowLeft size={20} color={COLORS.primary} /><View><Text style={s.searchTitle}>Đà Lạt, Việt Nam</Text><Text style={s.searchSubtitle}>2 khách · Chỗ ở mẫu</Text></View><MapPin size={20} color={COLORS.primary} /></View><SkeletonRows /></View>;
   if (id === 'search-empty') return <View style={s.stateFrame}><View style={s.searchHeader}><ArrowLeft size={20} color={COLORS.primary} /><View><Text style={s.searchTitle}>Đà Lạt, Việt Nam</Text><Text style={s.searchSubtitle}>2 khách · Chỗ ở mẫu</Text></View><MapPin size={20} color={COLORS.primary} /></View><View style={s.emptyCard}><Text style={s.cardTitle}>Không tìm thấy chỗ ở</Text><Text style={s.cardBody}>Hãy thử điểm đến khác hoặc điều chỉnh bộ lọc để tìm chỗ ở phù hợp.</Text><Button title="Đổi tìm kiếm" size="lg" fullWidth onPress={() => router.push('/(tabs)/search')} /></View></View>;
-  if (id === 'compare-loading') return <View style={s.stateFrame}><View style={s.compareHead}><View style={s.handle} /><Text style={s.cardTitle}>Đang so sánh giá...</Text><Text style={s.cardBody}>Dữ liệu chỗ ở mẫu</Text></View><SkeletonRows compare /><View style={s.previewFooter}><Button title="Xem giá có sẵn" size="lg" fullWidth onPress={() => onNotice('Đây là bản xem trước. Mở chi tiết chỗ ở để xem giá mẫu.')} /></View></View>;
+  if (id === 'compare-loading') return <CompareLoadingPreview />;
   return <View style={s.stateFrame}><View style={s.failedCard}><Text style={s.cardTitle}>Thanh toán không thành công</Text><Text style={s.cardBody}>Đây chỉ là trạng thái giao diện demo. Không có khoản thanh toán nào được thực hiện.</Text><Button title="Thử lại bản xem" size="lg" fullWidth onPress={() => onNotice('Luồng thanh toán thật không thay đổi.')} /><Pressable style={s.secondaryAction} onPress={() => onNotice('Chọn MoMo, VNPay hoặc thẻ trong checkout hiện có.')}><Text style={s.secondaryText}>Chọn phương thức thanh toán</Text></Pressable></View></View>;
 }
 
 function FilterPreview({ id, onSelect }: { id: string; onSelect: (id: string) => void }) {
   if (id.startsWith('checkbox')) {
     const checked = id.endsWith('on');
-    return <Pressable style={s.checkboxRow} onPress={() => onSelect(checked ? 'checkbox-off' : 'checkbox-on')} accessibilityRole="checkbox" accessibilityState={{ checked }}><View style={[s.checkbox, checked && s.checkboxOn]}>{checked && <Check size={17} color={COLORS.bgWhite} />}</View><Text style={s.checkboxLabel}>Khách sạn</Text></Pressable>;
+    return <Pressable style={s.checkboxRow} onPress={() => onSelect(checked ? 'checkbox-off' : 'checkbox-on')} accessibilityRole="checkbox" accessibilityState={{ checked }} aria-checked={checked}><View style={[s.checkbox, checked && s.checkboxOn]}>{checked && <Check size={17} color={COLORS.bgWhite} />}</View><Text style={s.checkboxLabel}>Khách sạn</Text></Pressable>;
   }
   if (id.startsWith('star')) {
     const checked = id.endsWith('on');
-    return <Pressable style={[s.starChip, checked && s.starChipOn]} onPress={() => onSelect(checked ? 'star-off' : 'star-on')} accessibilityRole="checkbox" accessibilityState={{ checked }}><Text style={s.starText}>1</Text><Star size={14} color={COLORS.textMuted} /></Pressable>;
+    return <Pressable style={[s.starChip, checked && s.starChipOn]} onPress={() => onSelect(checked ? 'star-off' : 'star-on')} accessibilityRole="checkbox" accessibilityState={{ checked }} aria-checked={checked}><Text style={s.starText}>1</Text><Star size={14} color={COLORS.textMuted} /></Pressable>;
   }
   if (id.startsWith('toggle')) {
     const checked = id.endsWith('on');
-    return <Pressable style={[s.toggle, checked && s.toggleOn]} onPress={() => onSelect(checked ? 'toggle-off' : 'toggle-on')} accessibilityRole="switch" accessibilityState={{ checked }}><View style={[s.toggleThumb, checked && s.toggleThumbOn]} /></Pressable>;
+    return <Pressable style={s.toggle} onPress={() => onSelect(checked ? 'toggle-off' : 'toggle-on')} accessibilityRole="switch" accessibilityLabel="Nút gạt" accessibilityState={{ checked }} aria-checked={checked}><Se121SharedAsset source={checked ? require('../../assets/figma/shared/243-966-imgStateOn.svg') : require('../../assets/figma/shared/243-966-imgStateOff.svg')} width={44} height={32} nativeFallback={<View style={[s.toggleTrack, checked && s.toggleOn]}><View style={[s.toggleThumb, checked && s.toggleThumbOn]} /></View>} /></Pressable>;
   }
   const budget = id.endsWith('budget');
   const min = Math.min(...MOCK_STAYS.map((stay) => stay.pricePerNight));
@@ -143,18 +172,18 @@ function PropertyPreview({ id, propertyIndex, onProperty, resultIndex, onResult,
 }
 
 function SharedPreview({ id, navIndex, onNav, onNotice }: { id: string; navIndex: number; onNav: (index: number) => void; onNotice: (message: string) => void }) {
-  if (id.startsWith('button')) return <View style={s.sharedCenter}><Button title="Tiếp tục" size="lg" icon={<ChevronRight size={16} color={COLORS.bgWhite} />} style={id.endsWith('pressed') ? s.buttonPressed : undefined} onPress={() => onNotice('Nút demo đã được nhấn.')} /></View>;
-  if (id === 'sticky') return <View style={s.stickyPreview}><View><Text style={s.stickyLabel}>Tổng thanh toán mẫu</Text><Text style={s.stickyPrice}>{money(MOCK_STAYS[0].pricePerNight)}</Text></View><Button title="Tiếp tục" size="lg" onPress={() => onNotice('Thanh hành động chỉ xem thử.')} /></View>;
+  if (id.startsWith('button')) return <View style={s.sharedCenter}><Button title="Tiếp tục" size="lg" icon={<Se121SharedAsset source={require('../../assets/figma/shared/270-1069-imgTrailingIcon.svg')} width={12.4999} nativeFallback={<ChevronRight size={16} color={COLORS.bgWhite} />} />} style={id.endsWith('pressed') ? s.buttonPressed : undefined} onPress={() => onNotice('Nút demo đã được nhấn.')} /></View>;
+  if (id === 'sticky') return <View style={s.stickyPreview}><View style={s.stickyPriceBlock}><Text numberOfLines={1} style={s.stickyLabel}>Tổng thanh toán mẫu</Text><Text style={s.stickyPrice}>{money(MOCK_STAYS[0].pricePerNight)}</Text></View><Button title="Tiếp tục" size="lg" style={s.stickyButton} onPress={() => onNotice('Thanh hành động chỉ xem thử.')} /></View>;
   if (id === 'appbar') return <TopAppBar title="StayFinder" onBackPress={() => onNotice('Đây là bản xem trước thanh trên.')} />;
   return <View style={[s.navPreview, navIndex === 5 && s.navSubtle]}>{NAV.map(({ label, icon: Icon }, index) => {
     const active = (navIndex === 5 ? 4 : navIndex) === index;
-    return <Pressable key={label} style={s.navItem} onPress={() => onNav(index)} accessibilityState={{ selected: active }}><Icon size={21} color={active ? COLORS.primary : COLORS.inkSoft} fill={active && index === 3 ? COLORS.primary : 'none'} /><Text style={[s.navLabel, active && s.navLabelActive]}>{label}</Text></Pressable>;
+    return <Pressable key={label} style={s.navItem} onPress={() => onNav(index)} accessibilityRole="tab" accessibilityLabel={label} accessibilityState={{ selected: active }} aria-selected={active}><Se121SharedAsset source={componentNavigationAsset(index, navIndex === 5 ? 4 : navIndex)} width={24} nativeFallback={<Icon size={24} color={active ? COLORS.primary : COLORS.textSecondary} fill={active && [0,3,4].includes(index) ? COLORS.primary : 'none'} />} /><Text style={[s.navLabel, active && s.navLabelActive, active && index === 4 && navIndex !== 5 && s.navLabelProfile]} numberOfLines={1} minimumFontScale={0.85}>{label}</Text></Pressable>;
   })}</View>;
 }
 
 export function UserUiGallery() {
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useUserWindowDimensions();
   const [group, setGroup] = useState<Group>('states');
   const [selected, setSelected] = useState('search-loading');
   const [propertyIndex, setPropertyIndex] = useState(0);
@@ -163,21 +192,32 @@ export function UserUiGallery() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [notice, setNotice] = useState('');
   const toastProgress = useRef(new Animated.Value(0)).current;
+  const toastOffset = useRef(new Animated.Value(8)).current;
   const dialogProgress = useRef(new Animated.Value(0)).current;
+  const choiceProgress = useRef(new Animated.Value(0)).current;
   const activeGroup = GROUPS.find((item) => item.id === group)!;
   const activeVariant = activeGroup.variants.find((item) => item.id === selected)!;
   const nodeId = selected.startsWith('result') ? RESULT_NODES[resultIndex][selected.endsWith('pressed') ? 1 : 0] : selected === 'gallery' ? ['243:978', '243:979', '243:989', '243:999', '243:1009', '243:1030', '243:1040', '243:1050', '243:1060', '243:1070', '243:1080'][propertyIndex] : activeVariant.node;
   useEffect(() => {
     if (overlay !== 'toast') return;
     toastProgress.setValue(0);
-    const animation = Animated.sequence([
-      Animated.timing(toastProgress, { toValue: 1, duration: 180, useNativeDriver: true }),
+    toastOffset.setValue(8);
+    const easing = Easing.bezier(0, 0, 0.58, 1);
+    const animation = Animated.loop(Animated.sequence([
+      Animated.parallel([
+        Animated.timing(toastProgress, { toValue: 1, duration: 180, easing, useNativeDriver: true }),
+        Animated.timing(toastOffset, { toValue: 0, duration: 180, easing, useNativeDriver: true }),
+      ]),
       Animated.delay(1520),
-      Animated.timing(toastProgress, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]);
-    animation.start(({ finished }) => { if (finished) setOverlay(null); });
+      Animated.parallel([
+        Animated.timing(toastProgress, { toValue: 0, duration: 200, easing, useNativeDriver: true }),
+        Animated.timing(toastOffset, { toValue: 4, duration: 200, easing, useNativeDriver: true }),
+      ]),
+      Animated.delay(100),
+    ]));
+    animation.start();
     return () => animation.stop();
-  }, [overlay, toastProgress]);
+  }, [overlay, toastProgress, toastOffset]);
   useEffect(() => {
     if (overlay !== 'dialog') return;
     dialogProgress.setValue(0);
@@ -185,6 +225,13 @@ export function UserUiGallery() {
     animation.start();
     return () => animation.stop();
   }, [overlay, dialogProgress]);
+  useLayoutEffect(() => {
+    if (overlay !== 'choice') return;
+    choiceProgress.setValue(0);
+    const animation = Animated.timing(choiceProgress, { toValue: 1, duration: 220, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [choiceProgress, overlay]);
   const selectGroup = (next: Group) => { setGroup(next); setSelected(GROUPS.find((item) => item.id === next)!.variants[0].id); setNotice(''); };
   const selectVariant = (next: string) => { setSelected(next); setNotice(''); if (next.startsWith('nav-')) setNavIndex(Number(next.slice(4))); };
   const chooseWishlistTab = (index: number) => setSelected(index === -1 ? 'wishlist-all' : index === -2 ? 'wishlist-upcoming' : 'wishlist-dream');
@@ -195,7 +242,7 @@ export function UserUiGallery() {
       <Text style={s.sectionLabel}>Nhóm</Text><Selector items={GROUPS} selected={group} onSelect={(next) => selectGroup(next as Group)} />
       <Text style={s.sectionLabel}>Biến thể</Text><Selector items={activeGroup.variants} selected={selected} onSelect={selectVariant} />
       <View style={s.previewHeading}><Text style={s.previewTitle}>{activeVariant.label}</Text><Text style={s.nodeLabel}>Figma {nodeId}</Text></View>
-      <View style={s.preview}>
+      <View style={[s.preview, group === 'shared' && { width, marginHorizontal: -SPACING.xl, borderRadius: 0, overflow: 'visible', boxShadow: 'none', shadowOpacity: 0 }]}>
         {group === 'states' && <StatePreview id={selected} onNotice={setNotice} />}
         {group === 'overlays' && <View style={s.overlayLaunch}><Text style={s.cardBody}>Nhấn để xem trạng thái {activeVariant.label.toLowerCase()} trên màn hình.</Text><Button title="Mở bản xem" size="lg" onPress={() => setOverlay(selected as Overlay)} /></View>}
         {group === 'filters' && <FilterPreview id={selected} onSelect={selectVariant} />}
@@ -204,13 +251,13 @@ export function UserUiGallery() {
       </View>
       {!!notice && <Text style={s.notice}>{notice}</Text>}
     </ScrollView>
-    <Modal visible={overlay === 'dialog' || overlay === 'choice'} transparent animationType="fade" onRequestClose={() => setOverlay(null)}>
-      <Pressable style={[s.scrim, { paddingTop: Math.max(insets.top + SPACING.section, height * 0.26) }]} onPress={() => setOverlay(null)}>
+    <Modal visible={overlay === 'dialog' || overlay === 'choice'} transparent animationType={overlay === 'dialog' ? 'fade' : 'none'} onRequestClose={() => setOverlay(null)}>
+      <Pressable style={[s.scrim, overlay === 'choice' && s.choiceScrim, { paddingTop: Math.max(insets.top + SPACING.section, height * 0.26) }]} onPress={() => setOverlay(null)}>
         {overlay === 'dialog' && <Animated.View style={[s.dialogCard, { opacity: dialogProgress, transform: [{ scale: dialogProgress.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }] }]}><Text style={s.dialogTitle}>Chi tiết đặt phòng</Text><Text style={s.dialogBody}>Kiểm tra thông tin trước khi xác nhận.</Text><Button title="Xác nhận demo" size="md" fullWidth onPress={() => { setOverlay(null); setNotice('Đã xem hộp thoại. Không có đặt phòng nào được tạo.'); }} /><Pressable style={s.secondaryAction} onPress={() => setOverlay(null)}><Text style={s.secondaryText}>Hủy</Text></Pressable></Animated.View>}
-        {overlay === 'choice' && <Pressable style={[s.choiceSheet, { paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(insets.bottom, SPACING.xxl) }]} onPress={() => {}}><Text style={s.choiceTitle}>Chọn một tùy chọn</Text>{['Tùy chọn một', 'Tùy chọn hai', 'Tùy chọn ba'].map((item) => <Pressable key={item} style={s.choiceRow} onPress={() => { setOverlay(null); setNotice(`Đã chọn “${item}” trong bản xem trước.`); }}><Text style={s.choiceText}>{item}</Text></Pressable>)}</Pressable>}
+        {overlay === 'choice' && <Animated.View style={[s.choiceSheet, { transform: [{ translateY: choiceProgress.interpolate({ inputRange: [0, 1], outputRange: [244 + (Platform.OS === 'web' ? SPACING.xxl : Math.max(insets.bottom, SPACING.xxl)), 0] }) }] }]}><Pressable style={[s.choiceSheetContent, { paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(insets.bottom, SPACING.xxl) }]} onPress={() => {}}><Text style={s.choiceTitle}>Chọn một tùy chọn</Text>{['Tùy chọn một', 'Tùy chọn hai', 'Tùy chọn ba'].map((item) => <Pressable key={item} style={s.choiceRow} onPress={() => { setOverlay(null); setNotice(`Đã chọn “${item}” trong bản xem trước.`); }}><Text style={s.choiceText}>{item}</Text></Pressable>)}</Pressable></Animated.View>}
       </Pressable>
     </Modal>
-    {overlay === 'toast' && <Animated.View pointerEvents="box-none" style={[s.toastLayer, { bottom: insets.bottom + SIZES.bottomNav + SPACING.xl, opacity: toastProgress, transform: [{ translateY: toastProgress.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}><Pressable style={s.toast} onPress={() => setOverlay(null)}><Text style={s.toastText}>Thay đổi đã lưu trong bản xem trước</Text></Pressable></Animated.View>}
+    {overlay === 'toast' && <Animated.View pointerEvents="box-none" style={[s.toastLayer, { bottom: Math.max(insets.bottom, SPACING.xl) + SIZES.bottomNav, opacity: toastProgress, transform: [{ translateY: toastOffset }] }]}><Pressable style={s.toast} accessibilityRole="button" accessibilityLabel="Đóng thông báo" onPress={() => setOverlay(null)}><Text numberOfLines={1} style={s.toastText}>Thay đổi đã lưu trong bản xem trước</Text></Pressable></Animated.View>}
   </View>;
 }
 
@@ -247,11 +294,25 @@ const s = StyleSheet.create({
   emptyCard: { margin: SPACING.xl, padding: SPACING.xxl, minHeight: 270, borderRadius: RADII.promo, backgroundColor: COLORS.bgWhite, justifyContent: 'space-between' },
   cardTitle: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
   cardBody: { color: COLORS.inkSoft, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22 },
-  compareHead: { padding: SPACING.xl, borderBottomWidth: 1, borderBottomColor: COLORS.borderMuted, gap: SPACING.xs },
+  compareStateFrame: { minHeight: 618, paddingTop: SPACING.xxl, backgroundColor: COLORS.overlayBlack + '59', justifyContent: 'flex-end' },
+  compareModalRoot: { flex: 1 },
+  compareBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.35)', ...(Platform.OS === 'web' ? { backdropFilter: 'blur(1px)' } as ViewStyle : {}) },
+  compareSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '89%', borderTopLeftRadius: SPACING.xl, borderTopRightRadius: SPACING.xl, backgroundColor: COLORS.bgMain, overflow: 'hidden', ...Platform.select({ web: { boxShadow: '0px -8px 12px rgba(0,0,0,0.12)' }, default: { shadowColor: '#000000', shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 11 } }) },
+  compareHandleArea: { height: 38, alignItems: 'center', justifyContent: 'center' },
+  compareHead: { paddingHorizontal: SPACING.xl, paddingBottom: 17, borderBottomWidth: 1, borderBottomColor: COLORS.borderMuted, gap: SPACING.xs },
   handle: { width: 48, height: 6, marginBottom: SPACING.lg, alignSelf: 'center', borderRadius: RADII.full, backgroundColor: COLORS.borderLight },
-  compareRows: { padding: SPACING.xl, gap: SPACING.sm },
-  compareCard: { height: 95, borderRadius: 0, borderWidth: 1, borderColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
-  compareImage: { width: 40, height: 40 },
+  compareTitle: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
+  compareBody: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 20 },
+  compareRows: { flex: 1 },
+  compareRowsContent: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.lg, paddingBottom: 96, gap: SPACING.sm },
+  compareCard: { height: 134, borderWidth: 1, borderColor: '#E0E8E8', backgroundColor: COLORS.bgWhite, position: 'relative', ...SHADOWS.cardSoft },
+  compareLastCard: { height: 100 },
+  compareImage: { position: 'absolute', top: 21, left: 15, width: 38, height: 38, borderRadius: RADII.md, backgroundColor: '#E3EDED' },
+  compareName: { position: 'absolute', top: 23, left: 67, width: 118, height: 12, borderRadius: RADII.md, backgroundColor: '#E3EDED' },
+  comparePrice: { position: 'absolute', top: 23, right: 15, width: 54, height: 16, borderRadius: RADII.md, backgroundColor: '#E3EDED' },
+  compareFallback: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 80, paddingTop: 15, paddingHorizontal: 19, borderWidth: 1, borderColor: '#E5EDF0', backgroundColor: COLORS.bgWhite },
+  compareFallbackButton: { height: 48, borderRadius: 24, backgroundColor: COLORS.primaryActive, alignItems: 'center', justifyContent: 'center' },
+  compareFallbackText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
   previewFooter: { padding: SPACING.xl, borderTopWidth: 1, borderTopColor: COLORS.borderLight, backgroundColor: COLORS.bgWhite },
   failedCard: { margin: SPACING.xl, marginTop: 95, padding: SPACING.xxl, gap: SPACING.xxl, borderRadius: RADII.promo, backgroundColor: COLORS.bgWhite },
   secondaryAction: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
@@ -264,9 +325,10 @@ const s = StyleSheet.create({
   starChip: { alignSelf: 'flex-start', height: 44, margin: SPACING.xl, paddingHorizontal: SPACING.lg, borderWidth: 1, borderColor: COLORS.borderDark, borderRadius: RADII.full, flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   starChipOn: { borderColor: COLORS.primary, backgroundColor: COLORS.surfaceMint },
   starText: { color: COLORS.textMuted, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
-  toggle: { width: 44, height: 32, margin: SPACING.xl, padding: 4, borderRadius: RADII.full, backgroundColor: COLORS.borderSage, justifyContent: 'center' },
-  toggleOn: { backgroundColor: COLORS.primary },
-  toggleThumb: { width: 24, height: 24, borderRadius: RADII.full, backgroundColor: COLORS.bgWhite },
+  toggle: { width: 44, height: 32, margin: SPACING.xl },
+  toggleTrack: { width: 40, height: 20, marginLeft: 2, marginTop: 6, padding: 2, borderRadius: RADII.full, backgroundColor: '#CBD5E1' },
+  toggleOn: { backgroundColor: COLORS.primaryActive },
+  toggleThumb: { width: 16, height: 16, borderRadius: RADII.full, backgroundColor: COLORS.bgWhite },
   toggleThumbOn: { alignSelf: 'flex-end' },
   range: { padding: SPACING.xl, paddingBottom: SPACING.section, minHeight: 140 },
   rangeTitle: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
@@ -292,24 +354,30 @@ const s = StyleSheet.create({
   resultAmenities: { flexDirection: 'row', gap: SPACING.sm },
   resultHint: { color: COLORS.inkSubtle, fontFamily: TYPOGRAPHY.families.medium, fontSize: 10 },
   sharedCenter: { minHeight: 190, justifyContent: 'center', alignItems: 'center' },
-  buttonPressed: { transform: [{ scale: 0.98 }], opacity: 0.96 },
-  stickyPreview: { minHeight: SIZES.stickyCta, paddingHorizontal: SPACING.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.borderMuted },
-  stickyLabel: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 12 },
-  stickyPrice: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 18 },
-  navPreview: { height: SIZES.bottomNav, borderTopLeftRadius: RADII.xl, borderTopRightRadius: RADII.xl, flexDirection: 'row', backgroundColor: COLORS.bgWhite },
-  navSubtle: { backgroundColor: COLORS.surfaceSage },
+  buttonPressed: { transform: [{ scale: 0.98 }], opacity: 0.94 },
+  stickyPreview: { height: SIZES.stickyCta, paddingHorizontal: SPACING.xl, paddingTop: 16, paddingBottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: COLORS.borderMuted, backgroundColor: COLORS.bgWhite, ...Platform.select({ web: { boxShadow: '0px -4px 6px rgba(0,0,0,0.08)' }, default: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 4 } }) },
+  stickyPriceBlock: { flex: 1, minWidth: 104 },
+  stickyButton: { width: 200, minWidth: 100, flexShrink: 1 },
+  stickyLabel: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 20 },
+  stickyPrice: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, lineHeight: 24 },
+  navPreview: { height: SIZES.bottomNav, paddingVertical: SPACING.sm, borderTopLeftRadius: RADII.xl, borderTopRightRadius: RADII.xl, flexDirection: 'row', backgroundColor: COLORS.bgWhite, ...Platform.select({ web: { boxShadow: '0px -4px 6px rgba(0,0,0,0.04)' }, default: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 4 } }) },
+  navSubtle: { backgroundColor: COLORS.bgWhite },
   navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING.xs },
-  navLabel: { color: COLORS.inkSoft, fontFamily: TYPOGRAPHY.families.medium, fontSize: 9 },
-  navLabelActive: { color: COLORS.primary, fontFamily: TYPOGRAPHY.families.semibold },
+  navLabel: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
+  navLabelActive: { color: COLORS.primary },
+  navLabelProfile: { fontFamily: TYPOGRAPHY.families.bold },
+  navLabelSubtle: { fontFamily: TYPOGRAPHY.families.medium },
   scrim: { flex: 1, backgroundColor: COLORS.overlayBlack + '59', justifyContent: 'flex-start', paddingHorizontal: SPACING.xl },
+  choiceScrim: { backgroundColor: 'rgba(0,0,0,0.16)', justifyContent: 'flex-end', paddingTop: 0, paddingHorizontal: 0, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(5px)' } as ViewStyle : {}) },
   dialogCard: { padding: SPACING.xxl, borderRadius: RADII.promo, backgroundColor: COLORS.bgWhite, alignItems: 'stretch', gap: SPACING.lg },
   dialogTitle: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, textAlign: 'center' },
   dialogBody: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22, textAlign: 'center' },
-  choiceSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingTop: SPACING.xxl, paddingHorizontal: SPACING.xl, borderTopLeftRadius: RADII.promo, borderTopRightRadius: RADII.promo, backgroundColor: COLORS.bgWhite, gap: SPACING.md },
+  choiceSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: RADII.promo, borderTopRightRadius: RADII.promo, backgroundColor: COLORS.bgWhite, ...Platform.select({ web: { boxShadow: '0px -7px 26px rgba(5,41,33,0.08)' }, default: { shadowColor: '#052921', shadowOffset: { width: 0, height: -7 }, shadowOpacity: 0.08, shadowRadius: 26, elevation: 8 } }) },
+  choiceSheetContent: { gap: SPACING.md, paddingTop: SPACING.xxl, paddingHorizontal: SPACING.xl },
   choiceTitle: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
-  choiceRow: { minHeight: SIZES.button, paddingHorizontal: SPACING.lg, borderRadius: RADII.lg, borderWidth: 1, borderColor: COLORS.borderTealSoft, backgroundColor: COLORS.surfacePale, justifyContent: 'center' },
-  choiceText: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14 },
+  choiceRow: { height: SIZES.button, paddingHorizontal: SPACING.lg, borderRadius: 14, borderWidth: 1, borderColor: COLORS.borderTealSoft, backgroundColor: COLORS.surfacePale, justifyContent: 'center' },
+  choiceText: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 20 },
   toastLayer: { position: 'absolute', left: SPACING.xl, right: SPACING.xl },
-  toast: { height: SIZES.button, paddingHorizontal: SPACING.xl, borderRadius: RADII.lg, backgroundColor: COLORS.inkNavy, justifyContent: 'center' },
-  toastText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14 },
+  toast: { height: SIZES.button, paddingHorizontal: SPACING.xl, paddingVertical: 14, borderRadius: RADII.lg, backgroundColor: COLORS.inkNavy, justifyContent: 'flex-start' },
+  toastText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22 },
 });

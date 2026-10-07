@@ -17,7 +17,8 @@ import {
   Tv,
   CheckCircle2,
 } from 'lucide-react-native';
-import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
+import { COLORS, RADII, SPACING, TYPOGRAPHY } from '../../constants/tokens';
+import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
 interface AmenityGridProps {
   amenities: Amenity[];
@@ -39,17 +40,24 @@ const ICON_MAP: Record<string, any> = {
   Tv,
 };
 
+const FIGMA_ICONS: Record<string, { source: number; width: number; height: number }> = {
+  Wifi: { source: require('../../assets/figma/exhaust-review-completion/property-wifi.svg'), width: 24, height: 17 },
+  Wind: { source: require('../../assets/figma/exhaust-review-completion/property-ac.svg'), width: 20, height: 20 },
+  Waves: { source: require('../../assets/figma/exhaust-review-completion/property-pool.svg'), width: 20, height: 18 },
+};
+
 export const AmenityGrid: React.FC<AmenityGridProps> = ({ amenities }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tiện nghi nổi bật</Text>
       <View style={styles.items}>
-        {amenities.map((item) => {
+        {amenities.slice(0, 4).map((item) => {
           const IconComp = ICON_MAP[item.icon] || CheckCircle2;
+          const asset = FIGMA_ICONS[item.icon];
           return (
             <View key={item.id} style={styles.item}>
               <View style={styles.iconCircle}>
-                <IconComp size={24} color={COLORS.primary} />
+                {asset ? <Se121SharedAsset source={asset.source} width={asset.width} height={asset.height} nativeFallback={<IconComp size={24} color={COLORS.primary} />} /> : <IconComp size={24} color={COLORS.primary} />}
               </View>
               <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
             </View>
@@ -61,10 +69,10 @@ export const AmenityGrid: React.FC<AmenityGridProps> = ({ amenities }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { paddingVertical: 24 },
-  title: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, marginBottom: 16 },
-  items: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', gap: 12 },
-  item: { width: '22%', alignItems: 'center', gap: 8 },
+  container: { marginTop: SPACING.section },
+  title: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28, marginBottom: 16 },
+  items: { flexDirection: 'row', gap: 16 },
+  item: { flex: 1, minWidth: 0, alignItems: 'center', gap: 8 },
   iconCircle: { width: 48, height: 48, borderRadius: RADII.full, backgroundColor: COLORS.bgSecondary, alignItems: 'center', justifyContent: 'center' },
-  name: { color: COLORS.inkSoft, fontFamily: TYPOGRAPHY.families.regular, fontSize: 11, textAlign: 'center' },
+  name: { color: '#3E4946', fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, textAlign: 'center' },
 });

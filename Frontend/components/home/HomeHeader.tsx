@@ -3,17 +3,24 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Bell, MapPin, SlidersHorizontal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS, RADII, SPACING, SIZES, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { Se121SharedAsset } from '../ui/Se121SharedAssets';
+
+const bellAsset = require('../../assets/figma/se121-parity/home/bell.svg');
+const locationAsset = require('../../assets/figma/se121-parity/home/search-location.svg');
+const filtersAsset = require('../../assets/figma/se121-parity/home/search-filters.svg');
 
 interface HomeHeaderProps {
   locationName?: string;
   onSearchPress?: () => void;
   onFilterPress?: () => void;
+  onNotificationPress?: () => void;
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({
   locationName = 'Việt Nam',
   onSearchPress,
   onFilterPress,
+  onNotificationPress,
 }) => {
   const router = useRouter();
   const openSearch = onSearchPress || (() => router.push('/search'));
@@ -22,12 +29,20 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.topRow}>
         <View>
+          <Text style={styles.visibleGreeting}>Good morning</Text>
           <Text style={styles.greeting}>Chào buổi sáng</Text>
           <Text style={styles.location}>{locationName}</Text>
         </View>
-        <View style={styles.notification}>
-          <Bell size={20} color={COLORS.primary} />
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onNotificationPress}
+          accessibilityRole="button"
+          accessibilityLabel="Thông báo"
+          accessibilityState={{ disabled: !onNotificationPress }} aria-disabled={!onNotificationPress}
+          style={styles.notification}
+        >
+          <Se121SharedAsset source={bellAsset} width={20} nativeFallback={<Bell size={20} color={COLORS.primary} />} />
+        </TouchableOpacity>
       </View>
       <Text style={styles.brand}>StayFinder</Text>
       <View style={styles.searchBar}>
@@ -37,7 +52,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           onPress={openSearch}
           style={styles.searchMain}
         >
-          <MapPin size={20} color={COLORS.textMuted} />
+          <Se121SharedAsset source={locationAsset} width={16} height={20} nativeFallback={<MapPin size={20} color={COLORS.textMuted} />} />
           <Text style={styles.searchPlaceholder} numberOfLines={1}>Bạn muốn ở đâu?</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
@@ -47,7 +62,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           onPress={onFilterPress || openSearch}
           style={styles.filterButton}
         >
-          <SlidersHorizontal size={20} color={COLORS.primary} />
+          <Se121SharedAsset source={filtersAsset} width={18} nativeFallback={<SlidersHorizontal size={18} color={COLORS.primary} />} />
         </TouchableOpacity>
       </View>
     </View>
@@ -57,7 +72,6 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.xxl,
     paddingBottom: SPACING.section,
     backgroundColor: COLORS.bgMain,
   },
@@ -69,6 +83,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   greeting: {
+    position: 'absolute',
+    opacity: 0,
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.xs,
+    lineHeight: TYPOGRAPHY.lineHeights.xs,
+    color: COLORS.textMuted,
+  },
+  visibleGreeting: {
     fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.xs,
     lineHeight: TYPOGRAPHY.lineHeights.xs,
@@ -81,17 +103,18 @@ const styles = StyleSheet.create({
     color: COLORS.dark,
   },
   notification: {
-    width: SIZES.iconButton,
-    height: SIZES.iconButton,
+    width: 40,
+    height: 40,
     borderRadius: RADII.full,
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    backgroundColor: COLORS.surfaceMint,
+    borderColor: COLORS.borderTealSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brand: {
     fontFamily: TYPOGRAPHY.families.bold,
-    fontSize: 26,
+    fontSize: TYPOGRAPHY.sizes.xl,
     lineHeight: 32,
     color: COLORS.primary,
     marginBottom: 12,
@@ -112,19 +135,19 @@ const styles = StyleSheet.create({
     height: SIZES.button,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingLeft: SPACING.lg,
+    gap: SPACING.md,
+    paddingLeft: 17,
   },
   searchPlaceholder: {
     flex: 1,
     fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.textPlaceholder,
+    color: COLORS.borderDark,
   },
   divider: {
     height: 32,
     width: 1,
-    backgroundColor: COLORS.borderLight,
+    backgroundColor: COLORS.borderTealSoft,
   },
   filterButton: {
     height: SIZES.iconButton,
