@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { Building2, Home, Trees, Castle, Flame } from 'lucide-react-native';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { COLORS, RADII, TYPOGRAPHY, SPACING } from '../../constants/tokens';
+import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
 export interface CategoryItem {
   id: string;
@@ -11,12 +12,18 @@ export interface CategoryItem {
 
 // Categories extracted directly from Figma Node 13:1066 (Hotels, Homestays, Villas, Resorts, Cabins)
 const CATEGORIES_DATA: CategoryItem[] = [
-  { id: 'Hotel', name: 'Khách sạn', iconName: 'Building2' },
+  { id: 'Hotel', name: 'Hotel', iconName: 'Building2' },
   { id: 'Homestay', name: 'Homestay', iconName: 'Home' },
-  { id: 'Villas', name: 'Villa', iconName: 'Castle' },
   { id: 'Resort', name: 'Resort', iconName: 'Trees' },
-  { id: 'Cabins', name: 'Nhà gỗ', iconName: 'Flame' },
+  { id: 'Villas', name: 'Villas', iconName: 'Castle' },
 ];
+
+const CATEGORY_ASSETS: Record<string, { selected: number; unselected: number; width: number; height: number }> = {
+  Building2: { selected: require('../../assets/figma/exhaust-account-completion/category-hotel-on.svg'), unselected: require('../../assets/figma/exhaust-account-completion/category-hotel-off.svg'), width: 13.5, height: 13.5 },
+  Home: { selected: require('../../assets/figma/exhaust-account-completion/category-homestay-on.svg'), unselected: require('../../assets/figma/exhaust-account-completion/category-homestay-off.svg'), width: 15, height: 11.25 },
+  Trees: { selected: require('../../assets/figma/exhaust-account-completion/category-resort-on.svg'), unselected: require('../../assets/figma/exhaust-account-completion/category-resort-off.svg'), width: 15, height: 12 },
+  Castle: { selected: require('../../assets/figma/exhaust-account-completion/category-villa-on.svg'), unselected: require('../../assets/figma/exhaust-account-completion/category-villa-off.svg'), width: 13.5, height: 13.5 },
+};
 
 interface CategoryScrollProps {
   selectedCategory?: string;
@@ -28,7 +35,7 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
   onSelectCategory,
 }) => {
   const renderIcon = (iconName: string, isSelected: boolean) => {
-    const iconColor = isSelected ? '#FFFFFF' : COLORS.textMuted;
+    const iconColor = isSelected ? COLORS.bgWhite : COLORS.primaryActive;
     const iconSize = 18;
 
     switch (iconName) {
@@ -60,12 +67,16 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
               key={item.id}
               activeOpacity={0.8}
               onPress={() => onSelectCategory && onSelectCategory(item.id)}
+              accessibilityRole="radio"
+              accessibilityLabel={item.name}
+              accessibilityState={{ checked: isSelected }} aria-checked={isSelected}
               style={[
                 styles.categoryChip,
                 isSelected ? styles.chipSelected : styles.chipUnselected,
+                item.id === 'Hotel' && styles.hotelChip,
               ]}
             >
-              {renderIcon(item.iconName, isSelected)}
+              {CATEGORY_ASSETS[item.iconName] ? <Se121SharedAsset source={isSelected ? CATEGORY_ASSETS[item.iconName].selected : CATEGORY_ASSETS[item.iconName].unselected} width={CATEGORY_ASSETS[item.iconName].width} height={CATEGORY_ASSETS[item.iconName].height} nativeFallback={renderIcon(item.iconName, isSelected)} /> : renderIcon(item.iconName, isSelected)}
               <Text
                 style={[
                   styles.categoryText,
@@ -84,39 +95,44 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    height: 54,
+    marginBottom: SPACING.section,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    gap: 10,
+    gap: SPACING.lg,
   },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: RADII.xl, // 32px pill
-    gap: 8,
+    paddingHorizontal: SPACING.xl,
+    height: 46,
+    borderRadius: RADII.full,
+    gap: SPACING.sm,
     borderWidth: 1,
+    justifyContent: 'center',
   },
   chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    ...SHADOWS.cardSubtle,
+    backgroundColor: COLORS.primaryActive,
+    borderColor: COLORS.primaryActive,
   },
   chipUnselected: {
     backgroundColor: COLORS.bgWhite,
-    borderColor: COLORS.borderLight,
+    borderColor: COLORS.borderDefault,
+  },
+  hotelChip: {
+    borderWidth: 0,
+    ...Platform.select({ web: { boxShadow: '0px 4px 6px rgba(0,0,0,0.04)' }, default: { shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 } }),
   },
   categoryText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.families.regular,
+    fontSize: TYPOGRAPHY.sizes.md,
+    lineHeight: 24,
   },
   textSelected: {
-    color: '#FFFFFF',
+    color: COLORS.bgWhite,
   },
   textUnselected: {
-    color: COLORS.textSecondary,
+    color: COLORS.primaryActive,
   },
 });

@@ -1,133 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Sparkles, ArrowRight } from 'lucide-react-native';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { COLORS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/tokens';
+import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 
-interface PromoBannerProps {
-  title?: string;
-  subtitle?: string;
-  tagline?: string;
-  onPress?: () => void;
+// Render of the image-only Figma layer 13:1057, without text or gradient.
+const promoImage = require('../../assets/figma/se121-parity/home/promo-photo-13-1057.png');
+
+export function PromoBanner({ onPress }: { onPress?: () => void }) {
+  const { width } = useUserWindowDimensions();
+  const compact = width <= 340;
+  const bannerWidth = width - SPACING.xl * 2;
+  return <TouchableOpacity
+    activeOpacity={0.9}
+    accessibilityRole="button"
+    accessibilityLabel="Special offer: save 20 percent on your first booking"
+    onPress={onPress}
+    style={[styles.container, { width: bannerWidth, height: bannerWidth * 212 / 350 }]}
+  >
+    <Image source={promoImage} resizeMode="cover" style={styles.image} />
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+        <Defs><LinearGradient id="promoShade" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor={COLORS.overlayBlack} stopOpacity={0.72} /><Stop offset="1" stopColor={COLORS.overlayBlack} stopOpacity={0.08} /></LinearGradient></Defs>
+        <Rect width="100%" height="100%" fill="url(#promoShade)" />
+      </Svg>
+      <View style={[styles.copy, compact && styles.compactCopy]}>
+        <Text style={[styles.badge, compact && styles.compactBadge]}>SPECIAL OFFER</Text>
+        <Text style={[styles.title, compact && styles.compactTitle]}>Save 20% on{'\n'}your first booking</Text>
+      </View>
+  </TouchableOpacity>;
 }
 
-export const PromoBanner: React.FC<PromoBannerProps> = ({
-  title = 'Ưu Đãi Đặt Phòng 25%',
-  subtitle = 'Giảm đến 500k cho thành viên lần đầu đặt homestay & villa',
-  tagline = 'ƯU ĐÃI ĐẶC BIỆT',
-  onPress,
-}) => {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={onPress}
-      style={styles.container}
-    >
-      {/* Decorative accent elements */}
-      <View style={styles.decorativeCircle} />
-      <View style={styles.decorativeCircle2} />
-
-      <View style={styles.contentWrapper}>
-        <View style={styles.tagBadge}>
-          <Sparkles size={12} color={COLORS.primarySoft} />
-          <Text style={styles.tagText}>{tagline}</Text>
-        </View>
-
-        <Text style={styles.titleText}>{title}</Text>
-        <Text style={styles.subtitleText}>{subtitle}</Text>
-
-        <View style={styles.ctaRow}>
-          <Text style={styles.ctaText}>Khám phá ngay</Text>
-          <View style={styles.ctaIconBg}>
-            <ArrowRight size={14} color={COLORS.primary} />
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: RADII.lg, // 16px
-    backgroundColor: COLORS.primary,
-    padding: 20,
-    overflow: 'hidden',
-    position: 'relative',
-    ...SHADOWS.cardSoft,
-  },
-  decorativeCircle: {
-    position: 'absolute',
-    right: -20,
-    top: -20,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(152, 243, 227, 0.15)', // primaryLight alpha
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    right: 40,
-    bottom: -40,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  contentWrapper: {
-    zIndex: 1,
-  },
-  tagBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0, 32, 28, 0.4)', // primaryContainer translucent
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADII.full,
-    marginBottom: 10,
-  },
-  tagText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '700',
-    color: COLORS.primarySoft,
-    letterSpacing: 0.5,
-  },
-  titleText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.lg, // 20px
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  subtitleText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.sm, // 13px
-    color: COLORS.primarySoft,
-    lineHeight: TYPOGRAPHY.lineHeights.sm,
-    marginBottom: 16,
-    maxWidth: '85%',
-  },
-  ctaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  ctaText: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  ctaIconBg: {
-    width: 24,
-    height: 24,
-    borderRadius: RADII.full,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  container: { marginHorizontal: SPACING.xl, marginBottom: SPACING.section, overflow: 'hidden', ...SHADOWS.cardSoft },
+  image: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 },
+  copy: { flex: 1, alignItems: 'flex-start', padding: SPACING.xxl },
+  compactCopy: { padding: 16 },
+  badge: { alignSelf: 'flex-start', backgroundColor: COLORS.accentOrange, color: COLORS.bgWhite, overflow: 'hidden', paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: 9999, fontFamily: TYPOGRAPHY.families.medium, fontSize: TYPOGRAPHY.sizes.xs, letterSpacing: 0.6, lineHeight: TYPOGRAPHY.lineHeights.xs, marginBottom: SPACING.md },
+  compactBadge: { marginBottom: 8 },
+  title: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.bold, fontSize: TYPOGRAPHY.sizes.xxl, letterSpacing: -0.64, lineHeight: TYPOGRAPHY.lineHeights.xxl },
+  compactTitle: { fontSize: 26, lineHeight: 32, letterSpacing: -0.52 },
 });
