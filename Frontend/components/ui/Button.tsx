@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
+import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { COLORS, RADII, SIZES, TYPOGRAPHY } from '../../constants/tokens';
 
 interface ButtonProps {
   title: string;
@@ -68,28 +68,31 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }} aria-disabled={disabled || loading} aria-busy={loading}
       onPress={onPress}
       disabled={disabled || loading}
-      style={[
+      style={({ pressed }) => [
         styles.base,
         getVariantStyle(),
         getSizeStyle(),
         fullWidth && styles.fullWidth,
         disabled && styles.disabled,
         style,
+        pressed && !disabled && !loading && (variant === 'primary' ? styles.primaryPressed : styles.pressed),
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : COLORS.primary} />
+        <ActivityIndicator color={variant === 'primary' ? COLORS.bgWhite : COLORS.primary} />
       ) : (
         <>
-          {icon}
           <Text style={[styles.textBase, getTextStyle(), textStyle]}>{title}</Text>
+          {icon}
         </>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -107,6 +110,8 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
+  primaryPressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
+  pressed: { opacity: 0.8 },
 
   // Sizes
   sm: {
@@ -122,12 +127,12 @@ const styles = StyleSheet.create({
   lg: {
     paddingVertical: 14,
     paddingHorizontal: 24,
-    height: 52,
+    height: SIZES.button,
   },
 
   // Variants
   primary: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryActive,
   },
   secondary: {
     backgroundColor: COLORS.bgSecondary,
@@ -143,12 +148,12 @@ const styles = StyleSheet.create({
 
   // Text
   textBase: {
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.families.semibold,
     fontSize: TYPOGRAPHY.sizes.base,
-    fontWeight: '600',
+    lineHeight: TYPOGRAPHY.lineHeights.base,
   },
   textPrimary: {
-    color: '#FFFFFF',
+    color: COLORS.bgWhite,
   },
   textSecondary: {
     color: COLORS.dark,

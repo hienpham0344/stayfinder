@@ -37,10 +37,29 @@ export const COLORS = {
   warning: '#F59E0B',
   accentRed: '#EF6466',
   accentOrange: '#FD6E58',
+  inkNavy: '#1F2936',
+  inkSoft: '#45544F',
+  inkSubtle: '#61736E',
+  borderTealSoft: '#DFEBE5',
+  surfaceMint: '#F3FAF8',
+  surfacePale: '#F4FAF8',
+  surfaceSage: '#F5FAF7',
+  borderSage: '#BDC9C4',
+  actionTeal: '#007D70',
+  validation: '#CC2933',
+  starSurface: '#FFFBED',
+  starGold: '#EDC954',
+  overlayBlack: '#000000',
 } as const;
 
 export const TYPOGRAPHY = {
-  fontFamily: 'Plus Jakarta Sans',
+  fontFamily: 'PlusJakartaSans-Regular',
+  families: {
+    regular: 'PlusJakartaSans-Regular',
+    medium: 'PlusJakartaSans-Medium',
+    semibold: 'PlusJakartaSans-SemiBold',
+    bold: 'PlusJakartaSans-Bold',
+  },
   monoFamily: 'Liberation Mono',
   mono: {
     fontSize: 16,
@@ -72,11 +91,15 @@ export const TYPOGRAPHY = {
   },
 } as const;
 
+export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, section: 32 } as const;
+export const SIZES = { button: 52, appBar: 56, bottomNav: 72, stickyCta: 84, icon: 24, iconButton: 48 } as const;
+
 export const RADII = {
   xs: 2,
   sm: 5,
   md: 6,
   lg: 16,
+  promo: 24,
   xl: 32,
   xxl: 48,
   full: 9999,
