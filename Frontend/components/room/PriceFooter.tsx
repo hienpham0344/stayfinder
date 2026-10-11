@@ -1,36 +1,60 @@
+import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, RADII, SHADOWS, SIZES, TYPOGRAPHY } from '../../constants/tokens';
 
 interface PriceFooterProps {
   stayId: string;
   pricePerNight: number;
+  priceLabel?: string;
+  onBookNow?: () => void;
 }
 
-export const PriceFooter: React.FC<PriceFooterProps> = ({ stayId, pricePerNight }) => {
+export const PriceFooter: React.FC<PriceFooterProps> = ({ stayId, pricePerNight, priceLabel, onBookNow }) => {
+  const insets = useSafeAreaInsets();
+  const compact = useUserWindowDimensions().width <= 340;
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price);
   };
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-5 py-3.5 flex-row items-center justify-between shadow-lg">
-      <View>
-        <View className="flex-row items-baseline">
-          <Text className="text-lg font-extrabold text-primary">
-            {formatPrice(pricePerNight)} đ
+    <View style={[styles.container, { height: 104 + insets.bottom, paddingBottom: 16 + insets.bottom }]}>
+      <View style={styles.priceBlock}>
+        <Text style={styles.eyebrow}>TOTAL PRICE</Text>
+        <View style={styles.priceRow}>
+          <Text style={[styles.price, compact && styles.compactPrice]}>
+            {priceLabel ?? `${formatPrice(pricePerNight)} đ`}
           </Text>
-          <Text className="text-xs text-gray-500 ml-1">/ đêm</Text>
+          <Text style={[styles.night, compact && styles.compactNight]}>/night</Text>
         </View>
-        <Text className="text-xs text-gray-400">Đã bao gồm thuế & phí</Text>
       </View>
 
-      <TouchableOpacity
-        onPress={() => router.push(`/booking/checkout?id=${stayId}` as any)}
-        activeOpacity={0.85}
-        className="bg-primary px-7 py-3 rounded-xl shadow-md"
+      <Pressable
+        onPress={onBookNow ?? (() => router.push(`/booking/checkout?id=${stayId}` as any))}
+        style={({ pressed }) => [styles.button, compact && styles.compactButton, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Book Now"
       >
-        <Text className="text-white font-bold text-base">Đặt phòng ngay</Text>
-      </TouchableOpacity>
+        <Text style={[styles.buttonText, compact && styles.compactButtonText]}>Book Now</Text>
+      </Pressable>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.bgMain, borderTopLeftRadius: RADII.xl, borderTopRightRadius: RADII.xl, paddingTop: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', ...SHADOWS.stickyFooter },
+  priceBlock: { flex: 1, minWidth: 0 },
+  eyebrow: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, letterSpacing: 0.3 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  price: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, lineHeight: 24 },
+  compactPrice: { fontSize: 16 },
+  night: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 20 },
+  compactNight: { fontSize: 11 },
+  button: { width: 133.69, height: SIZES.button, paddingHorizontal: 16, borderRadius: RADII.full, backgroundColor: COLORS.primaryActive, alignItems: 'center', justifyContent: 'center' },
+  compactButton: { width: 128 },
+  buttonText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
+  compactButtonText: { fontSize: 12 },
+  pressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
+});
