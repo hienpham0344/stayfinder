@@ -20,6 +20,18 @@ async function fixture(fetch) {
   return { session, client: new ApiClient({ baseUrl: 'https://api.example/api', platform: 'native', session, fetch }), refreshes: () => refreshes };
 }
 
+test('default browser fetch is invoked with its global receiver', async () => {
+ const original = globalThis.fetch;
+ try {
+  globalThis.fetch = function () {
+   assert.equal(this, globalThis);
+   return Promise.resolve(envelope({ ok: true }));
+  };
+  const client = new ApiClient({ baseUrl: 'https://api.example', platform: 'web' });
+  assert.deepEqual(await client.request('/api/catalog/filters', { auth: false }), { ok: true });
+ } finally { globalThis.fetch = original; }
+});
+
 test('concurrent 401s share one refresh and unwrap successful results', async () => {
   const f = await fixture(async (url, init) => init.headers.Authorization === 'Bearer new' ? envelope({ path: url }) : failure('UNAUTHORIZED', 401));
   const result = await Promise.all([f.client.request('/users/me'), f.client.request('/favorites')]);

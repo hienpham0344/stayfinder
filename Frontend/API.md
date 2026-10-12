@@ -8,4 +8,8 @@ The shared API client unwraps ApiResponse, bounds fetch and response-body readin
 
 SessionCoordinator keeps access tokens in memory, serializes session mutations and native credential writes, and shares one refresh among concurrent requests. Native refresh credentials use expo-secure-store. A SecureStore device/runtime check and live two-user API exercise remain pending until the backend database is restored and reviewed migrations are deployed.
 
-Node checks: node --test services/apiClient.test.mjs services/sessionCoordinator.test.mjs services/authValidation.test.mjs and the existing utility tests. Typecheck: node node_modules/typescript/bin/tsc --noEmit. Web export: node node_modules/expo/bin/cli export --platform web.
+CatalogProvider shares the applied date/occupancy/filter selection; FavoritesProvider owns optimistic saved state per account and reconciles failed or uncertain writes. Public catalog reads omit auth when signed out; authenticated reads retain the bearer so owned favorite flags are correct. All service paths are relative to the configured /api base. Live routes never substitute fixture identities or dates. UI Gallery retains explicit presentation fixtures.
+
+Checkout/confirmation currently require the next transaction milestone; a local timer never creates a confirmed booking. Real selected accommodation/room UUIDs, dates, quantity, adults and children reach guest information.
+
+Node checks: node --test services/*.test.mjs state/*.test.mjs utils/*.test.mjs. Typecheck: node node_modules/typescript/bin/tsc --noEmit. Web export: node node_modules/expo/bin/cli export --platform web.

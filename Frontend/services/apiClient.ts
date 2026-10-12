@@ -20,7 +20,7 @@ export class ApiClient {
   private readonly options: Options;
   private readonly fetcher: typeof fetch;
   private session?: SessionBridge;
-  constructor(options: Options) { this.options = options; this.fetcher = options.fetch ?? globalThis.fetch; this.session = options.session; }
+  constructor(options: Options) { this.options = options; this.fetcher = options.fetch ?? globalThis.fetch.bind(globalThis); this.session = options.session; }
   setSession(session: SessionBridge): void { this.session = session; }
 
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {

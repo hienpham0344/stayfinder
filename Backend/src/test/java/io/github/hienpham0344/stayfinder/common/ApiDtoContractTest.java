@@ -40,6 +40,15 @@ class ApiDtoContractTest {
     @Test void rejectsAmountsNotExactlyRepresentableByJavascript() {
         assertThrows(IllegalArgumentException.class, () -> money(9007199254740992L, "USD"));
     }
+    @Test void favoriteCardUsesTheApprovedAccommodationKey() {
+        var stay=new io.github.hienpham0344.stayfinder.accommodation.dto.StayCardResponse(
+            java.util.UUID.randomUUID(),"Stay",null,null,null,null,null,null,
+            io.github.hienpham0344.stayfinder.common.dto.MoneyUsd.cents(29900),null,null,0,true);
+        var dto=new io.github.hienpham0344.stayfinder.favorite.dto.FavoriteCardResponse(java.util.UUID.randomUUID(),stay);
+        var json=mapper.readTree(mapper.writeValueAsString(dto));
+        assertEquals(stay.id().toString(),json.get("accommodation").get("id").asString());
+        assertNull(json.get("stay"));
+    }
     @Test void exposesStableItemsPaginationInsteadOfFrameworkEntityPage() {
         Object page = assertDoesNotThrow(() -> Class.forName(
                 "io.github.hienpham0344.stayfinder.common.response.PageResponse")

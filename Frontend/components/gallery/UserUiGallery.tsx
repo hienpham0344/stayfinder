@@ -8,7 +8,7 @@ import { Button } from '../ui/Button';
 import { TopAppBar } from '../ui/TopAppBar';
 import { Se121SharedAsset, componentNavigationAsset } from '../ui/Se121SharedAssets';
 import { ImageCarousel } from '../room/ImageCarousel';
-import { ComparePricesModal } from '../room/ComparePricesModal';
+import { GalleryComparePricesModal as ComparePricesModal } from '../room/GalleryComparePricesModal';
 import { SearchResultCard } from '../search/SearchResultCard';
 import { MOCK_STAYS } from '../../constants/mockStays';
 import { COLORS, RADII, SHADOWS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';

@@ -61,6 +61,6 @@ class FavoriteServiceTest {
         service.add(stay);authenticate(UUID.randomUUID());
         assertEquals(0,service.list(PageRequest.of(0,20)).items().size());service.remove(stay);assertEquals(1,rows.size());
         authenticate(actor);var mine=service.list(PageRequest.of(0,20));assertEquals(1,mine.items().size());
-        assertEquals(stay,mine.items().getFirst().stay().id());service.remove(stay);service.remove(stay);assertTrue(rows.isEmpty());
+        assertEquals(stay,mine.items().getFirst().accommodation().id());service.remove(stay);service.remove(stay);assertTrue(rows.isEmpty());
     }
 }
