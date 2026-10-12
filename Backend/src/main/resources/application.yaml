@@ -2,6 +2,10 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
   application:
     name: stayfinder
 
@@ -23,7 +27,8 @@ spring:
   security:
     jwt:
       secret-base64: ${JWT_SECRET_BASE64:}
-      expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+    auth:
+      localhost-insecure-cookie: ${AUTH_LOCALHOST_INSECURE_COOKIE:false}
 
   web:
     cors:
