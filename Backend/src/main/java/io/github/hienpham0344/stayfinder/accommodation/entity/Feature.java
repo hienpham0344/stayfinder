@@ -15,4 +15,5 @@ import java.util.UUID;
 public class Feature {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private String name;
+    @jakarta.persistence.Column(name="icon_key") private String iconKey;
 }

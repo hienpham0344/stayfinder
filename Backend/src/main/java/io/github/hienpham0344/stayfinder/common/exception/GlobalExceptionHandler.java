@@ -23,7 +23,11 @@ public class GlobalExceptionHandler {
         return toResponse(ErrorCode.VALIDATION_ERROR);
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class,
+            org.springframework.validation.BindException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class,
+            org.springframework.web.method.annotation.HandlerMethodValidationException.class,
+            jakarta.validation.ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleMalformedRequest(Exception exception) {
         return toResponse(ErrorCode.VALIDATION_ERROR);
     }

@@ -26,5 +26,13 @@ public class Room {
     private BigDecimal price;
     private String description;
     @Convert(converter = RoomStatusConverter.class) private RoomStatus status;
+    @Column(name="nightly_price_cents") private Long nightlyPriceCents;
+    @Column(name="max_guests_per_room") private Integer maxGuestsPerRoom;
+    @Column(name="stock_total") private Integer stockTotal;
+    @Column(name="size_sqm") private BigDecimal sizeSqm;
+    @Column(name="bed_type") private String bedType;
+    @Column(name="includes_breakfast") private Boolean includesBreakfast;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(name="image_urls") private String[] imageUrls;
     @Column(name = "created_at") private Instant createdAt;
 }
