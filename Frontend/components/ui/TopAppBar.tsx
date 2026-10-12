@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Se121SharedAsset } from './Se121SharedAssets';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, TYPOGRAPHY } from '../../constants/tokens';
+import { COLORS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
 interface TopAppBarProps {
   title: string;
@@ -30,8 +31,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   return (
     <View style={styles.container}>
       {showBack ? (
-        <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.dark} />
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Quay lại">
+          <Se121SharedAsset source={require('../../assets/figma/shared/135-9-imgContainer.svg')} width={16} nativeFallback={<Ionicons name="arrow-back" size={16} color={COLORS.primary} />} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />
@@ -52,34 +53,33 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
+    height: SIZES.appBar,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.bgWhite,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.bgMain,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: SIZES.iconButton,
+    height: SIZES.iconButton,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontWeight: '700',
-    color: COLORS.dark,
+    fontFamily: TYPOGRAPHY.families.bold,
+    fontSize: TYPOGRAPHY.sizes.xl,
+    lineHeight: TYPOGRAPHY.lineHeights.xl,
+    letterSpacing: -0.24,
+    color: COLORS.primary,
     textAlign: 'center',
     flex: 1,
   },
   rightAction: {
-    width: 40,
+    width: SIZES.iconButton,
     alignItems: 'flex-end',
   },
   placeholder: {
-    width: 40,
+    width: SIZES.iconButton,
   },
 });

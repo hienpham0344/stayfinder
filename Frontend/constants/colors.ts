@@ -1,16 +1,19 @@
+import { COLORS as SE121_COLORS } from './tokens';
+
+// Compatibility palette for older USER components that still import this file.
 export const COLORS = {
-  primary: '#FF385C',
-  primaryDark: '#E00B41',
-  primaryLight: '#FF6682',
-  secondary: '#008489',
-  secondaryDark: '#00666B',
-  dark: '#222222',
-  gray: '#717171',
-  lightGray: '#F7F7F7',
-  border: '#DDDDDD',
-  white: '#FFFFFF',
-  star: '#FFB800',
-  success: '#128807',
-  warning: '#E3A008',
-  danger: '#D32F2F',
+  primary: SE121_COLORS.primary,
+  primaryDark: SE121_COLORS.primaryContainer,
+  primaryLight: SE121_COLORS.primaryLight,
+  secondary: SE121_COLORS.actionTeal,
+  secondaryDark: SE121_COLORS.primary,
+  dark: SE121_COLORS.dark,
+  gray: SE121_COLORS.textMuted,
+  lightGray: SE121_COLORS.bgMain,
+  border: SE121_COLORS.borderLight,
+  white: SE121_COLORS.bgWhite,
+  star: SE121_COLORS.starGold,
+  success: SE121_COLORS.actionTeal,
+  warning: SE121_COLORS.warning,
+  danger: SE121_COLORS.validation,
 };
