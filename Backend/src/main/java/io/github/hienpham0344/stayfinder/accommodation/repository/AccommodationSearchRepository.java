@@ -43,6 +43,18 @@ public class AccommodationSearchRepository {
         int pages=Math.toIntExact((total-1)/page.getPageSize()+1);
         return new PageResponse<>(items,page.getPageNumber(),page.getPageSize(),total,pages);
     }
+    public PageResponse<io.github.hienpham0344.stayfinder.favorite.dto.FavoriteCardResponse> favorites(Pageable page,UUID viewer,Instant now) {
+        if(viewer==null)throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        if(page.getPageNumber()<0||page.getPageSize()<1||page.getPageSize()>100)throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        AccommodationSearchRequest request=new AccommodationSearchRequest();request.validateAndNormalize();
+        var parameters=parameters(request,viewer,now).addValue("limit",page.getPageSize()).addValue("offset",page.getOffset());
+        String from=from(request)+" and exists(select 1 from favorites saved where saved.accommodation_id=a.id and saved.user_id=cast(:viewerId as uuid)) ";
+        Long count=jdbc.queryForObject("select count(*) "+from,parameters,Long.class);long total=count==null?0:count;
+        String columns=COLUMNS.replace("select a.id,", "select (select saved.id from favorites saved where saved.accommodation_id=a.id and saved.user_id=cast(:viewerId as uuid) order by saved.id limit 1) as favorite_id,a.id,");
+        var items=jdbc.query(columns+from+" order by a.name,a.id limit :limit offset :offset",parameters,(row,index)->
+            new io.github.hienpham0344.stayfinder.favorite.dto.FavoriteCardResponse(row.getObject("favorite_id",UUID.class),card(row,index)));
+        return new PageResponse<>(items,page.getPageNumber(),page.getPageSize(),total,total==0?0:Math.toIntExact((total-1)/page.getPageSize()+1));
+    }
     public Optional<StayCardResponse> findCard(UUID id,UUID viewer,Instant now) {
         AccommodationSearchRequest request=new AccommodationSearchRequest();request.validateAndNormalize();
         var parameters=parameters(request,viewer,now).addValue("selectedId",id);

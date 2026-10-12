@@ -94,6 +94,15 @@ class AuthHttpBoundaryTest {
             .andExpect(status().isBadRequest());
         verify(auth,never()).register(any());
     }
+    @Test void profilePatchRejectsRolePointsAndAuthEmailWrites() throws Exception {
+        String secret=Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
+        String token=new JwtTokenProvider(secret,Clock.systemUTC()).issue(id,sid);
+        for(String body:List.of("{\"role\":\"admin\"}","{\"loyaltyPoints\":9999}","{\"email\":\"other@example.com\"}")) {
+            mvc.perform(patch("/api/users/me").header("Authorization","Bearer "+token).contentType("application/json").content(body))
+                .andExpect(status().isBadRequest());
+        }
+        verify(userService,never()).updateProfile(any());
+    }
     @Test void corsAllowsOnlyConfiguredOriginWithSessionHeaders() throws Exception {
         mvc.perform(options("/api/auth/refresh").header("Origin","https://demo.example")
             .header("Access-Control-Request-Method","POST").header("Access-Control-Request-Headers","X-Client-Platform,Idempotency-Key"))

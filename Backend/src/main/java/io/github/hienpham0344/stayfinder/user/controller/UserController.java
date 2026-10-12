@@ -17,6 +17,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    @org.springframework.web.bind.annotation.PatchMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> update(@jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody
+            io.github.hienpham0344.stayfinder.user.dto.UserProfilePatch request) {
+        return ResponseEntity.ok(ApiResponse.success(userService.updateProfile(request)));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> currentUser() {
         return ResponseEntity.ok(ApiResponse.success(userService.getCurrentUser()));
