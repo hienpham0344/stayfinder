@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 class RewardReservationTest {
  private final UUID userId=UUID.randomUUID(),bookingId=UUID.randomUUID(),quoteId=UUID.randomUUID(),claimId=UUID.randomUUID();
+ private final io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events=mock(io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher.class);
  private final UserRepository users=mock(UserRepository.class);
  private final RewardWalletRepository wallets=mock(RewardWalletRepository.class);
  private final RewardClaimRepository claims=mock(RewardClaimRepository.class);
@@ -34,7 +35,7 @@ class RewardReservationTest {
   when(reservations.save(any())).thenAnswer(i->{RewardReservation r=i.getArgument(0);saved.put(r.getBookingId(),r);return r;});
   when(ledger.findByUserIdAndSourceKey(any(),any())).thenAnswer(i->Optional.ofNullable(entries.get(i.getArgument(1))));
   when(ledger.save(any())).thenAnswer(i->{RewardLedgerEntry e=i.getArgument(0);entries.put(e.getSourceKey(),e);return e;});
-  service=new RewardReservationService(new RewardWalletLocks(users,wallets),wallets,claims,reservations,ledger,clock);
+  service=new RewardReservationService(new RewardWalletLocks(users,wallets),wallets,claims,reservations,ledger,clock,events);
  }
  @Test void pointsReserveConsumeAndRefundOnceWithoutOverdrawing(){
   var preview=service.preview(userId,10000,null,200,clock.instant());
@@ -63,6 +64,7 @@ class RewardReservationTest {
  @Test void earnedPointsAreOncePerCompletedBookingAndLifetimeTierDoesNotDependOnSpending(){
   service.earnOnce(userId,bookingId,103299);service.earnOnce(userId,bookingId,103299);
   assertEquals(2032,wallet.getAvailablePoints());assertEquals(1032,wallet.getLifetimeEarnedPoints());assertEquals(1,entries.size());
+  verify(events,times(1)).publish("reward_earned",userId,bookingId,clock.instant());
   assertThrows(BusinessException.class,()->service.earnOnce(userId,bookingId,104000));assertEquals(2032,wallet.getAvailablePoints());
  }
  @Test void insufficientReserveDoesNotCreateAnOrphanBenefit(){

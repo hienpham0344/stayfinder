@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 class RewardClaimServiceTest {
+ private final io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events=mock(io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher.class);
  private final UserRepository users=mock(UserRepository.class);
  private final RewardWalletRepository wallets=mock(RewardWalletRepository.class);
  private final RewardOfferRepository offers=mock(RewardOfferRepository.class);
@@ -42,7 +43,7 @@ class RewardClaimServiceTest {
   when(keys.findByUserIdAndOperationAndRequestKey(any(),any(),any())).thenAnswer(i->Optional.ofNullable(savedKeys.get(i.getArgument(2))));
   when(keys.save(any())).thenAnswer(i->{IdempotencyRecord k=i.getArgument(0);savedKeys.put(k.getRequestKey(),k);return k;});
   var idempotency=new IdempotencyService(keys,users,mock(IdempotencyLockRepository.class),JsonMapper.builder().findAndAddModules().build(),clock);
-  service=new RewardServiceImpl(new RewardWalletLocks(users,wallets),wallets,offers,claims,ledger,idempotency,new AuditService(audit,clock),clock);
+  service=new RewardServiceImpl(new RewardWalletLocks(users,wallets),wallets,offers,claims,ledger,idempotency,new AuditService(audit,clock),clock,events);
  }
  @Test void claimDebitsOncePersistsOwnedTermsAndExpiresInThirtyDays(){
   var first=service.claim(owner,offerId,"claim-1");var retry=service.claim(owner,offerId,"claim-1");
@@ -50,6 +51,7 @@ class RewardClaimServiceTest {
   assertEquals(owner,savedClaims.getFirst().getUserId());assertEquals(now.plus(Duration.ofDays(30)),first.expiresAt());
   assertEquals(5,first.offer().terms().discountPercent());assertEquals(-1000,savedLedger.getFirst().getDeltaPoints());
   verify(audit,times(1)).save(any());
+  verify(events,times(1)).publish("reward_claimed",owner,first.id(),now);
  }
  @Test void reservedPointsCannotBeSpentByAClaimAndFailedClaimDoesNotCreateEntitlement(){
   wallet.setAvailablePoints(900);wallet.setReservedPoints(1000);

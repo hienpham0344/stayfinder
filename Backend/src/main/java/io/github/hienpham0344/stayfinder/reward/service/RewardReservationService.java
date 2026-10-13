@@ -10,9 +10,9 @@ import java.util.*;
 @Transactional(propagation=Propagation.MANDATORY)
 public class RewardReservationService implements RewardReservationOperations {
  private final RewardWalletLocks locks;private final RewardWalletRepository wallets;private final RewardClaimRepository claims;
- private final RewardReservationRepository reservations;private final RewardLedgerEntryRepository ledger;private final Clock clock;
+ private final RewardReservationRepository reservations;private final RewardLedgerEntryRepository ledger;private final Clock clock;private final io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events;
  public RewardReservationService(RewardWalletLocks locks,RewardWalletRepository wallets,RewardClaimRepository claims,RewardReservationRepository reservations,
-  RewardLedgerEntryRepository ledger,Clock clock){this.locks=locks;this.wallets=wallets;this.claims=claims;this.reservations=reservations;this.ledger=ledger;this.clock=clock;}
+  RewardLedgerEntryRepository ledger,Clock clock,io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events){this.locks=locks;this.wallets=wallets;this.claims=claims;this.reservations=reservations;this.ledger=ledger;this.clock=clock;this.events=events;}
  @Override @Transactional(readOnly=true)
  public RewardPolicy.DiscountPreview preview(UUID userId,long subtotal,UUID claimId,int points,Instant now){
   var wallet=wallets.findById(userId).orElseGet(RewardWallet::new);RewardWalletLocks.validate(wallet);
@@ -86,6 +86,7 @@ public class RewardReservationService implements RewardReservationOperations {
   long available=RewardPolicy.addPoints(wallet.getAvailablePoints(),points),lifetime=RewardPolicy.addPoints(wallet.getLifetimeEarnedPoints(),points);
   wallet.setAvailablePoints(available);wallet.setLifetimeEarnedPoints(lifetime);
   append(wallet,"earned",points,bookingId,"earn:"+bookingId,"Points earned for completed stay",netCents);
+  events.publish("reward_earned",userId,bookingId,clock.instant());
  }
  private RewardClaim ownedClaim(UUID id,UUID owner){
   return claims.lockById(id).filter(c->owner.equals(c.getUserId())).orElseThrow(()->new BusinessException(ErrorCode.REWARD_INELIGIBLE));

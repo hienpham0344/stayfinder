@@ -57,6 +57,41 @@ CREATE TABLE booking_quotes (
     OR (discount_source='voucher' AND reserved_points=0 AND voucher_id IS NOT NULL AND reward_points=0))
 );
 CREATE INDEX ix_quote_owner_created ON booking_quotes(user_id,created_at DESC,id);
+ALTER TABLE booking_quotes ADD CONSTRAINT uq_quote_id_owner UNIQUE(id,user_id);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS quote_id uuid UNIQUE;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_code varchar(40) UNIQUE;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS total_price_cents bigint CHECK(total_price_cents BETWEEN 0 AND 9007199254740991);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_method varchar(32) CHECK(payment_method IN ('bank_transfer','pay_at_property'));
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_full_name varchar(100);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email varchar(254);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone varchar(16);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_special_request varchar(2000);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason varchar(500);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at timestamptz;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status varchar(32) CHECK(payment_status IN ('pending','success','failed','refunded'));
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_status varchar(32) CHECK(refund_status IN ('none','requested','confirmed'));
+ALTER TABLE bookings ADD CONSTRAINT booking_owned_quote_fk FOREIGN KEY(quote_id,user_id) REFERENCES booking_quotes(id,user_id);
+-- Old rows remain unclassified; new quote-based rows must carry complete private data and supported ledger states.
+ALTER TABLE bookings ADD CONSTRAINT ck_quote_booking_contract CHECK(quote_id IS NULL OR (
+ user_id IS NOT NULL AND confirmation_code IS NOT NULL AND total_price_cents IS NOT NULL AND payment_method IS NOT NULL
+ AND guest_full_name IS NOT NULL AND length(btrim(guest_full_name)) BETWEEN 1 AND 100
+ AND guest_email IS NOT NULL AND guest_phone ~ '^[+]?[0-9]{9,15}$'
+ AND payment_status IS NOT NULL AND refund_status IS NOT NULL AND created_at IS NOT NULL
+ AND (payment_method<>'bank_transfer' OR hold_expires_at IS NOT NULL)
+ AND (payment_status NOT IN ('success','refunded') OR paid_at IS NOT NULL)));
+CREATE INDEX ix_booking_owner_created ON bookings(user_id,created_at DESC,id);
+CREATE INDEX ix_booking_pending_deadline ON bookings(hold_expires_at,id) WHERE status='pending';
+CREATE TABLE outbox_events (
+ id uuid PRIMARY KEY,event_key varchar(192) NOT NULL UNIQUE,event_type varchar(64) NOT NULL,
+ user_id uuid NOT NULL REFERENCES users(id),source_id uuid NOT NULL,occurred_at timestamptz NOT NULL,materialized_at timestamptz,
+ CHECK(event_type IN ('booking_created','booking_cancelled','booking_expired','booking_paid','booking_completed',
+  'refund_requested','refund_confirmed','reward_claimed','reward_earned'))
+);
+CREATE INDEX ix_outbox_unmaterialized ON outbox_events(occurred_at,id) WHERE materialized_at IS NULL;
+-- Event rows carry fixed type/source only, never guest/email/phone/private request payload.
+ALTER TABLE outbox_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE outbox_events FROM PUBLIC;
 ALTER TABLE reward_reservations ADD CONSTRAINT reward_reservations_quote_fk FOREIGN KEY(quote_id) REFERENCES booking_quotes(id);
 
 DO $access$
@@ -66,7 +101,7 @@ BEGIN
  REVOKE ALL ON TABLE booking_quotes FROM PUBLIC;
  FOREACH role_name IN ARRAY ARRAY['anon','authenticated'] LOOP
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname=role_name) THEN
-   EXECUTE format('REVOKE ALL ON TABLE %I.booking_quotes FROM %I',current_schema(),role_name);
+   EXECUTE format('REVOKE ALL ON TABLE %I.booking_quotes, %I.outbox_events FROM %I',current_schema(),current_schema(),role_name);
   END IF;
  END LOOP;
 END

@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Entity @Table(name = "booking_details") @Getter @Setter @NoArgsConstructor
 public class BookingDetail {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id private UUID id;
     @Column(name = "booking_id") private UUID bookingId;
     @Column(name = "room_snapshot_id") private UUID roomSnapshotId;
     @Column(name = "accommodation_snapshot_id") private UUID accommodationSnapshotId;

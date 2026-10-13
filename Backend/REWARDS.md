@@ -12,4 +12,4 @@ W01–W05 require the authenticated principal; client owner/balance fields are r
 
 Database mappings/migration 004 are draft and unexecuted. Existing empty loyalty_points_history cannot represent source-keyed held/consumed/restored benefits and is preserved unchanged. Real PostgreSQL concurrency/rollback tests remain G2-gated.
 
-Task 3 must attach the durable outbox publisher to reward claim/earning operations once that port exists; no production notification claim is made yet.
+Task 3 has attached the durable outbox publisher to claim/earning operations in the same source transaction. Tests verify one event on repeated claim/earning requests. Inbox materialization and actual PostgreSQL delivery verification remain pending.

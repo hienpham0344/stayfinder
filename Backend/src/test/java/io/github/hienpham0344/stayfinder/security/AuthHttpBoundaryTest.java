@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -38,6 +38,9 @@ class AuthHttpBoundaryTest {
     @MockitoBean AuthService auth;
     @MockitoBean UserService userService;
     @MockitoBean io.github.hienpham0344.stayfinder.reward.service.RewardService rewards;
+    @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingService bookings;
+    @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingLifecycleService lifecycle;
+    @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingQuoteService quotes;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -58,6 +61,40 @@ class AuthHttpBoundaryTest {
     private String accessToken() {
         String secret=Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
         return new JwtTokenProvider(secret,Clock.systemUTC()).issue(id,sid);
+    }
+    @Test void cancellationIsOwnerScopedAndRejectsClientAssignedState() throws Exception {
+        UUID bid=UUID.randomUUID();
+        mvc.perform(get("/api/bookings/"+bid+"/cancellation-preview")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/bookings/"+bid+"/cancel").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/bookings/"+bid+"/cancel").header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","cancel-1")
+            .contentType("application/json").content("{\"paid\":true,\"refundStatus\":\"confirmed\"}")).andExpect(status().isBadRequest());
+        verifyNoInteractions(lifecycle);
+        mvc.perform(get("/api/bookings/"+bid+"/cancellation-preview").header("Authorization","Bearer "+accessToken())).andExpect(status().isOk());
+        verify(lifecycle).previewCancellation(id,bid);
+    }
+    @Test void bookingRequiresAuthKeyAndOnlyQuoteGuestSupportedMethodContract() throws Exception {
+        mvc.perform(post("/api/bookings").contentType("application/json").content("{}")).andExpect(status().isUnauthorized());
+        String valid="{\"quoteId\":\""+UUID.randomUUID()+"\",\"guest\":{\"fullName\":\"Hien\",\"email\":\"hien@example.com\",\"phone\":\"+84912345678\"},\"paymentMethod\":\"pay_at_property\"}";
+        mvc.perform(post("/api/bookings").header("Authorization","Bearer "+accessToken()).contentType("application/json").content(valid))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        mvc.perform(post("/api/bookings").header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","book-1")
+            .contentType("application/json").content("{\"accommodationId\":\""+UUID.randomUUID()+"\",\"total\":1,\"status\":\"completed\"}"))
+            .andExpect(status().isBadRequest());
+        verify(bookings,never()).create(any(),any(),any());
+    }
+    @Test void quoteCannotAcceptClientOwnerOrPriceAndUnknownStatusFilterIsRejected() throws Exception {
+        mvc.perform(post("/api/booking-quotes").header("Authorization","Bearer "+accessToken()).contentType("application/json")
+            .content("{\"userId\":\""+UUID.randomUUID()+"\",\"nightlyPriceCents\":1}")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/bookings?status=paid").header("Authorization","Bearer "+accessToken())).andExpect(status().isBadRequest());
+        verifyNoInteractions(bookings,quotes);
+    }
+    @Test void validCreatePassesOnlyAuthenticatedOwnerAndPreservedRequestKey() throws Exception {
+        UUID qid=UUID.randomUUID();
+        mvc.perform(post("/api/bookings").header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","book-1").contentType("application/json")
+            .content("{\"quoteId\":\""+qid+"\",\"guest\":{\"fullName\":\" Hien \",\"email\":\"Hien@example.com\",\"phone\":\"+84912345678\"},\"paymentMethod\":\"pay_at_property\"}"))
+            .andExpect(status().isOk());
+        verify(bookings).create(eq(id),argThat(r->qid.equals(r.quoteId())&&"Hien".equals(r.guest().fullName())&&"hien@example.com".equals(r.guest().email())),eq("book-1"));
     }
     @Test void missingRewardIdempotencyHeaderIsValidationErrorWithoutMutation() throws Exception {
         mvc.perform(post("/api/rewards/claims").header("Authorization","Bearer "+accessToken())

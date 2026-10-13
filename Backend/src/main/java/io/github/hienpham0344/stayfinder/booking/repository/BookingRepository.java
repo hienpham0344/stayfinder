@@ -10,6 +10,11 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select b from Booking b where b.id=:id and b.userId=:userId")
+    Optional<Booking> lockOwned(@org.springframework.data.repository.query.Param("id") UUID id,@org.springframework.data.repository.query.Param("userId") UUID userId);
+    @org.springframework.data.jpa.repository.Query("select b.id from Booking b where b.status=io.github.hienpham0344.stayfinder.common.enums.BookingStatus.PENDING and b.paymentMethod='bank_transfer' and b.paidAt is null and b.holdExpiresAt<=:now order by b.holdExpiresAt,b.id")
+    java.util.List<UUID> findExpiredPendingIds(@org.springframework.data.repository.query.Param("now") java.time.Instant now,Pageable pageable);
     Page<Booking> findByUserId(UUID userId, Pageable pageable);
     Page<Booking> findByUserIdAndStatus(UUID userId, BookingStatus status, Pageable pageable);
     Optional<Booking> findByIdAndUserId(UUID id, UUID userId);

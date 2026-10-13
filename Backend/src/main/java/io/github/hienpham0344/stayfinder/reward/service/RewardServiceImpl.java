@@ -17,10 +17,10 @@ import java.util.*;
 public class RewardServiceImpl implements RewardService {
  private final RewardWalletLocks locks;private final RewardWalletRepository wallets;private final RewardOfferRepository offers;
  private final RewardClaimRepository claims;private final RewardLedgerEntryRepository ledger;
- private final IdempotencyService idempotency;private final AuditService audit;private final Clock clock;
+ private final IdempotencyService idempotency;private final AuditService audit;private final Clock clock;private final io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events;
  public RewardServiceImpl(RewardWalletLocks locks,RewardWalletRepository wallets,RewardOfferRepository offers,RewardClaimRepository claims,
-   RewardLedgerEntryRepository ledger,IdempotencyService idempotency,AuditService audit,Clock clock){
-  this.locks=locks;this.wallets=wallets;this.offers=offers;this.claims=claims;this.ledger=ledger;this.idempotency=idempotency;this.audit=audit;this.clock=clock;
+   RewardLedgerEntryRepository ledger,IdempotencyService idempotency,AuditService audit,Clock clock,io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events){
+  this.locks=locks;this.wallets=wallets;this.offers=offers;this.claims=claims;this.ledger=ledger;this.idempotency=idempotency;this.audit=audit;this.clock=clock;this.events=events;
  }
  @Override public RewardWalletResponse wallet(UUID userId){
   var wallet=wallets.findById(userId).orElseGet(RewardWallet::new);RewardWalletLocks.validate(wallet);
@@ -58,6 +58,7 @@ public class RewardServiceImpl implements RewardService {
    var entry=new RewardLedgerEntry();entry.setId(UUID.randomUUID());entry.setUserId(userId);entry.setKind("claim");entry.setDeltaPoints(-offer.getPointsCost());
    entry.setSourceType("reward_claim");entry.setSourceId(claim.getId());entry.setSourceKey("claim:"+claim.getId());entry.setBalanceAfter(wallet.getAvailablePoints());entry.setCreatedAt(now);entry.setTitle(offer.getTitle());
    ledger.save(entry);audit.record(userId,"reward_claimed",claim.getId());
+   events.publish("reward_claimed",userId,claim.getId(),now);
    return claimResponse(claim);
   });
  }
