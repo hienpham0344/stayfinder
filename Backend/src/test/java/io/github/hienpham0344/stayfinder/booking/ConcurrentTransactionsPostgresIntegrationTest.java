@@ -45,7 +45,7 @@ class ConcurrentTransactionsPostgresIntegrationTest {
    n.update("update stayfinder_test_20261013.booking_quotes set consumed_booking_id=null where user_id in (:owners) and accommodation_id=:stay",p);
    n.update("delete from stayfinder_test_20261013.payment_webhook_events where payment_id in (select id from stayfinder_test_20261013.payments where user_id in (:owners))",p);
    if(nativeId!=null&&nativeHash!=null)j.update("delete from stayfinder_test_20261013.payment_webhook_events where provider='sepay' and environment='test' and event_id=? and payload_hash=?",nativeId,nativeHash);
-   for(String table:List.of("refund_requests","payments","reward_reservations","outbox_events","idempotency_records","reward_ledger_entries"))
+   for(String table:List.of("notifications","notification_inbox_state","user_preferences","support_reports","media_assets","reviews","refund_requests","payments","reward_reservations","outbox_events","idempotency_records","reward_ledger_entries"))
     n.update("delete from stayfinder_test_20261013."+table+" where user_id in (:owners)",p);
    n.update("delete from stayfinder_test_20261013.audit_records where actor_id in (:owners)",p);
    n.update("delete from stayfinder_test_20261013.booking_details where booking_id in (select id from stayfinder_test_20261013.bookings where user_id in (:owners))",p);
@@ -73,6 +73,36 @@ class ConcurrentTransactionsPostgresIntegrationTest {
    start.countDown();List<Object> result=new ArrayList<>();for(var f:futures)result.add(f.get(45,TimeUnit.SECONDS));return result;
   }finally{executor.shutdownNow();assertTrue(executor.awaitTermination(10,TimeUnit.SECONDS));}
  }
+
+ @Autowired io.github.hienpham0344.stayfinder.notification.service.NotificationService inbox;
+ @Autowired io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher domainEvents;
+ @Autowired io.github.hienpham0344.stayfinder.support.service.SupportReportService reports;
+ @Test void twoInboxWorkersDeliverEachEventOnceAndKeepLaterArrivalsUnread()throws Exception{
+  tx(()->{domainEvents.publish("reward_claimed",owner,UUID.randomUUID(),clock.instant());domainEvents.publish("reward_earned",owner,UUID.randomUUID(),clock.instant());domainEvents.publish("reward_claimed",other,UUID.randomUUID(),clock.instant());});
+  var result=parallel(()->inbox.materializeBatch(),()->inbox.materializeBatch());assertEquals(3,result.stream().mapToInt(x->(Integer)x).sum());
+  assertEquals(2,inbox.unreadCount(owner));assertEquals(1,inbox.unreadCount(other));
+  var before=inbox.list(owner,false,org.springframework.data.domain.PageRequest.of(0,20));tx(()->domainEvents.publish("reward_earned",owner,UUID.randomUUID(),clock.instant()));
+  parallel(()->inbox.markAllRead(owner,before.snapshotTime()),()->inbox.materializeBatch());
+  assertEquals(1,inbox.unreadCount(owner));assertEquals(3,read(()->j.queryForObject("select count(*) from notifications where user_id=?",Integer.class,owner)));
+  var late=inbox.list(owner,true,org.springframework.data.domain.PageRequest.of(0,20)).items().getFirst();assertTrue(late.createdAt().isAfter(before.snapshotTime()));
+  assertEquals(0,inbox.materializeBatch());assertEquals(1,inbox.unreadCount(other));
+ }
+
+ @Autowired io.github.hienpham0344.stayfinder.media.service.MediaService media;
+ @Autowired io.github.hienpham0344.stayfinder.media.service.LocalMediaStorage mediaFiles;
+ @Test void rolledBackUploadRemovesDatabaseRowAndGeneratedFile(){
+  UUID[] id={null};byte[] png=new byte[]{(byte)137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1};
+  new TransactionTemplate(manager).executeWithoutResult(status->{var uploaded=media.upload(owner,new org.springframework.mock.web.MockMultipartFile("image","fixture.png","image/png",png));id[0]=uploaded.id();assertArrayEquals(png,mediaFiles.read(id[0]));status.setRollbackOnly();});
+  assertNotNull(id[0]);assertEquals(0,read(()->j.queryForObject("select count(*) from media_assets where id=?",Integer.class,id[0])));assertThrows(BusinessException.class,()->mediaFiles.read(id[0]));
+ }
+
+ @Test void simultaneousReportRetriesPersistOneRequestWithSameResult()throws Exception{
+  var request=new io.github.hienpham0344.stayfinder.support.dto.SupportReportRequest("Other","Synthetic concurrent report",null);
+  var result=parallel(()->reports.submit(owner,request,"fixture-report"),()->reports.submit(owner,request,"fixture-report"));
+  var a=(io.github.hienpham0344.stayfinder.support.dto.SupportReportResponse)result.get(0);var b=(io.github.hienpham0344.stayfinder.support.dto.SupportReportResponse)result.get(1);assertEquals(a.reportId(),b.reportId());
+  assertEquals(1,read(()->j.queryForObject("select count(*) from support_reports where user_id=?",Integer.class,owner)));
+ }
+
  @Test void lastRoomHasOneWinnerAndFailedTransactionLeavesNoSnapshotsWalletOrKey()throws Exception{
   var a=quote(owner,1);var b=quote(other,1);
   var result=parallel(()->bookings.create(owner,request(a,"pay_at_property"),"same-namespace-key"),()->bookings.create(other,request(b,"pay_at_property"),"same-namespace-key"));

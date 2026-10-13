@@ -37,7 +37,7 @@ class BookingServiceTest {
  final IdempotencyRepository idemRows=mock(IdempotencyRepository.class);final UserRepository users=mock(UserRepository.class);
  final Map<String,IdempotencyRecord> savedKeys=new HashMap<>();
  final IdempotencyService idem=new IdempotencyService(idemRows,users,mock(IdempotencyLockRepository.class),JsonMapper.builder().build(),clock);
- final BookingReadService reads=new BookingReadService(bookings,details,quotes,roomSnapshots,staySnapshots,Mappers.getMapper(BookingMapper.class),clock);
+ final BookingReadService reads=new BookingReadService(bookings,details,quotes,roomSnapshots,staySnapshots,Mappers.getMapper(BookingMapper.class),clock,mock(io.github.hienpham0344.stayfinder.review.repository.ReviewRepository.class));
  final BookingServiceImpl service=new BookingServiceImpl(bookings,details,locks,inventory,snapshots,benefits,idem,events,reads,clock);
  BookingQuote q;Room room;Accommodation stay;Booking saved;BookingDetail savedDetail;
  @BeforeEach void setup(){

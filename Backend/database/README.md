@@ -40,8 +40,8 @@ Preflight must verify the exact existing test schema, baseline31 empty tables, a
 
 The user explicitly approved this exact batch in call_vf8W3qNx9a8xcgyKq6j2fpv3. Both scripts committed successfully; postflight verified35 empty tables, all RLS, no external FKs/direct client schema usage, and public metadata/count fingerprint unchanged. Two whole-context rollback fixture tests now pass with ddl-auto=validate, proving owned immutable snapshot booking/idempotent replay and native signed receipt/exact collection/cancellation/refund FX. Multi-transaction service races remain to be verified. No public rollout/provider action/seed was performed.
 
-## Proposed G2 experience batch: 007–009 (NOT APPLIED)
-Exact target ONLY existing stayfinder_test_20261013. Apply migrations/007_reviews_media.sql, 008_preferences_reports.sql, then 009_notifications.sql. Exact LF-normalized checksums are frozen in test/g2-experience-2026-10-13.sha256. Human approval is required before the approved flag can be used; the preceding two approvals do not authorize this batch.
+## Approved G2 experience batch: 007–009 (applied 2026-10-13)
+Exact target ONLY existing stayfinder_test_20261013. Apply migrations/007_reviews_media.sql, 008_preferences_reports.sql, then 009_notifications.sql. Exact LF-normalized checksums are frozen in test/g2-experience-2026-10-13.sha256. The user explicitly approved this exact batch in call_93c5306622834e528c6ddae4383ac3e4. Runner checksums matched; all three scripts committed. Postflight verified40emptytables, allRLS, noexternalFKs/directclientusage and unchangedpublicfingerprint. The runner refuses a replay against the already migrated schema. Public rollout/seed/provider actions remain separate gates.
 
 | Script | Reviewable change |
 |---|---|

@@ -93,6 +93,9 @@ class AuthHttpBoundaryTest {
         when(notifications.markAllRead(id,now)).thenReturn(new io.github.hienpham0344.stayfinder.notification.dto.NotificationReadAllResponse(1,1));
         mvc.perform(post("/api/notifications/read-all").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"snapshotTime\":\""+now+"\"}")).andExpect(status().isOk()).andExpect(jsonPath("$.result.unreadCount").value(1));
     }
+    @Test void missingMultipartImageIsClientValidationError() throws Exception {
+        mvc.perform(multipart("/api/media").header("Authorization","Bearer "+accessToken())).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
     @Test void mediaUploadAndDeleteRequireAuthenticationWhileSignedContentIsAnonymous() throws Exception {
         UUID image=UUID.randomUUID();var file=new org.springframework.mock.web.MockMultipartFile("image","synthetic.png","image/png",new byte[]{1,2,3});
         mvc.perform(multipart("/api/media").file(file)).andExpect(status().isUnauthorized());

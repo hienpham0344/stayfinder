@@ -15,6 +15,7 @@ interface HomeHeaderProps {
   onLocationPress?: () => void;
   onFilterPress?: () => void;
   onNotificationPress?: () => void;
+  unreadCount?: number;
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({
@@ -23,6 +24,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onLocationPress,
   onFilterPress,
   onNotificationPress,
+  unreadCount=0,
 }) => {
   const router = useRouter();
   const openSearch = onSearchPress || (() => router.push('/search'));
@@ -38,11 +40,12 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           activeOpacity={0.8}
           onPress={onNotificationPress}
           accessibilityRole="button"
-          accessibilityLabel="Notifications"
+          accessibilityLabel={'Notifications'+(unreadCount>0?', '+unreadCount+' unread':'')}
           accessibilityState={{ disabled: !onNotificationPress }} aria-disabled={!onNotificationPress}
           style={styles.notification}
         >
           <Se121SharedAsset source={bellAsset} width={20} nativeFallback={<Bell size={20} color={COLORS.primary} />} />
+          {unreadCount>0?<Text style={{position:"absolute",top:0,right:0,fontSize:10,color:COLORS.bgWhite,backgroundColor:COLORS.primary,borderRadius:10,paddingHorizontal:4}}>{unreadCount>99?"99+":unreadCount}</Text>:null}
         </TouchableOpacity>
       </View>
       <Text style={styles.brand}>StayFinder</Text>

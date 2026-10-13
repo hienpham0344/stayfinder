@@ -4,9 +4,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCatalog, useCatalogResource } from '../../state/CatalogProvider';
 import { useFavorites } from '../../state/FavoritesProvider';
 import { validateSearchSelection } from '../../state/searchSelection';
-import { formatUsd } from '../../services/dtoAdapters';
+import{useUsdFormatter}from'../../state/useUsdFormatter';
 import { Action, CatalogPage, FavoriteButton, ResourceStatus, StayImage, catalogStyles as s } from '../catalog/CatalogUi';
+import{ReviewsExperience}from'../reviews/ReviewsExperience';
 export function RoomDetailExperience(){
+ const formatUsd=useUsdFormatter();
  const {id}=useLocalSearchParams<{id:string}>();const {catalog,selection}=useCatalog();
  const {state:favorites}=useFavorites();const [error,setError]=useState('');
  const result=useCatalogResource(signal=>catalog.detail(id||'',signal),'detail:'+id);
@@ -38,6 +40,7 @@ export function RoomDetailExperience(){
  <Text style={s.text}>Cleaning fee {formatUsd(stay.cleaningFee)} · Service fee {formatUsd(stay.serviceFee)} per booking</Text>
  <Action title="Select a room and compare demo prices" onPress={choose}/>
  {!!error&&<Text style={s.error}>{error}</Text>}
+ <ReviewsExperience stayId={stay.id} onChanged={result.reload}/>
  </>}
  </CatalogPage>;
 }

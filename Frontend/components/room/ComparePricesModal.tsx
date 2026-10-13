@@ -3,13 +3,14 @@ import { Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { QuoteSelection } from '../../types/catalog';
 import { useCatalog, useCatalogResource } from '../../state/CatalogProvider';
-import { formatUsd } from '../../services/dtoAdapters';
+import{useUsdFormatter}from'../../state/useUsdFormatter';
 import { Action, ResourceStatus, catalogStyles as s } from '../catalog/CatalogUi';
 export function ComparePricesModal({visible,onClose,selection}:{visible:boolean;onClose:()=>void;selection:QuoteSelection}){
  if(!visible)return null;
  return <Modal visible animationType="slide" onRequestClose={onClose}><ComparisonContent selection={selection} onClose={onClose}/></Modal>;
 }
 function ComparisonContent({selection,onClose}:{selection:QuoteSelection;onClose:()=>void}){
+ const formatUsd=useUsdFormatter();
  const {catalog}=useCatalog();
  const result=useCatalogResource(signal=>catalog.compare(selection,signal),'comparison:'+JSON.stringify(selection));
  return <SafeAreaView style={s.screen}><View style={s.header}><Text style={s.title}>Compare demo prices</Text><Action title="Close" secondary onPress={onClose}/></View>

@@ -13,10 +13,10 @@ import java.util.*;
 @Service
 public class BookingReadService {
  private final BookingRepository bookings;private final BookingDetailRepository details;private final BookingQuoteRepository quotes;
- private final RoomSnapshotRepository rooms;private final AccommodationSnapshotRepository stays;private final BookingMapper mapper;private final Clock clock;
+ private final RoomSnapshotRepository rooms;private final AccommodationSnapshotRepository stays;private final BookingMapper mapper;private final Clock clock;private final io.github.hienpham0344.stayfinder.review.repository.ReviewRepository reviews;
  public BookingReadService(BookingRepository bookings,BookingDetailRepository details,BookingQuoteRepository quotes,RoomSnapshotRepository rooms,
-  AccommodationSnapshotRepository stays,BookingMapper mapper,Clock clock){
-  this.bookings=bookings;this.details=details;this.quotes=quotes;this.rooms=rooms;this.stays=stays;this.mapper=mapper;this.clock=clock;
+  AccommodationSnapshotRepository stays,BookingMapper mapper,Clock clock,io.github.hienpham0344.stayfinder.review.repository.ReviewRepository reviews){
+  this.bookings=bookings;this.details=details;this.quotes=quotes;this.rooms=rooms;this.stays=stays;this.mapper=mapper;this.clock=clock;this.reviews=reviews;
  }
  @Transactional(readOnly=true) public BookingResponse owned(UUID userId,UUID id){
   return response(bookings.findByIdAndUserId(id,userId).orElseThrow(()->new BusinessException(ErrorCode.BOOKING_NOT_FOUND)));
@@ -38,7 +38,7 @@ public class BookingReadService {
    booking.getCreatedAt(),booking.getHoldExpiresAt(),booking.getPaymentMethod(),q.getAccommodationId(),q.getRoomId(),stay.getName(),room.getName(),image,
    q.getCheckIn(),q.getCheckOut(),q.getTimezone(),q.getQuantity(),q.getAdults(),q.getChildren(),BookingQuoteService.response(q),mapper.toGuest(booking),
    booking.getPaymentStatus(),booking.getRefundStatus(),new BookingResponse.AllowedActions(active&&beforeCheckIn&&!timedOut,
-    booking.getStatus()==BookingStatus.COMPLETED&&booking.getPaidAt()!=null,true));
+    booking.getStatus()==BookingStatus.COMPLETED&&booking.getPaidAt()!=null&&"success".equals(booking.getPaymentStatus())&&!reviews.existsByBookingIdAndUserId(booking.getId(),booking.getUserId()),true));
  }
  private static BusinessException unavailable(){return new BusinessException(ErrorCode.DEPENDENCY_UNAVAILABLE);}
 }

@@ -4,10 +4,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCatalog, useCatalogResource } from '../../state/CatalogProvider';
 import { cancelSearchSelection, quoteSelectionParams, selectionForRoom, validateSearchSelection } from '../../state/searchSelection';
 import type { QuoteSelection } from '../../types/catalog';
-import { formatUsd } from '../../services/dtoAdapters';
+import{useUsdFormatter}from'../../state/useUsdFormatter';
 import { ComparePricesModal } from './ComparePricesModal';
 import { Action, CatalogPage, ResourceStatus, SelectionFields, StayImage, catalogStyles as s } from '../catalog/CatalogUi';
 export function RoomSelectionExperience(){
+ const formatUsd=useUsdFormatter();
  const params=useLocalSearchParams<{id?:string;accommodationId?:string;checkIn?:string;checkOut?:string;quantity?:string;adults?:string;children?:string}>();
  const id=params.id||params.accommodationId||'';
  const {catalog,selection,apply}=useCatalog();

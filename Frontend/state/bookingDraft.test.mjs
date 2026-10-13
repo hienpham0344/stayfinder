@@ -49,3 +49,29 @@ test('definitive stale quote rejection clears the retry intent and requires a fr
  const store=new BookingDraftStore(f.bookings,f.payments,f.storage,f.now);await store.changeOwner('owner');await store.setGuest(selection,guest);await store.refreshQuote();await assert.rejects(store.checkout('bank_transfer'));assert.equal(store.snapshot().intent,null);assert.equal(store.snapshot().quote,null);
 });
 
+
+test('cancelled server booking releases uncertain payment setup for a new draft',async()=>{
+ const f=fixture();f.bookings.create=async body=>({...await f.bookings.get('book'),paymentMethod:body.paymentMethod});
+ f.payments.create=async()=>{throw new Error('Unavailable');};
+ const s=new BookingDraftStore(f.bookings,f.payments,f.storage,f.now);
+ await s.changeOwner('owner');await s.setGuest(selection,guest);await s.refreshQuote();await assert.rejects(s.checkout('bank_transfer'));
+ f.bookings.get=async id=>({id,...selection,status:'cancelled',paymentMethod:'bank_transfer',paymentStatus:'pending',refundStatus:'none',quote,guest});
+ await s.refreshStatus();await s.setGuest(selection,guest);assert.equal(s.snapshot().intent,null);
+});
+test('lost create response can resume the owned matching quote but refuses a different booking',async()=>{
+ const f=fixture();f.payments.list=async()=>[];
+ const s=new BookingDraftStore(f.bookings,f.payments,f.storage,f.now);
+ await s.changeOwner('owner');await s.setGuest(selection,guest);await s.refreshQuote();await assert.rejects(s.checkout('bank_transfer'));
+ const key=s.snapshot().intent.bookingKey;
+ const get=f.bookings.get;f.bookings.get=async id=>({...await get(id),quote:{...quote,id:'other-quote'}});
+ await assert.rejects(s.resume('other'));assert.equal(s.snapshot().intent.bookingKey,key);
+ f.bookings.get=get;await s.resume('book');assert.equal(s.snapshot().intent.bookingKey,key);assert.equal(s.snapshot().intent.uncertain,false);
+});
+test('retry reads current booking after a cached create response before attempting payment',async()=>{
+ const f=fixture();let paymentCalls=0;
+ f.bookings.create=async()=>({...await f.bookings.get('book'),status:'pending'});
+ f.bookings.get=async id=>({id,...selection,status:'cancelled',paymentMethod:'bank_transfer',paymentStatus:'pending',refundStatus:'none',quote,guest});
+ f.payments.create=async()=>{paymentCalls++;throw new Error('Should not create');};
+ const s=new BookingDraftStore(f.bookings,f.payments,f.storage,f.now);await s.changeOwner('owner');await s.setGuest(selection,guest);await s.refreshQuote();
+ await assert.rejects(s.checkout('bank_transfer'));assert.equal(paymentCalls,0);assert.equal(s.snapshot().booking.status,'cancelled');assert.equal(s.snapshot().intent.uncertain,false);
+});

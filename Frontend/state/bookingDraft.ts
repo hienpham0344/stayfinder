@@ -79,8 +79,11 @@ export class BookingDraftStore{
    const intent=this.state.intent!;
    if(intent.body.paymentMethod!==method)throw new ApiError('BOOKING_METHOD_FIXED',409,'Retry the original payment method. Cancel and rebook to change it.');
    try{
-    const b=intent.bookingId?await this.bookings.get(intent.bookingId,signal):await this.bookings.create(clone(intent.body),intent.bookingKey,signal);this.check(v);
-    intent.bookingId=b.id;intent.uncertain=false;this.state.booking=b;await this.persist(v);this.notify();
+    const created=intent.bookingId?null:await this.bookings.create(clone(intent.body),intent.bookingKey,signal);this.check(v);
+    if(created){intent.bookingId=created.id;await this.persist(v);}
+    const b=await this.bookings.get(intent.bookingId!,signal);this.check(v);
+    intent.uncertain=false;this.state.booking=b;await this.persist(v);this.notify();
+    if(b.status==='cancelled'||b.status==='completed')throw new ApiError('BOOKING_TERMINAL',409,'This booking is '+b.status+'. Start a new booking to continue.');
     const p=intent.paymentId?await this.payments.get(intent.paymentId,signal):await this.payments.create(b.id,method,intent.paymentKey,signal);this.check(v);
     intent.paymentId=p.id;intent.uncertain=false;this.state.payment=p;await this.persist(v);this.notify();return {booking:b,payment:p};
    }catch(e){
@@ -88,7 +91,7 @@ export class BookingDraftStore{
     const definitive=new Set(['QUOTE_EXPIRED','QUOTE_CHANGED','QUOTE_ALREADY_USED','ROOM_NOT_AVAILABLE','INSUFFICIENT_POINTS','REWARD_INELIGIBLE','VOUCHER_EXPIRED','VALIDATION_ERROR']);
     const code=(e as{code?:string}).code;
     if(!intent.bookingId&&code&&definitive.has(code)){this.state.intent=null;this.state.quote=null;}
-    else intent.uncertain=true;
+    else intent.uncertain=code!=='BOOKING_TERMINAL';
     await this.persist(v);throw e;
    }
   });
@@ -97,17 +100,21 @@ export class BookingDraftStore{
   return this.run(async(v,signal)=>{
    const i=this.state.intent;if(!i?.bookingId)return null;
    const b=await this.bookings.get(i.bookingId,signal);this.check(v);this.state.booking=b;
+   if(b.status==='cancelled'||b.status==='completed'){i.uncertain=false;await this.persist(v);}
    if(i.paymentId){const p=await this.payments.get(i.paymentId,signal);this.check(v);this.state.payment=p;}
    this.notify();return this.state.booking;
   });
  }
  resume(id:string){
   return this.run(async(v,signal)=>{
-   if(this.state.intent?.uncertain&&this.state.intent.bookingId!==id)throw new ApiError('RESOLVE_PENDING',409,'Resolve the pending booking request first.');
-   const b=await this.bookings.get(id,signal);this.check(v);const list=await this.payments.list(id,signal);this.check(v);
+   const previous=this.state.intent;
+   if(previous?.uncertain&&previous.bookingId&&previous.bookingId!==id)throw new ApiError('RESOLVE_PENDING',409,'Resolve the pending booking request first.');
+   const b=await this.bookings.get(id,signal);this.check(v);
+   if(previous?.uncertain&&(previous.body.quoteId!==b.quote.id||previous.body.paymentMethod!==b.paymentMethod))throw new ApiError('RESOLVE_PENDING',409,'This booking does not match the pending request.');
+   const list=await this.payments.list(id,signal);this.check(v);
    this.state.selection={accommodationId:b.accommodationId,roomId:b.roomId,checkIn:b.checkIn,checkOut:b.checkOut,quantity:b.quantity,adults:b.adults,children:b.children};
    this.state.guest=b.guest;this.state.quote=b.quote;this.state.booking=b;this.state.payment=list[0]??null;
-   this.state.intent={body:{quoteId:b.quote.id,guest:clone(b.guest),paymentMethod:b.paymentMethod},bookingKey:mutationKey('resume'),paymentKey:mutationKey('payment'),bookingId:id,paymentId:list[0]?.id??null,uncertain:false};
+   this.state.intent={body:{quoteId:b.quote.id,guest:clone(b.guest),paymentMethod:b.paymentMethod},bookingKey:previous?.body.quoteId===b.quote.id?previous.bookingKey:mutationKey('resume'),paymentKey:previous?.body.quoteId===b.quote.id?previous.paymentKey:mutationKey('payment'),bookingId:id,paymentId:list[0]?.id??null,uncertain:false};
    await this.persist(v);this.notify();return b;
   });
  }

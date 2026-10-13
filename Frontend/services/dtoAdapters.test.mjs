@@ -31,3 +31,8 @@ test('non-USD or unsafe money cannot be shown as a USD price',()=>{
   assert.throws(()=>formatUsd({amountCents:1,currency:'VND'}));
   assert.throws(()=>formatUsd({amountCents:2.5,currency:'USD'}));
 });
+
+test('locale changes formatting while preserving USD and exact cents',()=>{
+ assert.equal(formatUsd({amountCents:103209,currency:'USD'},'fr-FR'),new Intl.NumberFormat('fr-FR',{style:'currency',currency:'USD'}).format(1032.09));
+ assert.equal(formatUsd({amountCents:Number.MAX_SAFE_INTEGER,currency:'USD'},'vi-VN').includes(',91'),true);
+});

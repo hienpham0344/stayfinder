@@ -1,12 +1,16 @@
-import React,{useEffect,useMemo,useState}from'react';import{Text,View}from'react-native';import{router}from'expo-router';import{Action,CatalogPage,Field,ResourceStatus,StayImage,catalogStyles as s}from'../catalog/CatalogUi';import{useSession}from'../../state/SessionProvider';import{useCatalogResource}from'../../state/CatalogProvider';import{useBookingDraft}from'../../state/BookingDraftProvider';import{createBookingApi}from'../../services/bookingApi';import{mutationKey}from'../../state/bookingDraft';import{formatUsd}from'../../services/dtoAdapters';import type{BookingDto,CancellationPreview}from'../../types/transaction';
+import React,{useEffect,useMemo,useState}from'react';import{Text,View}from'react-native';import{router}from'expo-router';import{Action,CatalogPage,Field,ResourceStatus,StayImage,catalogStyles as s}from'../catalog/CatalogUi';import{useSession}from'../../state/SessionProvider';import{useCatalogResource}from'../../state/CatalogProvider';import{useBookingDraft}from'../../state/BookingDraftProvider';import{createBookingApi}from'../../services/bookingApi';import{mutationKey}from'../../state/bookingDraft';import{useUsdFormatter}from'../../state/useUsdFormatter';import type{BookingDto,CancellationPreview}from'../../types/transaction';
+import{ReviewComposer}from'../reviews/ReviewComposer';
+import{useNotifications}from'../../state/NotificationsProvider';
 export function MyBookingsExperience(){
+ const formatUsd=useUsdFormatter();
+ const [reviewing,setReviewing]=useState<BookingDto|null>(null);const{store:inbox}=useNotifications();
  const {api,user,session}=useSession(),draft=useBookingDraft(),bookings=useMemo(()=>createBookingApi(api),[api]);
  const [filter,setFilter]=useState(''),[page,setPage]=useState(0),[dialog,setDialog]=useState<{owner:string;booking:BookingDto;preview:CancellationPreview|null;key:string}|null>(null),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const list=useCatalogResource(signal=>user?bookings.list(page,filter||undefined,signal):Promise.resolve(null),'bookings:'+page+':'+filter);
- useEffect(()=>{setDialog(null);setError('');setNotice('');setBusy(false);setPage(0);},[user?.id]);
+ useEffect(()=>{setReviewing(null);setDialog(null);setError('');setNotice('');setBusy(false);setPage(0);},[user?.id]);
  const attempt=async(job:()=>Promise<void>)=>{const generation=session.getGeneration();setBusy(true);setError('');try{await job();}catch(e){if(generation===session.getGeneration())setError(e instanceof Error?e.message:'Unable to continue.');}finally{if(generation===session.getGeneration())setBusy(false);}};
  const preview=async(b:BookingDto)=>{const generation=session.getGeneration();setReason('');const candidate={owner:user!.id,booking:b,preview:null,key:mutationKey('cancel')};setDialog(candidate);const value=await bookings.previewCancellation(b.id);if(generation===session.getGeneration())setDialog({...candidate,preview:value});};
- const cancel=async()=>{if(!dialog?.preview?.eligible)return;const generation=session.getGeneration();const result=await bookings.cancel(dialog.booking.id,reason.trim()||null,dialog.key);if(generation!==session.getGeneration())return;setDialog(null);setNotice(result.refundStatus==='requested'?'Booking cancelled. Refund requested; awaiting confirmation.':'Booking cancelled.');list.reload();};
+ const cancel=async()=>{if(!dialog?.preview?.eligible)return;const generation=session.getGeneration();const result=await bookings.cancel(dialog.booking.id,reason.trim()||null,dialog.key);if(generation!==session.getGeneration())return;setDialog(null);setNotice(result.refundStatus==='requested'?'Booking cancelled. Refund requested; awaiting confirmation.':'Booking cancelled.');list.reload();void inbox.refreshCount();};
  return <CatalogPage title="My bookings">{!user?<Action title="Sign in to view bookings" onPress={()=>router.push({pathname:'/auth/demo',params:{returnTo:'/bookings'}})}/>:<>
  <View style={s.row}>{[['','All'],['pending','Awaiting payment'],['confirmed','Confirmed'],['completed','Completed'],['cancelled','Cancelled']].map(([value,label])=><Action key={value} title={label} secondary={filter!==value} onPress={()=>{setFilter(value);setPage(0);setDialog(null);}}/>)}</View>
  <Action title="Refresh bookings" secondary disabled={list.loading||busy} onPress={list.reload}/>
@@ -17,8 +21,9 @@ export function MyBookingsExperience(){
  {b.status==='pending'&&<Action title="Continue payment" disabled={busy||!draft.ready} onPress={()=>void attempt(async()=>{await draft.store.resume(b.id);router.push('/booking/checkout');})}/>}
  {b.allowedActions.cancel&&<Action title="Cancel booking" secondary disabled={busy} onPress={()=>void attempt(()=>preview(b))}/>}
  {b.allowedActions.rebook&&<Action title="Book again · choose new dates" secondary onPress={()=>router.push({pathname:'/room/[id]',params:{id:b.accommodationId}})}/>}
- {b.allowedActions.review&&<Text style={s.text}>This stay is eligible for a review. Review submission will be available with the reviews integration.</Text>}
+ {b.allowedActions.review&&<Action title="Review this stay" secondary disabled={busy} onPress={()=>setReviewing(b)}/>}
  </View></View>)}
  {list.data&&list.data.totalPages>1&&<View style={s.row}><Action title="Previous" secondary disabled={page===0||list.loading} onPress={()=>setPage(p=>p-1)}/><Text style={s.text}>Page {page+1} / {list.data.totalPages}</Text><Action title="Next" secondary disabled={page+1>=list.data.totalPages||list.loading} onPress={()=>setPage(p=>p+1)}/></View>}
+ {reviewing&&<ReviewComposer source={{stayId:reviewing.accommodationId,bookingId:reviewing.id}} onClose={()=>setReviewing(null)} onSaved={()=>{setReviewing(null);setNotice('Your review was saved. View or edit it on the stay details page.');list.reload();}}/>}
  </>}</CatalogPage>;
 }

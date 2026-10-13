@@ -6,7 +6,7 @@ import { ArrowLeft, Heart, ImageOff, Star } from 'lucide-react-native';
 import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 import { useSession } from '../../state/SessionProvider';
 import { useFavorites } from '../../state/FavoritesProvider';
-import { formatUsd } from '../../services/dtoAdapters';
+import{useUsdFormatter}from'../../state/useUsdFormatter';
 import type { StayCardModel } from '../../types/stay';
 import type { SearchSelection } from '../../state/searchSelection';
 export const catalogStyles=StyleSheet.create({
@@ -57,6 +57,7 @@ export function FavoriteButton({stay}:{stay:StayCardModel}){
  }}><Heart size={22} color={saved?'#FF5285':COLORS.primary} fill={saved?'#FF5285':'transparent'}/></Pressable>;
 }
 export function LiveStayCard({stay}:{stay:StayCardModel}){
+ const formatUsd=useUsdFormatter();
  return <View style={catalogStyles.card}><Pressable accessibilityRole="button" accessibilityLabel={'View '+stay.title} onPress={()=>router.push({pathname:'/room/[id]',params:{id:stay.id}})}>
  <StayImage key={stay.imageUrl} url={stay.imageUrl} title={stay.title}/><View style={catalogStyles.cardBody}><Text style={catalogStyles.heading}>{stay.title}</Text>
  {stay.locationLabel&&<Text style={catalogStyles.text}>{stay.locationLabel}</Text>}

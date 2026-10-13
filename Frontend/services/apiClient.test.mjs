@@ -98,3 +98,10 @@ test('timeout also covers a stalled JSON response body', async () => {
     new Promise(resolve => setTimeout(() => resolve('NO_TIMEOUT'), 40))]);
   assert.equal(result, 'REQUEST_TIMEOUT');
 });
+
+test('multipart upload keeps FormData and lets fetch supply its boundary',async()=>{
+ let captured;const client=new ApiClient({baseUrl:'https://api.example/api',platform:'web',fetch:async(url,init)=>{captured=init;return envelope({id:'media'});}});
+ const form=new FormData();form.append('image',new Blob(['synthetic'],{type:'image/png'}),'synthetic.png');
+ await client.request('/media',{method:'POST',body:form,auth:false});
+ assert.ok(captured.body instanceof FormData);assert.equal(captured.headers['Content-Type'],undefined);assert.equal(captured.body.get('image').name,'synthetic.png');
+});

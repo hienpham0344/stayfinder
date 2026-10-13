@@ -1,9 +1,9 @@
 import type { MoneyUsd } from '../types/api';
 import type { StayCardDto, StayDetailDto, RoomTierDto } from '../types/catalog';
 import type { StayCardModel, StayDetailModel, RoomTierModel } from '../types/stay';
-export function formatUsd(money: MoneyUsd): string {
+export function formatUsd(money: MoneyUsd,locale='en-US'): string {
  if (money.currency !== 'USD' || !Number.isSafeInteger(money.amountCents) || money.amountCents < 0) throw new Error('Invalid USD money');
- return '$' + Math.floor(money.amountCents / 100).toLocaleString('en-US') + '.' + String(money.amountCents % 100).padStart(2, '0');
+ return new Intl.NumberFormat(locale,{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).formatToParts(Math.floor(money.amountCents/100)).map(part=>part.type==='fraction'?String(money.amountCents%100).padStart(2,'0'):part.value).join('');
 }
 export function toStayCard(dto: StayCardDto): StayCardModel {
  formatUsd(dto.nightlyPrice);

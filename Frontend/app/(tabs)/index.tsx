@@ -7,7 +7,9 @@ import { CategoryScroll } from '../../components/home/CategoryScroll';
 import { Action, LiveStayCard, ResourceStatus, catalogStyles as s } from '../../components/catalog/CatalogUi';
 import { useCatalog, useCatalogResource } from '../../state/CatalogProvider';
 import { useFavorites } from '../../state/FavoritesProvider';
+import {useNotifications}from'../../state/NotificationsProvider';
 export default function HomeScreen(){
+ const {state:inbox}=useNotifications();
  const {catalog,selection,apply}=useCatalog();const {state:favorites}=useFavorites();
  const [typeId,setTypeId]=useState('');
  const metadata=useCatalogResource(signal=>catalog.filters(signal),'filters');
@@ -16,7 +18,7 @@ export default function HomeScreen(){
  const recommended=useCatalogResource(signal=>catalog.search(criteria,0,'recommended',signal),'home-recommended:'+key);
  const popular=useCatalogResource(signal=>catalog.search(criteria,0,'popular',signal),'home-popular:'+key);
  const seeAll=()=>{apply(criteria);router.push('/search');};
- return <SafeAreaView style={s.screen} edges={['top','left','right']}><HomeHeader locationName={selection.locationLabel||selection.q||'Choose destination'}
+ return <SafeAreaView style={s.screen} edges={['top','left','right']}><HomeHeader unreadCount={inbox.unreadCount} onNotificationPress={()=>router.push('/notifications')} locationName={selection.locationLabel||selection.q||'Choose destination'}
  onSearchPress={()=>router.push('/search?entry=criteria')} onFilterPress={()=>router.push('/search?entry=filters')} onLocationPress={()=>router.push('/search?entry=criteria')}/>
  <ScrollView contentContainerStyle={{paddingBottom:32}}><View style={s.body}><Text style={s.heading}>Find your next stay</Text><Text style={s.text}>Explore places to stay and compare demo prices for your selected room and dates.</Text><Action title="Search stays" onPress={seeAll}/></View>
  {metadata.data&&<CategoryScroll selectedCategory={typeId} items={[{id:'',name:'All',iconName:'Building2'},...metadata.data.propertyTypes.map(t=>({...t,iconName:'Building2'}))]} onSelectCategory={setTypeId}/>}

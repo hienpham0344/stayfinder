@@ -1,154 +1,72 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, ViewStyle } from 'react-native';
-import { router } from 'expo-router';
-import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, CircleHelp, Globe2, Heart, LogOut, Settings, Star, Wallet } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Se121SharedAsset } from '../ui/Se121SharedAssets';
-import { COLORS, RADII, SHADOWS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
-
-type Dialog = 'edit' | 'settings' | 'password' | 'report' | 'category' | 'language' | 'logout' | null;
-const CATEGORIES = ['Booking', 'Payment', 'Account', 'Rewards', 'Other'];
-const PROFILE_ASSETS = {
-  back: require('../../assets/figma/se121-parity/profile/profile-back.svg'),
-  avatar: require('../../assets/figma/se121-parity/profile/alex-johnson.jpeg'),
-  rewardStar: require('../../assets/figma/se121-parity/profile/reward-star.svg'),
-  walletArrow: require('../../assets/figma/se121-parity/profile/wallet-arrow.svg'),
-  bookings: require('../../assets/figma/se121-parity/profile/menu-bookings.svg'),
-  chevron: require('../../assets/figma/se121-parity/profile/menu-chevron.svg'),
-  wishlist: require('../../assets/figma/se121-parity/profile/menu-wishlist.svg'),
-  wallet: require('../../assets/figma/se121-parity/profile/menu-wallet.svg'),
-  language: require('../../assets/figma/se121-parity/profile/menu-language.svg'),
-  languageChevron: require('../../assets/figma/se121-parity/profile/language-chevron-exact.png'),
-  settings: require('../../assets/figma/se121-parity/profile/settings-exact.png'),
-  report: require('../../assets/figma/se121-parity/profile/report-exact.png'),
-  settingsOn: require('../../assets/figma/se121-parity/profile/settings-on.svg'),
-  settingsChevron: require('../../assets/figma/se121-parity/profile/settings-chevron.svg'),
-  logout: require('../../assets/figma/se121-parity/profile/logout.svg'),
-} as const;
-
-function MenuRow({ title, icon: Icon, asset, onPress, value }: { title: string; icon: typeof Heart; asset: number; onPress: () => void; value?: string }) {
-  return <Pressable style={styles.menuRow} onPress={onPress} accessibilityRole="button" accessibilityLabel={value ? `${title}, ${value}` : title}><Se121SharedAsset source={asset} width={36} nativeFallback={<View style={styles.menuIcon}><Icon size={22} color={COLORS.primary} /></View>} /><Text style={styles.menuText}>{title}</Text>{value ? <Text style={styles.menuValue}>{value}</Text> : null}<Se121SharedAsset source={value ? PROFILE_ASSETS.languageChevron : PROFILE_ASSETS.chevron} width={7.4} height={12} nativeFallback={<ChevronRight size={20} color={COLORS.inkSubtle} />} /></Pressable>;
+import React,{useEffect,useState}from'react';
+import{ActivityIndicator,Image,KeyboardAvoidingView,Modal,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,View,ViewStyle,Switch}from'react-native';
+import{router}from'expo-router';import{useSafeAreaInsets}from'react-native-safe-area-context';
+import{ArrowLeft,CalendarDays,ChevronRight,CircleHelp,Globe2,Heart,LogOut,Settings,Star,Wallet}from'lucide-react-native';
+import{COLORS,RADII,SHADOWS,SIZES,SPACING,TYPOGRAPHY}from'../../constants/tokens';
+import{useProfile}from'../../state/ProfileProvider';import{useSession}from'../../state/SessionProvider';import{useRewards}from'../../state/RewardsProvider';
+import type{Preferences,SupportReportRequest}from'../../types/userFeatures';
+type Dialog='edit'|'settings'|'password'|'email'|'report'|'language'|'logout'|null;
+const languages={'en-US':'English (US)','vi-VN':'Tiếng Việt','fr-FR':'Français'} as const;
+const categories:SupportReportRequest['category'][]=['Booking','Payment','Account','Rewards','Other'];
+function MenuRow({title,icon:Icon,onPress,value}:{title:string;icon:typeof Heart;onPress:()=>void;value?:string}){
+ return <Pressable style={styles.menuRow} onPress={onPress} accessibilityRole="button" accessibilityLabel={value?title+', '+value:title}><View style={styles.menuIcon}><Icon size={22} color={COLORS.primary}/></View><Text style={styles.menuText}>{title}</Text>{value?<Text style={[styles.menuValue,{maxWidth:'35%'}]}>{value}</Text>:null}<ChevronRight size={20} color={COLORS.inkSubtle}/></Pressable>;
 }
-
-function ProfileSheet({ visible, onClose, title, children, height, titleGap = 16, category = false }: { visible: boolean; onClose: () => void; title: string; children: React.ReactNode; height?: number; titleGap?: number; category?: boolean }) {
-  const sheetHeight = height ?? 300;
-  const translateY = useRef(new Animated.Value(sheetHeight)).current;
-  useLayoutEffect(() => {
-    if (!visible) return;
-    translateY.setValue(sheetHeight);
-    const animation = Animated.timing(translateY, { toValue: 0, duration: 300, useNativeDriver: true });
-    animation.start();
-    return () => animation.stop();
-  }, [sheetHeight, translateY, visible]);
-
-  return <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}><View style={styles.sheetRoot}><Pressable style={styles.sheetBackdrop} onPress={onClose} accessibilityLabel="Close" /><Animated.View style={[styles.sheetCard, category && styles.categorySheetCard, height ? { height } : undefined, { transform: [{ translateY }] }]}><Text style={[styles.sheetTitle, { marginBottom: titleGap }]}>{title}</Text>{children}</Animated.View></View></Modal>;
+function Field({label,value,onChange,secure=false,multiline=false,maxLength,keyboardType}:{label:string;value:string;onChange:(v:string)=>void;secure?:boolean;multiline?:boolean;maxLength?:number;keyboardType?:'email-address'|'phone-pad'}){
+ return <View style={styles.formTile}><Text style={styles.formLabel}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} secureTextEntry={secure} multiline={multiline} maxLength={maxLength} autoCapitalize={secure||keyboardType==='email-address'?'none':'sentences'} keyboardType={keyboardType} style={[styles.formInput,multiline&&{minHeight:100,textAlignVertical:'top'}]}/></View>;
 }
-
-function LogoutDialog({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const progress = useRef(new Animated.Value(0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useLayoutEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) setReduceMotion(enabled);
-    });
-    return () => { mounted = false; };
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!visible || reduceMotion) {
-      progress.setValue(1);
-      return;
-    }
-    progress.setValue(0);
-    const animation = Animated.loop(Animated.sequence([
-      Animated.timing(progress, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.delay(1800),
-    ]));
-    animation.start();
-    return () => animation.stop();
-  }, [progress, reduceMotion, visible]);
-
-  return <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}><View style={styles.contextRoot}><Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close dialog" /><Animated.View style={[styles.contextCard, { opacity: progress, transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }] }]}><Text style={styles.contextTitle}>Log out?</Text><Text style={styles.contextDescription}>You can sign in again to view your bookings, rewards and saved stays.</Text><Pressable style={styles.contextConfirm} onPress={() => { onClose(); router.push('/auth/demo?mode=signed-out' as never); }} accessibilityRole="button" accessibilityLabel="Log out"><Text style={styles.contextConfirmText}>Log out</Text></Pressable></Animated.View></View></Modal>;
-}
-
-export function ProfileExperience() {
-  const insets = useSafeAreaInsets();
-  const [name, setName] = useState('Alex Johnson');
-  const [email, setEmail] = useState('alex.johnson@example.com');
-  const [draftName, setDraftName] = useState(name);
-  const [draftEmail, setDraftEmail] = useState(email);
-  const [notifications, setNotifications] = useState(true);
-  const [draftNotifications, setDraftNotifications] = useState(true);
-  const [language, setLanguage] = useState('English (US)');
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const [category, setCategory] = useState('Alex Johnson');
-  const [description, setDescription] = useState('alex.johnson@example.com');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-  useEffect(() => {
-    if (Platform.OS !== 'web' || !dialog) return;
-    const timer = setTimeout(() => (document.activeElement as HTMLElement | null)?.blur(), 100);
-    return () => clearTimeout(timer);
-  }, [dialog]);
-  const closeDialog = () => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setError(''); setDialog(null); };
-  const openEdit = () => { setDraftName(name); setDraftEmail(email); setError(''); setDialog('edit'); };
-  const openPassword = () => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setError(''); setDialog('password'); };
-  const saveProfile = () => {
-    if (!draftName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draftEmail.trim())) { setError('Enter a valid name and email address.'); return; }
-    setName(draftName.trim()); setEmail(draftEmail.trim()); setNotice('Your profile was updated for this demo session.'); setDialog(null);
-  };
-  const previewPassword = () => {
-    if (!currentPassword || newPassword.length < 8 || newPassword !== confirmPassword) { setError('Enter your current password and a matching new password of at least 8 characters.'); return; }
-    setNotice('Your password is unchanged in this demo.'); closeDialog();
-  };
-  const submitReport = () => {
-    if (!description.trim()) { setError('Please describe the issue before submitting.'); return; }
-    setNotice('Issue reported. We will follow up by email.'); setDialog(null); setCategory('Alex Johnson'); setDescription('alex.johnson@example.com');
-  };
-
-  return <View style={[styles.screen, { paddingTop: insets.top }]}>
-    <View style={styles.header}><Pressable style={styles.back} onPress={() => router.replace('/')} accessibilityLabel="Back to home"><Se121SharedAsset source={PROFILE_ASSETS.back} width={16} nativeFallback={<ArrowLeft size={16} color={COLORS.primary} />} /></Pressable><Text style={styles.brand}>StayFinder</Text><View style={styles.back} /></View>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.profileCard}><View style={styles.avatarShadow}><Image source={PROFILE_ASSETS.avatar} style={styles.avatar} /></View><View style={styles.profileInfo}><Text style={styles.name} numberOfLines={1}>{name}</Text><Text style={styles.email} numberOfLines={1}>{email}</Text><Pressable style={styles.editButton} onPress={openEdit} accessibilityRole="button" accessibilityLabel="Edit profile"><Text style={styles.editText}>Edit Profile</Text></Pressable></View></View>
-      {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      <Pressable style={styles.rewardCard} onPress={() => router.push('/rewards')} accessibilityLabel="View rewards wallet"><View pointerEvents="none" style={styles.rewardGlow} /><View style={styles.rewardTop}><Text style={styles.rewardLabel}>StayFinder Rewards</Text><Se121SharedAsset source={PROFILE_ASSETS.rewardStar} width={20} nativeFallback={<Star size={20} color={COLORS.primaryLight} />} /></View><View style={styles.pointsLine}><Text style={styles.points}>24,500</Text><Text style={styles.pointsUnit}>pts</Text></View><View style={styles.walletButton}><Text style={styles.walletText}>View Wallet</Text><Se121SharedAsset source={PROFILE_ASSETS.walletArrow} width={9.33333} nativeFallback={<ChevronRight size={9.33333} color={COLORS.primaryActive} />} /></View></Pressable>
-      <View style={styles.menuCard}>
-        <MenuRow title="My Bookings" icon={CalendarDays} asset={PROFILE_ASSETS.bookings} onPress={() => router.push('/(tabs)/bookings')} />
-        <MenuRow title="Wishlist" icon={Heart} asset={PROFILE_ASSETS.wishlist} onPress={() => router.push('/(tabs)/wishlist')} />
-        <MenuRow title="Rewards Wallet" icon={Wallet} asset={PROFILE_ASSETS.wallet} onPress={() => router.push('/rewards')} />
-        <MenuRow title="Language" icon={Globe2} asset={PROFILE_ASSETS.language} value={language} onPress={() => setDialog('language')} />
-        <MenuRow title="Settings" icon={Settings} asset={PROFILE_ASSETS.settings} onPress={() => { setDraftNotifications(notifications); setDialog('settings'); }} />
-        <MenuRow title="Report an Issue" icon={CircleHelp} asset={PROFILE_ASSETS.report} onPress={() => { setCategory('Alex Johnson'); setDescription('alex.johnson@example.com'); setError(''); setDialog('report'); }} />
-      </View>
-      <Pressable style={styles.signedOutButton} onPress={() => setDialog('logout')} accessibilityLabel="Log out"><Se121SharedAsset source={PROFILE_ASSETS.logout} width={18} nativeFallback={<LogOut size={18} color={COLORS.validation} />} /><Text style={styles.signedOutText}>Log Out</Text></Pressable>
-    </ScrollView>
-
-    <ProfileSheet visible={dialog === 'settings'} onClose={closeDialog} title="Settings" height={348}>
-      <View style={styles.settingRow}><Text style={styles.notificationLabel}>Booking notifications</Text>{Platform.OS === 'web' && draftNotifications ? <Pressable onPress={() => setDraftNotifications(false)} accessibilityRole="switch" accessibilityLabel="Toggle booking notifications" accessibilityState={{ checked: true }} aria-checked={true} style={styles.notificationToggle}><Se121SharedAsset source={PROFILE_ASSETS.settingsOn} width={50} height={28} nativeFallback={<Switch value={draftNotifications} onValueChange={setDraftNotifications} trackColor={{ false: COLORS.borderSage, true: COLORS.actionTeal }} thumbColor={COLORS.bgWhite} />} /></Pressable> : <Switch value={draftNotifications} onValueChange={setDraftNotifications} accessibilityLabel="Toggle booking notifications" trackColor={{ false: COLORS.borderSage, true: COLORS.actionTeal }} thumbColor={COLORS.bgWhite} />}</View>
-      <Pressable style={[styles.settingRow, styles.changePasswordRow]} onPress={openPassword} accessibilityRole="button" accessibilityLabel="Change password"><View><Text style={styles.settingText}>Change Password</Text><Text style={styles.settingHint}>Update your account password</Text></View><Se121SharedAsset source={PROFILE_ASSETS.settingsChevron} width={18} nativeFallback={<ChevronRight size={18} color={COLORS.inkSubtle} />} /></Pressable>
-      <Pressable style={styles.sheetPrimaryButton} onPress={() => { setNotifications(draftNotifications); setNotice('Settings were saved for this demo session.'); closeDialog(); }}><Text style={styles.settingsSubmitText}>Save settings</Text></Pressable>
-      <Pressable style={styles.settingsCancelButton} onPress={closeDialog}><Text style={styles.settingsCancelText}>Cancel</Text></Pressable>
-    </ProfileSheet>
-    <ProfileSheet visible={dialog === 'category'} onClose={() => setDialog('report')} title="Choose category" height={388} titleGap={12} category>
-      {CATEGORIES.map((item) => <Pressable key={item} style={styles.categoryRow} onPress={() => { setCategory(item); setDialog('report'); }}><Text style={styles.settingText}>{item}</Text></Pressable>)}
-    </ProfileSheet>
-    <ProfileSheet visible={dialog === 'language'} onClose={closeDialog} title="Language" height={268} titleGap={12}>
-      {['English (US)', 'Tiếng Việt', 'Français'].map((option, index) => <Pressable key={option} style={[styles.choiceRow, index === 2 && styles.lastChoiceRow]} onPress={() => { setLanguage(option); closeDialog(); }} accessibilityRole="button" accessibilityLabel={option}><Text style={styles.choiceText}>{option}</Text></Pressable>)}
-    </ProfileSheet>
-    <LogoutDialog visible={dialog === 'logout'} onClose={closeDialog} />
-
-    <Modal key={dialog} visible={dialog === 'edit' || dialog === 'password' || dialog === 'report'} transparent animationType="fade" onRequestClose={closeDialog}><KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView contentContainerStyle={styles.modalCenter} keyboardShouldPersistTaps="handled"><View style={[styles.modalCard, dialog === 'edit' ? styles.editModalCard : styles.tallModalCard]}>
-      {dialog === 'edit' && <><Text style={styles.modalTitle}>Edit profile</Text><Text style={styles.modalHint}>Keep your contact information up to date.</Text><View style={[styles.formTile, styles.editFormTile]}><Text style={[styles.formLabel, styles.editFormLabel]}>Full name</Text><TextInput accessibilityLabel="Full name" value={draftName} onChangeText={setDraftName} style={[styles.formInput, styles.editFormInput]} /></View><View style={[styles.formTile, styles.editFormTile]}><Text style={[styles.formLabel, styles.editFormLabel]}>Email</Text><TextInput accessibilityLabel="Email" value={draftEmail} onChangeText={setDraftEmail} keyboardType="email-address" autoCapitalize="none" style={[styles.formInput, styles.editFormInput]} /></View>{!!error && <Text style={styles.error}>{error}</Text>}<Pressable style={styles.submitButton} onPress={saveProfile}><Text style={[styles.submitText, styles.editSubmitText]}>Save changes</Text></Pressable></>}
-      {dialog === 'password' && <><Text style={styles.modalTitle}>Change password</Text><Text style={styles.modalHint}>Use a strong password you don’t use elsewhere.</Text>{([{ label: 'Current password', value: currentPassword, setter: setCurrentPassword }, { label: 'New password', value: newPassword, setter: setNewPassword }, { label: 'Confirm new password', value: confirmPassword, setter: setConfirmPassword }] as const).map((field) => <View key={field.label} style={styles.formTile}><Text style={styles.formLabel}>{field.label}</Text><TextInput accessibilityLabel={field.label} value={field.value} onChangeText={field.setter} secureTextEntry style={styles.formInput} /></View>)}{!!error && <Text style={styles.error}>{error}</Text>}<Pressable style={styles.submitButton} onPress={previewPassword}><Text style={styles.submitText}>Change password</Text></Pressable></>}
-      {dialog === 'report' && <><Text style={styles.modalTitle}>Report an issue</Text><Text style={styles.modalHint}>Review the details before confirming.</Text><Pressable style={[styles.formTile, styles.reportCategoryTile]} onPress={() => setDialog('category')} accessibilityRole="button" accessibilityLabel="Choose report category"><Text style={styles.formLabel}>Category</Text><View style={styles.categoryValue}><Text style={styles.formValue}>{category}</Text><ChevronDown size={20} color={COLORS.inkSoft} /></View></Pressable><View style={[styles.formTile, styles.reportDescriptionTile]}><Text style={[styles.formLabel, styles.reportDescriptionLabel]}>Description</Text><TextInput accessibilityLabel="Description" value={description} onChangeText={setDescription} multiline placeholderTextColor={COLORS.inkSubtle} style={[styles.formInput, styles.descriptionInput]} /></View>{!!error && <Text style={styles.error}>{error}</Text>}<Pressable style={styles.submitButton} onPress={submitReport}><Text style={styles.submitText}>Submit report</Text></Pressable></>}
-      <Pressable style={[styles.cancelButton, dialog === 'edit' && styles.editCancelButton]} onPress={closeDialog}><Text style={[styles.cancelText, dialog === 'edit' && styles.editCancelText]}>Cancel</Text></Pressable>
-    </View></ScrollView></KeyboardAvoidingView></Modal>
-  </View>;
+export function ProfileExperience(){
+ const insets=useSafeAreaInsets(),{store,state}=useProfile(),{user,session,authApi}=useSession(),{store:rewardsStore,state:rewards,ready}=useRewards();
+ const[dialog,setDialog]=useState<Dialog>(null),[draftName,setDraftName]=useState(''),[draftPhone,setDraftPhone]=useState(''),[draftEmail,setDraftEmail]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[draftNotifications,setDraftNotifications]=useState(true),[category,setCategory]=useState<SupportReportRequest['category']>('Booking'),[description,setDescription]=useState(''),[notice,setNotice]=useState(''),[error,setError]=useState(''),[authBusy,setAuthBusy]=useState(false);
+ const profile=state.profile,name=profile?.fullName??user?.fullName??'Sign in',email=profile?.email??user?.email??'',locale=state.preferences?.language??'en-US',busy=state.busy||state.loading||authBusy;
+ const close=()=>{setDialog(null);setCurrentPassword('');setNewPassword('');setConfirmPassword('');setError('');};
+ useEffect(()=>{close();setNotice('');setDescription('');setAuthBusy(false);},[user?.id]);
+ useEffect(()=>{if(ready&&user)void rewardsStore.load().catch(()=>{});},[ready,rewardsStore,user?.id]);
+ const open=(next:Dialog)=>{if(!user){router.push('/auth/demo');return;}setError('');setNotice('');setDialog(next);setCurrentPassword('');setNewPassword('');setConfirmPassword('');
+  if(next==='edit'){setDraftName(name);setDraftPhone(profile?.phone??'');}
+  if(next==='email')setDraftEmail(email);
+  if(next==='settings')setDraftNotifications(state.preferences?.bookingNotifications??true);
+  if(next==='report'){setCategory(state.pendingReport?.body.category??'Booking');setDescription(state.pendingReport?.body.description??'');}
+ };
+ const action=async(job:()=>Promise<string>)=>{if(busy)return;const generation=session.getGeneration();setAuthBusy(true);setError('');setNotice('');
+  try{const message=await job();if(generation===session.getGeneration()){close();setNotice(message);}}
+  catch(e){if(generation===session.getGeneration())setError(e instanceof Error?e.message:'Unable to save. Please retry.');}
+  finally{if(generation===session.getGeneration())setAuthBusy(false);}
+ };
+ const save=()=>{
+  if(!draftName.trim()||draftName.trim().length>100){setError('Enter a name of 1–100 characters.');return;}
+  void action(async()=>{await store.save({fullName:draftName.trim(),phone:draftPhone.trim()||null});return 'Your profile was saved.';});
+ };
+ const changePassword=()=>{
+  if(!currentPassword||newPassword.length<8||newPassword!==confirmPassword){setError('Enter your current password and a matching new password of at least 8 characters.');return;}
+  void action(async()=>{await authApi.changePassword({currentPassword,newPassword});session.clearUserState();close();router.replace('/auth/demo?reason=password-changed' as never);return '';});
+ };
+ const changeEmail=()=>{
+  if(!currentPassword||!/^\S+@\S+\.\S+$/.test(draftEmail.trim())){setError('Enter a valid new email and your current password.');return;}
+  void action(async()=>{await authApi.changeEmail({currentPassword,newEmail:draftEmail.trim()});session.clearUserState();close();router.replace('/auth/demo?reason=email-changed' as never);return '';});
+ };
+ const report=()=>{
+  if(!description.trim()||description.length>5000){setError('Describe the issue in 1–5000 characters.');return;}
+  void action(async()=>{const r=await store.report({category,description:description.trim(),bookingId:null});setDescription('');return 'Report '+r.reportId+' was submitted.';});
+ };
+ const submit=(title:string,onPress:()=>void)=><Pressable style={[styles.submitButton,busy&&{opacity:0.5}]} disabled={busy} onPress={onPress} accessibilityRole="button"><Text style={styles.submitText}>{busy?'Please wait…':title}</Text></Pressable>;
+ return <View style={[styles.screen,{paddingTop:insets.top}]}><View style={styles.header}><Pressable style={styles.back} onPress={()=>router.replace('/')} accessibilityLabel="Back to home"><ArrowLeft size={20} color={COLORS.primary}/></Pressable><Text style={styles.brand}>StayFinder</Text><View style={styles.back}/></View>
+ <ScrollView contentContainerStyle={[styles.content,{paddingBottom:100+insets.bottom}]} keyboardShouldPersistTaps="handled">
+ <View style={styles.profileCard}><View style={styles.avatarShadow}>{profile?.avatarUrl?<Image source={{uri:profile.avatarUrl}} style={styles.avatar}/>:<View style={[styles.avatar,{alignItems:'center',justifyContent:'center',backgroundColor:COLORS.surfaceMint}]}><Text style={styles.name}>{name.slice(0,1)}</Text></View>}</View><View style={styles.profileInfo}><Text style={styles.name} numberOfLines={1}>{name}</Text><Text style={styles.email} numberOfLines={1}>{email}</Text><Pressable style={[styles.editButton,{minHeight:44}]} disabled={busy} onPress={()=>open('edit')}><Text style={styles.editText}>{user?'Edit Profile':'Sign in'}</Text></Pressable></View></View>
+ {state.loading?<ActivityIndicator color={COLORS.primary}/>:null}{notice?<Text style={styles.notice}>{notice}</Text>:null}{state.error?<Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>:null}{!dialog&&error?<Text style={styles.error}>{error}</Text>:null}
+ <Pressable style={{minHeight:44,justifyContent:'center'}} disabled={busy} onPress={()=>void store.load()}><Text style={styles.editText}>Refresh profile</Text></Pressable>
+ <Pressable style={styles.rewardCard} onPress={()=>router.push('/rewards')} accessibilityLabel="View rewards wallet"><View pointerEvents="none" style={styles.rewardGlow}/><View style={styles.rewardTop}><Text style={styles.rewardLabel}>StayFinder Rewards</Text><Star size={20} color={COLORS.primaryLight}/></View><View style={styles.pointsLine}><Text style={styles.points}>{rewards.wallet?rewards.wallet.availablePoints.toLocaleString(locale):'—'}</Text><Text style={styles.pointsUnit}>pts</Text></View><View style={styles.walletButton}><Text style={styles.walletText}>View Wallet</Text><ChevronRight size={14} color={COLORS.primary}/></View></Pressable>
+ <View style={styles.menuCard}><MenuRow title="My Bookings" icon={CalendarDays} onPress={()=>router.push('/(tabs)/bookings')}/><MenuRow title="Wishlist" icon={Heart} onPress={()=>router.push('/(tabs)/wishlist')}/><MenuRow title="Rewards Wallet" icon={Wallet} onPress={()=>router.push('/rewards')}/><MenuRow title="Language" icon={Globe2} value={languages[locale]} onPress={()=>open('language')}/><MenuRow title="Settings" icon={Settings} onPress={()=>open('settings')}/><MenuRow title="Report an Issue" icon={CircleHelp} onPress={()=>open('report')}/></View>
+ {user?<Pressable style={styles.signedOutButton} onPress={()=>open('logout')}><LogOut size={18} color={COLORS.validation}/><Text style={styles.signedOutText}>Log Out</Text></Pressable>:null}</ScrollView>
+ <Modal visible={dialog!==null} transparent animationType="fade" onRequestClose={()=>{if(!busy)close();}}><KeyboardAvoidingView style={[styles.modalBackdrop,{backgroundColor:'rgba(0,0,0,0.45)'}]} behavior={Platform.OS==='ios'?'padding':undefined}><ScrollView contentContainerStyle={[styles.modalCenter,{paddingTop:24+insets.top,paddingBottom:24+insets.bottom}]} keyboardShouldPersistTaps="handled"><View style={styles.modalCard}>
+ {dialog==='edit'?<><Text style={styles.modalTitle}>Edit profile</Text><Text style={styles.modalHint}>Update your name and phone.</Text><Field label="Full name" value={draftName} onChange={setDraftName} maxLength={100}/><Field label="Phone" value={draftPhone} onChange={setDraftPhone} keyboardType="phone-pad" maxLength={16}/>{submit('Save changes',save)}</>:null}
+ {dialog==='settings'?<><Text style={styles.modalTitle}>Settings</Text><View style={styles.settingRow}><Text style={styles.notificationLabel}>Booking notifications</Text><Switch value={draftNotifications} onValueChange={setDraftNotifications} disabled={busy} accessibilityLabel="Booking notifications"/></View><Pressable style={styles.settingRow} onPress={()=>open('password')} disabled={busy}><Text style={styles.settingText}>Change password</Text><ChevronRight size={20}/></Pressable><Pressable style={styles.settingRow} onPress={()=>open('email')} disabled={busy}><Text style={styles.settingText}>Change email</Text><ChevronRight size={20}/></Pressable>{submit('Save settings',()=>void action(async()=>{await store.savePreferences({bookingNotifications:draftNotifications});return 'Settings were saved.';}))}</>:null}
+ {dialog==='language'?<><Text style={styles.modalTitle}>Language</Text><Text style={styles.modalHint}>Controls number and date formatting. Screen labels remain in English.</Text>{(Object.keys(languages) as Preferences['language'][]).map(value=><Pressable key={value} style={styles.choiceRow} disabled={busy} onPress={()=>void action(async()=>{await store.savePreferences({language:value});return 'Formatting preference saved.';})}><Text style={styles.choiceText}>{languages[value]}{locale===value?' ✓':''}</Text></Pressable>)}</>:null}
+ {dialog==='password'?<><Text style={styles.modalTitle}>Change password</Text><Text style={styles.modalHint}>Sign in again after saving.</Text><Field label="Current password" value={currentPassword} onChange={setCurrentPassword} secure/><Field label="New password" value={newPassword} onChange={setNewPassword} secure/><Field label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} secure/>{submit('Change password',changePassword)}</>:null}
+ {dialog==='email'?<><Text style={styles.modalTitle}>Change email</Text><Text style={styles.modalHint}>Sign in again after saving.</Text><Field label="New email" value={draftEmail} onChange={setDraftEmail} keyboardType="email-address" maxLength={254}/><Field label="Current password" value={currentPassword} onChange={setCurrentPassword} secure/>{submit('Change email',changeEmail)}</>:null}
+ {dialog==='report'?<><Text style={styles.modalTitle}>Report an issue</Text><Text style={styles.modalHint}>Choose a category and describe the issue. Reports are saved in the app.</Text><View style={{flexDirection:'row',flexWrap:'wrap',gap:8,marginBottom:16}}>{categories.map(c=><Pressable key={c} style={[styles.editButton,{minHeight:44,width:'auto',paddingHorizontal:12},category===c&&{borderColor:COLORS.primary}]} disabled={!!state.pendingReport||busy} onPress={()=>setCategory(c)}><Text style={styles.editText}>{c}</Text></Pressable>)}</View><Field label="Description" value={description} onChange={state.pendingReport?()=>{}:setDescription} multiline maxLength={5000}/>{state.pendingReport?<Text style={styles.modalHint}>Retry with the same details to recover the pending report.</Text>:null}{submit(state.pendingReport?'Retry report':'Submit report',report)}</>:null}
+ {dialog==='logout'?<><Text style={styles.modalTitle}>Log out?</Text><Text style={styles.modalHint}>Sign in again to view your saved bookings and rewards.</Text>{submit('Log out',()=>void action(async()=>{await session.logout();router.replace('/auth/demo?mode=signed-out' as never);return '';}))}</>:null}
+ {error?<Text accessibilityRole="alert" style={[styles.error,{marginTop:12}]}>{error}</Text>:null}<Pressable style={styles.cancelButton} disabled={busy} onPress={close}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+ </View></ScrollView></KeyboardAvoidingView></Modal></View>;
 }
 
 const styles = StyleSheet.create({

@@ -28,7 +28,9 @@ class CatalogPostgresIntegrationTest {
     var cards=repo.search(req,PageRequest.of(0,10),null,now);
     assertEquals(1,cards.totalElements());assertEquals(29900,cards.items().getFirst().nightlyPrice().amountCents());assertFalse(cards.items().getFirst().isFavorite());
     assertNull(cards.items().getFirst().ratingAverage());
-    j.update("insert into reviews(id,user_id,accommodation_id,rating,comment) values(?,?,?,4,'Synthetic review')",UUID.randomUUID(),user,stay);
+    UUID reviewBooking=UUID.randomUUID();
+    j.update("insert into bookings(id,user_id,status,payment_status) values(?,?,'completed','success')",reviewBooking,user);
+    j.update("insert into reviews(id,user_id,booking_id,accommodation_id,rating,comment,created_at,updated_at) values(?,?,?,?,4,'Synthetic review',?,?)",UUID.randomUUID(),user,reviewBooking,stay,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now));
     assertEquals(4.0,repo.findCard(stay,null,now).orElseThrow().ratingAverage());
     UUID favorite=UUID.randomUUID();j.update("insert into favorites(id,user_id,accommodation_id) values(?,?,?)",favorite,user,stay);
     assertTrue(repo.findCard(stay,user,now).orElseThrow().isFavorite());

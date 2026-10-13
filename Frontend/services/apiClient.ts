@@ -23,12 +23,18 @@ export class ApiClient {
   constructor(options: Options) { this.options = options; this.fetcher = options.fetch ?? globalThis.fetch.bind(globalThis); this.session = options.session; }
   setSession(session: SessionBridge): void { this.session = session; }
 
+  isAuthenticated():boolean{return !!this.session?.getAccessToken();}
+  mediaUrl(path:string):string{
+    if(!/^\/api\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content\?expires=\d{1,16}&signature=[0-9a-f]{64}$/.test(path))throw new ApiError('BAD_RESPONSE',502,'Image link is invalid. Refresh and try again.');
+    return new URL(path,new URL(this.url('/media')).origin).toString();
+  }
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = this.url(path);
     const auth = options.auth ?? true;
     const generation = this.session?.getGeneration();
     const method = options.method ?? 'GET';
-    const body = options.body === undefined ? undefined : JSON.stringify(options.body);
+    const multipart=typeof FormData!=='undefined'&&options.body instanceof FormData;
+    const body = options.body === undefined ? undefined : multipart ? options.body as FormData : JSON.stringify(options.body);
     const originalToken = auth ? this.session?.getAccessToken() : null;
     const checkGeneration = () => {
       if (auth && generation !== this.session?.getGeneration()) throw new ApiError('SESSION_CHANGED', 409, 'Your session changed. Please try again.');
@@ -68,7 +74,7 @@ export class ApiClient {
     return url.toString();
   }
 
-  private async send(url: string, method: string, body: string | undefined, options: RequestOptions, token?: string | null): Promise<{ status: number; ok: boolean; data: unknown }> {
+  private async send(url: string, method: string, body: string | FormData | undefined, options: RequestOptions, token?: string | null): Promise<{ status: number; ok: boolean; data: unknown }> {
     const controller = new AbortController();
     let timedOut = false;
     const abort = () => controller.abort();
@@ -76,7 +82,7 @@ export class ApiClient {
     options.signal?.addEventListener('abort', abort, { once: true });
     const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, this.options.timeoutMs ?? 15_000);
     const headers: Record<string, string> = { Accept: 'application/json', 'X-Client-Platform': this.options.platform };
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (body !== undefined&&typeof body==='string') headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = 'Bearer ' + token;
     if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
     const aborted = new Promise<never>((resolve, reject) => controller.signal.addEventListener('abort', () => reject(
