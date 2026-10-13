@@ -51,7 +51,8 @@ public class BookingServiceImpl implements BookingService {
   SelectionPolicy.validate(new io.github.hienpham0344.stayfinder.common.dto.QuoteSelection(q.getAccommodationId(),q.getRoomId(),
    q.getCheckIn(),q.getCheckOut(),q.getQuantity(),q.getAdults(),q.getChildren()),BookingQuoteService.timezone(stay),clock);
   BookingQuoteService.validateSellablePricing(room,stay);
-  if(room.getStatus()!=RoomStatus.AVAILABLE||stay.getStatus()!=AccommodationStatus.ACTIVE||!q.getAccommodationId().equals(room.getAccommodationId()))
+  if(room.getStatus()!=RoomStatus.AVAILABLE||stay.getStatus()!=AccommodationStatus.ACTIVE
+   ||!q.getRoomId().equals(room.getId())||!q.getAccommodationId().equals(stay.getId())||!q.getAccommodationId().equals(room.getAccommodationId()))
    throw new BusinessException(ErrorCode.ROOM_NOT_AVAILABLE);
   if(q.getNightlyPriceCents()!=room.getNightlyPriceCents()||q.getCleaningFeeCents()!=stay.getCleaningFeeCents()
    ||q.getServiceFeeCents()!=stay.getServiceFeeCents()||q.getTaxCents()!=0||room.getMaxGuestsPerRoom()==null

@@ -38,11 +38,11 @@ class BookingQuoteServiceTest {
   when(stays.findById(stayId)).thenReturn(Optional.of(stay));
   when(rooms.findById(roomId)).thenReturn(Optional.of(room));
   when(inventory.remaining(eq(roomId),any(),any(),any())).thenReturn(3);
-  when(rewards.preview(eq(user),anyLong(),isNull(),eq(0),any())).thenReturn(new RewardPolicy.DiscountPreview("none",0,0,null));
+  when(rewards.preview(eq(user),anyLong(),isNull(),eq(0L),any())).thenReturn(new RewardPolicy.DiscountPreview("none",0,0,null));
   when(quotes.save(any())).thenAnswer(i->i.getArgument(0));
  }
  QuoteRequest request(LocalDate start,LocalDate end,int quantity,int adults,int children,UUID voucher,Integer points){
-  return new QuoteRequest(stayId,roomId,start,end,quantity,adults,children,voucher,points);
+  return new QuoteRequest(stayId,roomId,start,end,quantity,adults,children,voucher,points==null?null:points.longValue());
  }
  @Test void calculatesServerUsdLineItemsAndPersistsTenMinuteQuoteWithoutHoldingAnything(){
   var result=service.create(user,request(in,out,1,2,0,null,null));
@@ -98,6 +98,13 @@ class BookingQuoteServiceTest {
   room.setNightlyPriceCents(29900L);stay.setCleaningFeeCents(null);
   assertThrows(BusinessException.class,()->service.create(user,request(in,out,1,1,0,null,null)));
   verifyNoInteractions(quotes);
+ }
+ @Test void longAvailablePointRequestCanBeCappedToExactRoomDiscountWithoutIntOverflow(){
+  room.setNightlyPriceCents(1_000_000_000L);
+  when(rewards.preview(user,3_000_000_000L,null,3_000_000_000L,clock.instant())).thenReturn(new RewardPolicy.DiscountPreview("points",600_000_000L,600_000_000L,null));
+  var result=service.create(user,new QuoteRequest(stayId,roomId,in,out,1,1,0,null,3_000_000_000L));
+  assertEquals(3_000_000_000L,result.rewardPoints());assertEquals(600_000_000L,result.discount().amountCents());
+  assertEquals(2_400_013_500L,result.total().amountCents());
  }
  @Test void quotesKeepOldAmountsWhenCatalogChangesAndNewQuotesExposeDifferentVersion(){
   var before=service.create(user,request(in,out,1,1,0,null,null));

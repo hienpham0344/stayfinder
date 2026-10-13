@@ -26,6 +26,7 @@ public enum ErrorCode {
     CANCELLATION_NOT_ALLOWED("CANCELLATION_NOT_ALLOWED", "Cancellation is not allowed", HttpStatus.CONFLICT),
     BOOKING_INVALID_STATE("BOOKING_INVALID_STATE", "Invalid booking state", HttpStatus.CONFLICT),
     BOOKING_SNAPSHOT_REQUIRED("BOOKING_SNAPSHOT_REQUIRED", "Booking snapshot schema is required", HttpStatus.CONFLICT),
+    PAYMENT_AMOUNT_UNSUPPORTED("PAYMENT_AMOUNT_UNSUPPORTED", "Amount is outside the SePay Test Mode simulation range; use pay at property", HttpStatus.UNPROCESSABLE_ENTITY),
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Payment not found", HttpStatus.NOT_FOUND),
     IDEMPOTENCY_CONFLICT("IDEMPOTENCY_CONFLICT", "Request key was already used with different content", HttpStatus.CONFLICT),
     INSUFFICIENT_POINTS("INSUFFICIENT_POINTS", "Insufficient available points", HttpStatus.UNPROCESSABLE_ENTITY),

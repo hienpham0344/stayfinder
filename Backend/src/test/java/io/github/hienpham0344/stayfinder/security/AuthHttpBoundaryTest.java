@@ -83,6 +83,12 @@ class AuthHttpBoundaryTest {
             .andExpect(status().isBadRequest());
         verify(bookings,never()).create(any(),any(),any());
     }
+    @Test void fractionalGuestCountIsRejectedRatherThanRoundedDown() throws Exception {
+        mvc.perform(post("/api/booking-quotes").header("Authorization","Bearer "+accessToken()).contentType("application/json")
+            .content("{\"accommodationId\":\""+UUID.randomUUID()+"\",\"roomId\":\""+UUID.randomUUID()+"\",\"checkIn\":\"2026-11-01\",\"checkOut\":\"2026-11-04\",\"quantity\":1,\"adults\":1.9,\"children\":0}"))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        verifyNoInteractions(quotes);
+    }
     @Test void quoteCannotAcceptClientOwnerOrPriceAndUnknownStatusFilterIsRejected() throws Exception {
         mvc.perform(post("/api/booking-quotes").header("Authorization","Bearer "+accessToken()).contentType("application/json")
             .content("{\"userId\":\""+UUID.randomUUID()+"\",\"nightlyPriceCents\":1}")).andExpect(status().isBadRequest());

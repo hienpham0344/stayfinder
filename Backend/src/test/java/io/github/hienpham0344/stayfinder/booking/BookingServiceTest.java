@@ -105,6 +105,11 @@ class BookingServiceTest {
   assertThrows(BusinessException.class,()->service.create(user,bad,"create-2"));
   verifyNoInteractions(locks,snapshots,events);
  }
+ @Test void aDifferentLockedRoomCannotAuthorizeSelectedInventory(){
+  room.setId(UUID.randomUUID());
+  assertEquals(ErrorCode.ROOM_NOT_AVAILABLE,assertThrows(BusinessException.class,()->service.create(user,request("pay_at_property"),"create-1")).getErrorCode());
+  verifyNoInteractions(snapshots,events);
+ }
  @Test void quoteOwnedBySomeoneElseCannotLeakOrCreateBooking(){
   q.setUserId(UUID.randomUUID());
   assertEquals(ErrorCode.QUOTE_NOT_FOUND,assertThrows(BusinessException.class,()->service.create(user,request("pay_at_property"),"create-1")).getErrorCode());

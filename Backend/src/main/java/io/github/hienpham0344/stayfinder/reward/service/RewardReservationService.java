@@ -14,7 +14,7 @@ public class RewardReservationService implements RewardReservationOperations {
  public RewardReservationService(RewardWalletLocks locks,RewardWalletRepository wallets,RewardClaimRepository claims,RewardReservationRepository reservations,
   RewardLedgerEntryRepository ledger,Clock clock,io.github.hienpham0344.stayfinder.common.events.DomainEventPublisher events){this.locks=locks;this.wallets=wallets;this.claims=claims;this.reservations=reservations;this.ledger=ledger;this.clock=clock;this.events=events;}
  @Override @Transactional(readOnly=true)
- public RewardPolicy.DiscountPreview preview(UUID userId,long subtotal,UUID claimId,int points,Instant now){
+ public RewardPolicy.DiscountPreview preview(UUID userId,long subtotal,UUID claimId,long points,Instant now){
   var wallet=wallets.findById(userId).orElseGet(RewardWallet::new);RewardWalletLocks.validate(wallet);
   RewardPolicy.Voucher voucher=null;
   if(claimId!=null){

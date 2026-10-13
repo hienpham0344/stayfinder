@@ -36,7 +36,7 @@ CREATE TABLE booking_quotes (
  check_in date NOT NULL,check_out date NOT NULL CHECK(check_out>check_in AND check_out-check_in<=90),
  quantity integer NOT NULL CHECK(quantity BETWEEN 1 AND 10),adults integer NOT NULL CHECK(adults BETWEEN 1 AND 20),
  children integer NOT NULL CHECK(children BETWEEN 0 AND 20),max_guests_per_room integer NOT NULL CHECK(max_guests_per_room>0),
- voucher_id uuid REFERENCES reward_claims(id),reward_points integer NOT NULL CHECK(reward_points>=0 AND reward_points%100=0),
+ voucher_id uuid REFERENCES reward_claims(id),reward_points bigint NOT NULL CHECK(reward_points BETWEEN 0 AND 9007199254740991 AND reward_points%100=0),
  reserved_points bigint NOT NULL CHECK(reserved_points BETWEEN 0 AND 9007199254740991),
  discount_source varchar(16) NOT NULL CHECK(discount_source IN ('none','points','voucher')),
  nights integer NOT NULL CHECK(nights=check_out-check_in),price_version bigint NOT NULL CHECK(price_version BETWEEN 1 AND 9007199254740991),
@@ -76,7 +76,7 @@ ALTER TABLE bookings ADD CONSTRAINT booking_owned_quote_fk FOREIGN KEY(quote_id,
 ALTER TABLE bookings ADD CONSTRAINT ck_quote_booking_contract CHECK(quote_id IS NULL OR (
  user_id IS NOT NULL AND confirmation_code IS NOT NULL AND total_price_cents IS NOT NULL AND payment_method IS NOT NULL
  AND guest_full_name IS NOT NULL AND length(btrim(guest_full_name)) BETWEEN 1 AND 100
- AND guest_email IS NOT NULL AND guest_phone ~ '^[+]?[0-9]{9,15}$'
+ AND guest_email IS NOT NULL AND guest_phone IS NOT NULL AND guest_phone ~ '^[+]?[0-9]{9,15}$'
  AND payment_status IS NOT NULL AND refund_status IS NOT NULL AND created_at IS NOT NULL
  AND (payment_method<>'bank_transfer' OR hold_expires_at IS NOT NULL)
  AND (payment_status NOT IN ('success','refunded') OR paid_at IS NOT NULL)));

@@ -16,7 +16,7 @@ public class BookingQuote {
  private int adults;
  private int children;
  @Column(name="voucher_id") private UUID voucherId;
- @Column(name="reward_points") private int rewardPoints;
+ @Column(name="reward_points") private long rewardPoints;
  @Column(name="reserved_points") private long reservedPoints;
  @Column(name="discount_source") private String discountSource;
  private int nights;
