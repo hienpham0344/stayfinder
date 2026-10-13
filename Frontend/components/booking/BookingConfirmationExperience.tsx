@@ -1,7 +1,6 @@
-import React from 'react';
-import { Text } from 'react-native';
-import { router } from 'expo-router';
-import { Action, CatalogPage, catalogStyles as s } from '../catalog/CatalogUi';
-export function BookingConfirmationExperience(){
- return <CatalogPage title="Booking status" back><Text style={s.text}>No confirmed booking is available here.</Text><Action title="View my bookings" onPress={()=>router.replace('/bookings')}/></CatalogPage>;
+import React,{useEffect}from'react';import{Text}from'react-native';import{router,useLocalSearchParams}from'expo-router';import{Action,CatalogPage,ResourceStatus,catalogStyles as s}from'../catalog/CatalogUi';import{useSession}from'../../state/SessionProvider';import{useBookingDraft}from'../../state/BookingDraftProvider';import{BookingStatus,QuoteSummary}from'./TransactionSummary';
+export function BookingConfirmationExperience(){const {id}=useLocalSearchParams<{id?:string}>(),{user}=useSession(),{store,state,ready,initialError}=useBookingDraft();
+ useEffect(()=>{if(ready&&user&&id)void store.resume(id).catch(()=>{});},[store,ready,id,user?.id]);
+ const b=state.booking?.id===id?state.booking:null;
+ return <CatalogPage title="Booking status" back>{!user?<Action title="Sign in to view booking" onPress={()=>router.push({pathname:'/auth/demo',params:{returnTo:'/booking/confirmation?id='+encodeURIComponent(id??'')}})}/>:<><ResourceStatus loading={!ready||state.busy} error={initialError||state.error} retry={()=>{if(id)void store.resume(id).catch(()=>{});}}/>{b?<><BookingStatus booking={b} payment={state.payment}/><QuoteSummary quote={b.quote}/>{b.status==='pending'&&<Action title="Open payment instructions" onPress={()=>router.replace('/booking/checkout')}/>}</>:!state.busy&&<Text style={s.text}>No booking is available here.</Text>}<Action title="View my bookings" onPress={()=>router.replace('/bookings')}/></>}</CatalogPage>;
 }

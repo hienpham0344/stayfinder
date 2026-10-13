@@ -7,6 +7,8 @@ import { COLORS } from '../constants/tokens';
 import { SessionProvider } from '../state/SessionProvider';
 import { CatalogProvider } from '../state/CatalogProvider';
 import { FavoritesProvider } from '../state/FavoritesProvider';
+import {BookingDraftProvider} from '../state/BookingDraftProvider';
+import {RewardsProvider} from '../state/RewardsProvider';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -21,7 +23,7 @@ export default function RootLayout() {
   }
 
   return (
-    <SessionProvider><CatalogProvider><FavoritesProvider>
+    <SessionProvider><CatalogProvider><FavoritesProvider><BookingDraftProvider><RewardsProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -33,6 +35,6 @@ export default function RootLayout() {
         <Stack.Screen name="room/[id]" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="booking/checkout" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
-    </FavoritesProvider></CatalogProvider></SessionProvider>
+    </RewardsProvider></BookingDraftProvider></FavoritesProvider></CatalogProvider></SessionProvider>
   );
 }
