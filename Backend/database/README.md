@@ -22,4 +22,6 @@ New sensitive tables enable RLS and remove direct PUBLIC/anon/authenticated gran
 
 Current code verification: 129 non-DB backend tests and 46 frontend tests pass; frontend typecheck and web export pass. These do not yet prove PostgreSQL transaction/locking behavior. G2 unlocks isolated-schema context, SQL and concurrency checks. Later booking/payment/experience migrations and shared deployment still require concrete review.
 
+Migration 005 is a later unexecuted quote/snapshot/booking draft and is NOT part of this approval batch. PostgreSQL fixture tests additionally require exact-schema/approval properties and are excluded from the non-DB suite via the postgres tag; exclusion is a runtime gate, not database verification.
+
 No seeds are included in this approval batch. Fake fixtures used by later tests must verify the exact test schema before writes and never copy public rows.

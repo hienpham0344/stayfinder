@@ -25,4 +25,5 @@ public class Booking {
     @Column(name = "total_price") private BigDecimal totalPrice;
     @Convert(converter = BookingStatusConverter.class) private BookingStatus status;
     @Column(name = "created_at") private Instant createdAt;
+    @Column(name = "paid_at") private Instant paidAt;
 }
