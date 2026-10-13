@@ -7,7 +7,7 @@ public class ApprovedPostgresInitializer implements ApplicationContextInitialize
  @Override public void initialize(ConfigurableApplicationContext context){
   try(var c=PostgresTestTarget.openRollbackOnly()){
    try(var s=c.createStatement();var r=s.executeQuery("select count(*) from information_schema.tables where table_schema='stayfinder_test_20261013' and table_type='BASE TABLE'")){
-    r.next();if(r.getInt(1)!=35)throw new IllegalStateException("Approved transaction migrations required");
+    r.next();if(r.getInt(1)!=40)throw new IllegalStateException("Approved experience migrations required");
    }finally{c.rollback();}
   }catch(Exception e){throw new IllegalStateException("Approved PostgreSQL context preflight failed; no public fallback");}
   Properties env=new Properties();
@@ -23,6 +23,8 @@ public class ApprovedPostgresInitializer implements ApplicationContextInitialize
   p.put("SEPAY_TEST_MODE","true");p.put("SEPAY_TEST_BANK_NAME","MBBank");p.put("SEPAY_TEST_BANK_CODE","MB");p.put("SEPAY_TEST_ACCOUNT_NUMBER","000123456789");
   p.put("SEPAY_TEST_ACCOUNT_HOLDER","Synthetic holder");p.put("SEPAY_TEST_SUB_ACCOUNT","");
   p.put("SEPAY_WEBHOOK_SECRET","fixture-only-sepay-hmac-secret-32bytes");
+  p.put("stayfinder.media.signing-secret","synthetic-test-media-signing-key-012345678901");
+  p.put("stayfinder.media.storage-root",Path.of("target","guarded-review-media").toAbsolutePath().normalize().toString());
   p.put("logging.level.org.hibernate","ERROR");p.put("logging.level.com.zaxxer.hikari","WARN");
   TestPropertyValues.of(p).applyTo(context.getEnvironment());
  }

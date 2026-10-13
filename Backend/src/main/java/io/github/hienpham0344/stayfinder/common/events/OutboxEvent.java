@@ -13,4 +13,5 @@ public class OutboxEvent {
  @Column(name="source_id") private UUID sourceId;
  @Column(name="occurred_at") private Instant occurredAt;
  @Column(name="materialized_at") private Instant materializedAt;
+ @Column(name="materialization_status") private String materializationStatus;
 }

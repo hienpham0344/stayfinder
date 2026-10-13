@@ -24,6 +24,8 @@ public class ApprovedBatchRunner {
  };
  private static final String[] TRANSACTION_FILES={"Backend/database/migrations/005_quotes_snapshots_booking.sql","Backend/database/migrations/006_payments_events_refunds.sql"};
  private static final String[] TRANSACTION_HASHES={"f416c78c57da514ff54a2a1e64c8462d1f85ffbe4a473f28b15557216eb64eb7","8291b67e7c46aa33d695aa1e1e467ba33a49ad98e5a34aea43bc8d7f0d8d2835"};
+ private static final String[] EXPERIENCE_FILES={"Backend/database/migrations/007_reviews_media.sql","Backend/database/migrations/008_preferences_reports.sql","Backend/database/migrations/009_notifications.sql"};
+ private static final String[] EXPERIENCE_HASHES={"556a1eb319642529a35b2e43c3cc587252a951f88ddd8044b88645c96342b7bb","a24e9a5a5d6b016e27aa526cee7df2587b4bf5f8c0270f0fe52ff17a672cd21f","c15f5c86b282425aa98f6b790e6da8ce7d65cb1f1cb1f6502b7e0283cd95250d"};
  private static String hash(String input)throws Exception {
   return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(input.getBytes(StandardCharsets.UTF_8)));
  }
@@ -80,9 +82,11 @@ public class ApprovedBatchRunner {
  public static void main(String[] args){
   String stage="checksum";int applied=0;
   try{
-   if(args.length!=3||(!"--approved-g2-20261013".equals(args[2])&&!"--approved-g2-transactions-20261013".equals(args[2])))throw new IllegalArgumentException("Explicit batch approval required");
+   if(args.length!=3||(!"--approved-g2-20261013".equals(args[2])&&!"--approved-g2-transactions-20261013".equals(args[2])&&!"--approved-g2-experience-20261013".equals(args[2])&&!"--verify-g2-experience-20261013".equals(args[2])))throw new IllegalArgumentException("Explicit batch approval required");
    boolean transactionBatch="--approved-g2-transactions-20261013".equals(args[2]);
-   String[] selectedFiles=transactionBatch?TRANSACTION_FILES:FILES,selectedHashes=transactionBatch?TRANSACTION_HASHES:HASHES;
+   boolean verifyOnly="--verify-g2-experience-20261013".equals(args[2]);
+   boolean experienceBatch=verifyOnly||"--approved-g2-experience-20261013".equals(args[2]);
+   String[] selectedFiles=experienceBatch?EXPERIENCE_FILES:transactionBatch?TRANSACTION_FILES:FILES,selectedHashes=experienceBatch?EXPERIENCE_HASHES:transactionBatch?TRANSACTION_HASHES:HASHES;
    Path root=Path.of(args[1]).toRealPath();
    List<String> sql=new ArrayList<>();StringBuilder expectedManifest=new StringBuilder();
    for(int i=0;i<selectedFiles.length;i++){
@@ -90,8 +94,9 @@ public class ApprovedBatchRunner {
     String source=normalized(p);if(!selectedHashes[i].equals(hash(source)))throw new IllegalArgumentException("Frozen checksum changed");
     sql.add(source);expectedManifest.append(selectedHashes[i]).append("  ").append(selectedFiles[i]).append('\n');
    }
-   if(!normalized(root.resolve("Backend/database/test/"+(transactionBatch?"g2-transactions-2026-10-13.sha256":"g2-batch-2026-10-13.sha256"))).equals(expectedManifest.toString()))throw new IllegalArgumentException("Manifest changed");
+   if(!normalized(root.resolve("Backend/database/test/"+(experienceBatch?"g2-experience-2026-10-13.sha256":transactionBatch?"g2-transactions-2026-10-13.sha256":"g2-batch-2026-10-13.sha256"))).equals(expectedManifest.toString()))throw new IllegalArgumentException("Manifest changed");
    System.out.println("CHECKSUMS_VERIFIED|files="+selectedFiles.length+"|target="+TARGET);
+   if(verifyOnly){System.out.println("VERIFY_ONLY|no_env_read|no_database_connection|no_mutation");return;}
    Properties cfg=new Properties();try(Reader r=Files.newBufferedReader(Path.of(args[0]),StandardCharsets.UTF_8)){cfg.load(r);}
    Properties login=new Properties();login.setProperty("user",env(cfg,"SPRING_DATASOURCE_USERNAME"));login.setProperty("password",env(cfg,"SPRING_DATASOURCE_PASSWORD"));
    login.setProperty("prepareThreshold","0");login.setProperty("connectTimeout","10");login.setProperty("socketTimeout","45");login.setProperty("ApplicationName","StayFinderApprovedG2TestBatch");DriverManager.setLoginTimeout(10);
@@ -103,7 +108,11 @@ public class ApprovedBatchRunner {
      try(Statement s=c.createStatement()){s.execute("set statement_timeout='30s'");s.execute("set lock_timeout='5s'");}
      stage="preflight";
      try(PreparedStatement s=c.prepareStatement("select exists(select 1 from pg_namespace where nspname=?)")){
-      s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getBoolean(1)!=transactionBatch)throw new SQLException("Unexpected target existence; reset forbidden","SF007");}
+      s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getBoolean(1)!=(transactionBatch||experienceBatch))throw new SQLException("Unexpected target existence; reset forbidden","SF007");}
+     }
+     if(experienceBatch){
+      verifyTarget(c,35);
+      try(Statement s=c.createStatement();ResultSet r=s.executeQuery("select count(*) from information_schema.tables where table_schema='stayfinder_test_20261013' and table_name in ('media_assets','user_preferences','support_reports','notifications','notification_inbox_state')")){r.next();if(r.getInt(1)!=0)throw new SQLException("Experience already present; reset forbidden","SF010");}
      }
      if(transactionBatch){
       verifyTarget(c,31);
@@ -118,7 +127,7 @@ public class ApprovedBatchRunner {
       try(Statement s=c.createStatement()){s.execute(sql.get(i));}
       applied++;System.out.println("APPLIED|"+selectedFiles[i]);
      }
-     stage="verify";verifyTarget(c,transactionBatch?35:31);
+     stage="verify";verifyTarget(c,experienceBatch?40:transactionBatch?35:31);
      String after=fingerprintPublic(c);if(!before.equals(after))throw new SQLException("Public fingerprint differs; investigate concurrent changes","SF008");
      System.out.println("PUBLIC_UNCHANGED|metadata_and_counts_sha256="+after);
      c.rollback();System.out.println("G2_BATCH_COMPLETE|committed_scripts="+applied);

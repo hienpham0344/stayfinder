@@ -39,3 +39,25 @@ Target ONLY existing stayfinder_test_20261013. Apply migrations/005_quotes_snaps
 Preflight must verify the exact existing test schema, baseline31 empty tables, and absence of booking_quotes/outbox_events/payment_webhook_events/refund_requests. No wildcard migration discovery. The transaction-local target guard/search_path stays pinned through JDBC transaction pooling; named server prepared statements are disabled. Each reviewed script commits independently with lock5s/statement30s. If a script fails, roll back that script and retain earlier commits for diagnosis; no automatic drop/reset or public fallback. Expected final schema35 tables and zero rows before guarded rollback fixtures. Compare public metadata/count fingerprints before/after again.
 
 The user explicitly approved this exact batch in call_vf8W3qNx9a8xcgyKq6j2fpv3. Both scripts committed successfully; postflight verified35 empty tables, all RLS, no external FKs/direct client schema usage, and public metadata/count fingerprint unchanged. Two whole-context rollback fixture tests now pass with ddl-auto=validate, proving owned immutable snapshot booking/idempotent replay and native signed receipt/exact collection/cancellation/refund FX. Multi-transaction service races remain to be verified. No public rollout/provider action/seed was performed.
+
+## Proposed G2 experience batch: 007–009 (NOT APPLIED)
+Exact target ONLY existing stayfinder_test_20261013. Apply migrations/007_reviews_media.sql, 008_preferences_reports.sql, then 009_notifications.sql. Exact LF-normalized checksums are frozen in test/g2-experience-2026-10-13.sha256. Human approval is required before the approved flag can be used; the preceding two approvals do not authorize this batch.
+
+| Script | Reviewable change |
+|---|---|
+| 007 | Validate incompatible/duplicate historical reviews without rewriting rows; add review rating/owner/booking uniqueness/FKs/update timestamp/indexes; create owned local-media metadata/attachment state and cleanup indexes. No file upload is performed by SQL. |
+| 008 | Create user_preferences (en-US/vi-VN/fr-FR; bookingNotifications) and support_reports with submitted-only status and owned optional booking FK. Legacy reports table remains untouched. No external email or seeded report/profile is created. |
+| 009 | Create notifications and notification_inbox_state; add outbox disposition/owned FK/indexes and unique event/user delivery. Server-owned inbox watermark protects read-all from later deliveries and equal timestamp precision. No push/mail/provider action. |
+
+Runner preflight requires35 existing empty tables with RLS/no external FKs/no direct client schema usage; all five new tables must be absent. Fixed list, exact hashes, exact schema, no wildcard discovery. Refuses a populated/migrated/unexpected target; never resets, drops, seeds or falls back to public. Credential values are read in memory from the original local Backend/.env, never copied/printed or passed as secrets in arguments. Local verification mode does not even read that file or connect:
+```powershell
+& 'C:/Program Files/Java/jdk-24/bin/java.exe' -cp 'C:/Users/HIEN/.m2/repository/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar' Backend/database/test/ApprovedBatchRunner.java 'not-read.env' 'C:/Users/HIEN/.codex/worktrees/user-api-auto/stayfinder' --verify-g2-experience-20261013
+```
+Observed result: CHECKSUMS_VERIFIED files3; VERIFY_ONLY no_env_read/no_database_connection/no_mutation.
+
+Only AFTER a human approves this exact batch, use the same runner with the original env path and --approved-g2-experience-20261013. Each frozen SQL script commits independently, with lock5s/statement30s and transaction-local target/search_path. Expected postflight40 empty tables, all RLS, no external FKs/direct client schema usage. Compare public metadata/count fingerprints before/after. SQL includes no persistent fixture data.
+
+Rollback limits: failure rolls back the current script; retain earlier committed scripts for diagnosis. Stop on any mismatch or partial application. Do not automatically remove schema/tables/constraints/rows/files or modify public to recover. Code rollback alone can leave additive tables/nullable columns intact; data-bearing incompatible rollback requires a separately reviewed migration. No destructive rollback command is authorized by this proposal. Preserve media files/rows on a deployed code rollback; do not delete published assets.
+
+After successful application, the guarded JPA initializer expects40 tables and ddl-auto=validate; its signing key/storage path are synthetic test-only values. Run rollback/owned-temporary fixtures with the existing exact-schema/approval/envFile gates. New review/media/preferences/reports/notifications PG acceptance has NOT run yet. Public rollout, persistent demo seed and real SePay Test Mode delivery remain separate gates.
+

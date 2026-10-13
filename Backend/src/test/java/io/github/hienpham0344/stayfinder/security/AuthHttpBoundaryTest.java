@@ -28,7 +28,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class,io.github.hienpham0344.stayfinder.demo.controller.DemoPaymentOperationsController.class,io.github.hienpham0344.stayfinder.media.controller.MediaController.class,io.github.hienpham0344.stayfinder.review.controller.ReviewController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class,io.github.hienpham0344.stayfinder.demo.controller.DemoPaymentOperationsController.class,io.github.hienpham0344.stayfinder.media.controller.MediaController.class,io.github.hienpham0344.stayfinder.review.controller.ReviewController.class,io.github.hienpham0344.stayfinder.user.controller.UserPreferencesController.class,io.github.hienpham0344.stayfinder.support.controller.SupportReportController.class,io.github.hienpham0344.stayfinder.notification.controller.NotificationController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -48,6 +48,9 @@ class AuthHttpBoundaryTest {
     @MockitoBean io.github.hienpham0344.stayfinder.demo.service.DemoPaymentOperationsService demoOperations;
     @MockitoBean io.github.hienpham0344.stayfinder.media.service.MediaService media;
     @MockitoBean io.github.hienpham0344.stayfinder.review.service.ReviewService reviews;
+    @MockitoBean io.github.hienpham0344.stayfinder.user.service.UserPreferencesService preferences;
+    @MockitoBean io.github.hienpham0344.stayfinder.support.service.SupportReportService reports;
+    @MockitoBean io.github.hienpham0344.stayfinder.notification.service.NotificationService notifications;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -64,6 +67,31 @@ class AuthHttpBoundaryTest {
         u.setCredentialState("active");u.setPasswordHash("test-hash");
         live=new RefreshSession();live.setId(sid);live.setUserId(id);live.setExpiresAt(Instant.now().plusSeconds(9000));
         when(users.findById(id)).thenReturn(Optional.of(u));when(sessions.findById(sid)).thenReturn(Optional.of(live));
+    }
+    @Test void preferencesAreOwnedAndCannotChangeRoleOrPoints() throws Exception {
+        when(preferences.get(id)).thenReturn(new io.github.hienpham0344.stayfinder.user.dto.PreferencesResponse("en-US",true));
+        when(preferences.patch(eq(id),any())).thenReturn(new io.github.hienpham0344.stayfinder.user.dto.PreferencesResponse("vi-VN",false));
+        mvc.perform(get("/api/users/me/preferences")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/users/me/preferences").header("Authorization","Bearer "+accessToken())).andExpect(status().isOk()).andExpect(jsonPath("$.result.language").value("en-US"));
+        mvc.perform(patch("/api/users/me/preferences").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"language\":\"vi-VN\",\"bookingNotifications\":false}")).andExpect(status().isOk()).andExpect(jsonPath("$.result.bookingNotifications").value(false));
+        mvc.perform(patch("/api/users/me/preferences").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"role\":\"ADMIN\",\"loyaltyPoints\":1000}")).andExpect(status().isBadRequest());
+        mvc.perform(patch("/api/users/me/preferences").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"language\":\"unknown\"}")).andExpect(status().isBadRequest());
+    }
+    @Test void supportReportValidatesTextAndReturnsOnlySubmittedIdentifier() throws Exception {
+        String path="/api/support/reports",body="{\"category\":\"Payment\",\"description\":\"Synthetic QA report\"}";UUID report=UUID.randomUUID();
+        mvc.perform(post(path).contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+        when(reports.submit(eq(id),any(),eq("support-qa-key"))).thenReturn(new io.github.hienpham0344.stayfinder.support.dto.SupportReportResponse(report,"submitted",Instant.now()));
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","support-qa-key").contentType("application/json").content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.result.reportId").value(report.toString())).andExpect(jsonPath("$.result.status").value("submitted")).andExpect(jsonPath("$.result.email").doesNotExist());
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"category\":\"Other\",\"description\":\" \"}")).andExpect(status().isBadRequest());
+    }
+    @Test void notificationReadsAreAuthenticatedAndReadAllRequiresServerCutoff() throws Exception {
+        UUID notification=UUID.randomUUID();var now=Instant.now();when(notifications.unreadCount(id)).thenReturn(2L);
+        mvc.perform(get("/api/notifications/unread-count")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/notifications/unread-count").header("Authorization","Bearer "+accessToken())).andExpect(status().isOk()).andExpect(jsonPath("$.result.count").value(2));
+        mvc.perform(patch("/api/notifications/"+notification).header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"read\":false}")).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/notifications/read-all").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{}")).andExpect(status().isBadRequest());
+        when(notifications.markAllRead(id,now)).thenReturn(new io.github.hienpham0344.stayfinder.notification.dto.NotificationReadAllResponse(1,1));
+        mvc.perform(post("/api/notifications/read-all").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"snapshotTime\":\""+now+"\"}")).andExpect(status().isOk()).andExpect(jsonPath("$.result.unreadCount").value(1));
     }
     @Test void mediaUploadAndDeleteRequireAuthenticationWhileSignedContentIsAnonymous() throws Exception {
         UUID image=UUID.randomUUID();var file=new org.springframework.mock.web.MockMultipartFile("image","synthetic.png","image/png",new byte[]{1,2,3});
