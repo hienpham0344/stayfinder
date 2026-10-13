@@ -24,10 +24,14 @@ public class RefundRequestService implements RefundRequestOperations {
    if(!ownerId.equals(existing.getUserId())||existing.getAmountUsdCents()!=amountUsdCents)throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
    return;
   }
-  var collections=payments.findByBookingId(bookingId).stream().filter(p->p.getStatus()==PaymentStatus.SUCCESS&&p.getAmount()!=null
-   &&BigDecimal.valueOf(amountUsdCents,2).compareTo(p.getAmount())==0).toList();
+  var collections=payments.findByBookingId(bookingId).stream().filter(p->p.getStatus()==PaymentStatus.SUCCESS&&ownerId.equals(p.getUserId())
+   &&p.getOriginalAmountCents()!=null&&p.getOriginalAmountCents()==amountUsdCents).toList();
   if(collections.size()!=1||collections.getFirst().getId()==null)throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
+  var paid=collections.getFirst();
+  if(!"bank_transfer".equals(paid.getMethod())&&!"pay_at_property".equals(paid.getMethod()))throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
+  if("bank_transfer".equals(paid.getMethod())&&(paid.getSettlementVnd()==null||paid.getUsdToVndRate()==null||paid.getRateVersion()==null))throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
   var row=new RefundRequest();row.setId(UUID.randomUUID());row.setBookingId(bookingId);row.setUserId(ownerId);
-  row.setPaymentId(collections.getFirst().getId());row.setAmountUsdCents(amountUsdCents);row.setStatus("requested");row.setRequestedAt(clock.instant());rows.save(row);
+  row.setPaymentId(collections.getFirst().getId());row.setAmountUsdCents(amountUsdCents);row.setSettlementVnd(paid.getSettlementVnd());row.setUsdToVndRate(paid.getUsdToVndRate());row.setRateVersion(paid.getRateVersion());
+  paid.setRefundStatus("requested");payments.save(paid);row.setStatus("requested");row.setRequestedAt(clock.instant());rows.save(row);
  }
 }

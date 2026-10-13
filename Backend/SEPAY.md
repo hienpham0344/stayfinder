@@ -1,17 +1,38 @@
-# SePay Test Mode implementation notes (work in progress)
+# SePay Test Mode payment implementation (in progress)
 
-Transaction Task4 foundation implements exact configured demo FX locking, raw-byte HMAC verification, native payload parsing and opaque reference matching. The current legacy PaymentController/PaymentService/SepayPaymentProvider are still pending replacement; these helpers do not prove payment delivery or collection.
+P01–P05 use the supported bank_transfer/pay_at_property contract. Payment creation is owned and idempotent; it accepts only method and must match the immutable booking. Original amount is classified integer USD cents. Existing instructions retain their VND amount/rate/version/account/reference/QR after configuration changes. Property ledger payments stay pending with no VND conversion; creation never sets paid.
 
-Default demo rate is 25000 VND/USD with labelled version. Lock HALF_UP(USD cents × rate /100) as immutable integer VND/rate/version. Test Mode simulator accepts 1000–499000000 VND; outside this range return PAYMENT_AMOUNT_UNSUPPORTED422 and offer property payment, without changing USD booking terms. [Official simulator limits](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/mo-phong-giao-dich).
+SePay is behind PaymentProvider. Bank instructions are disabled unless explicit Test Mode, an adequate dedicated webhook secret and valid Test Mode bank/account configuration are present. No Live fallback or client environment flag is accepted. Virtual account display and underlying receiving account are captured separately. Public method availability reveals no credentials/account details.
 
-Verify X-SePay-Signature (sha256=hex) over the exact timestamp, dot and raw bytes, with X-SePay-Timestamp in seconds within ±300s. Keep a dedicated Test Mode secret with at least32 UTF8 bytes, no fallback authentication. Reject oversized bodies (>64KiB), changed bytes, missing headers and timestamp overflow. Expected UTF8 fixture hash is generated independently by Node crypto. [Official authentication](https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc).
+Native POST /api/payments/webhook/sepay reads at most65537 bytes and authenticates the exact original body using X-SePay-Signature and X-SePay-Timestamp. HMAC SHA256 signs timestamp dot raw bytes, with a ±300-second window and constant-time comparison. Signature and secret never enter receipt storage. Strict native parsing rejects duplicate fields/trailing JSON/fractional or coerced amounts and parses transactionDate in UTC+7. [Authentication](https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc).
 
-Native parsing requires positive integral id/transferAmount and parses transactionDate in Vietnam UTC+7. Duplicate JSON fields, trailing JSON, fractional/coerced amounts and invalid dates are rejected. Future metadata cannot supply bookingId/status authority. Match exactly one SF +10-alphanumeric reference token in content and, when present, the same parsed code.
+A receipt transaction persists parsed verified fields and SHA256 body hash before native HTTP200 JSON success=true acknowledgement. Unique provider/test/eventId plus a receipt advisory mutex preserves the first body. Changed payload on the same native ID increments conflict metadata without replacing the original. Database/commit failure cannot return a successful acknowledgement. Receipt registration never acquires financial locks. [Payload and acknowledgement](https://developer.sepay.vn/vi/sepay-webhooks/tich-hop-webhook).
 
-Receipts still need durable storage before HTTP200/201 success=true acknowledgement, with unique provider/environment/eventId and immutable payload hash. Worker matching must compare stored account/VA/reference/exact VND and hold state, and preserve anomalies for reconciliation. [Native payload/acknowledgement](https://developer.sepay.vn/vi/sepay-webhooks/tich-hop-webhook).
+The worker acquires owner wallet → room → booking → payment → receipt and refreshes rows after waits. Exact incoming account/VA/gateway/reference/VND and valid provider time are required. Native dates have second precision; compare creation/receipt boundaries at that precision. Unknown/outgoing transactions are retained as ignored/reconciliation; mismatched amount/account/time, second collection or altered same-ID payload cannot falsely confirm and are retained for reconciliation. Conflicts received after processing are picked up again and mark the related payment required without erasing its original collection.
 
-Test and Live use the same JSON shape. Environment must come from dedicated Test Mode configuration/secret/account, rather than a client test_mode field. [Environment isolation](https://developer.sepay.vn/vi/sepay-webhooks/test-mode/so-sanh-voi-live). Generated QR must use verified Test Mode account/VA; dashboard simulation creates test transactions without a bank transfer. [Test QR simulation](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/mo-phong-tao-ma-vietqr).
+Confirmation requires processing before the15-minute hold deadline as well as an on-time transaction. Inventory excludes expired holds regardless of worker backlog, so a receipt processed later cannot revive that reservation. Exact late/cancelled collection remains successful collection history and creates a requested refund with the original locked VND/rate; released benefits are not consumed again. Refund confirmation/restoration and property collection are Task5 ADMIN demo controls, not real bank actions.
 
-G3 remains: prepare complete adapter/runtime instructions, configure only Test Mode locally, and capture an actual authenticated native delivery. Primary Backend/.env was inspected only as booleans; adequate secret and test-mode/bank/account/holder configuration are not present. No values copied/printed or external configuration/payment action performed.
+Rate defaults to labelled25000 VND/USD. Lock HALF_UP(cents × rate /100). Simulator supports1000–499000000 VND; unsupported totals return PAYMENT_AMOUNT_UNSUPPORTED422 with property option. [Simulator](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/mo-phong-giao-dich). Test/Live JSON shape is identical; dedicated Test configuration identifies environment. [Environment isolation](https://developer.sepay.vn/vi/sepay-webhooks/test-mode/so-sanh-voi-live).
 
-G2: the user approved and applied the frozen 000 +001–004 batch only to stayfinder_test_20261013. Four guarded PostgreSQL foundation tests pass with fixture rollback; public structure/counts are unchanged. 005/006 remain unapproved and unapplied. Current unit/security-MVC tests do not establish PostgreSQL transaction/locking/rollback or native provider delivery.
+## Local Test Mode configuration and G3
+
+Configure locally, never paste values into chat or commit .env:
+
+- SEPAY_TEST_MODE=true only after verifying the account belongs to Test Mode.
+- SEPAY_TEST_BANK_NAME: exact gateway emitted by the native test payload (for example MBBank).
+- SEPAY_TEST_BANK_CODE: corresponding QR bank identifier (for example MB).
+- SEPAY_TEST_ACCOUNT_NUMBER: receiving parent Test Mode account, digits6–64.
+- SEPAY_TEST_ACCOUNT_HOLDER: Test Mode holder display text.
+- SEPAY_TEST_SUB_ACCOUNT: optional Test Mode VA; leave empty if unused. Instruction/QR displays this VA while matching retains both parent account and VA.
+- SEPAY_WEBHOOK_SECRET: separate Test Mode HMAC secret,32–2048 UTF8 bytes, matching the provider webhook.
+- stayfinder.payment.demo-usd-vnd-rate and demo-rate-version: labelled demo configuration; edits affect only new payments.
+
+The primary .env has not been modified/copied. Real values and provider native delivery remain G3. Tests use unmistakably synthetic config in the approved private schema; no provider account or transfer is created by tests.
+
+When an approved reachable test API endpoint is available, configure a SePay Test Mode MoneyIn JSON webhook at /api/payments/webhook/sepay with HMAC and SF prefix plus10 alphanumeric suffix. Use a fresh owned pending bank booking, then the Test Mode dashboard QR simulator and the exact stored VND/reference/receiving account. Inspect native delivery status, durable receipt, and owned booking/payment GETs; retry the same native ID to prove no second consumption. Test QR uses a Test Mode account/VA and no real bank transfer. [Test webhook setup](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/tao-webhook), [QR simulation](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/mo-phong-tao-ma-vietqr).
+
+## Schema and verification
+
+Frozen000–004 and005–006 were separately approved and applied only to stayfinder_test_20261013. It has35 tables with RLS/no direct client schema usage/no external FKs. Public metadata/count fingerprint remains unchanged. Public migration or persistent demo seed is not approved.
+
+Current evidence:202 non-context/non-PostgreSQL tests pass, including real Spring Security/MVC payment owner/key/body/ACK boundaries and native primitive/receipt/matching/lateness tests. Four PostgreSQL foundation tests and two whole-context transaction tests pass separately with rollback fixtures. JPA ddl-auto=validate passes on the private schema. The latter exercise native signed receipt → exact collection → single confirmation/benefit consumption → paid cancellation → original locked-FX refund request. Actual SePay delivery and multi-transaction booking/payment races still require verification; synthetic native fixture evidence is not provider delivery.

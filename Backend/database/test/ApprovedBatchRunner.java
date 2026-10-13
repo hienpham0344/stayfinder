@@ -22,6 +22,8 @@ public class ApprovedBatchRunner {
   "eaff47e771b2c370fa045f09597429beed9c35f2443e2e2cc3edff4d3d36e016",
   "531891f3afe91a0cdf976243037f5d4bfb6ed9cf0104edf2499aab3f1feaf74c"
  };
+ private static final String[] TRANSACTION_FILES={"Backend/database/migrations/005_quotes_snapshots_booking.sql","Backend/database/migrations/006_payments_events_refunds.sql"};
+ private static final String[] TRANSACTION_HASHES={"f416c78c57da514ff54a2a1e64c8462d1f85ffbe4a473f28b15557216eb64eb7","8291b67e7c46aa33d695aa1e1e467ba33a49ad98e5a34aea43bc8d7f0d8d2835"};
  private static String hash(String input)throws Exception {
   return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(input.getBytes(StandardCharsets.UTF_8)));
  }
@@ -55,14 +57,14 @@ public class ApprovedBatchRunner {
   }
   return hash(result.toString());
  }
- private static void verifyTarget(Connection c)throws SQLException{
+ private static void verifyTarget(Connection c,int expectedTables)throws SQLException{
   searchPath(c,TARGET);
   try(Statement s=c.createStatement();ResultSet r=s.executeQuery("select current_schema()")){r.next();if(!TARGET.equals(r.getString(1)))throw new SQLException("Unexpected target","SF001");}
   List<String> tables=new ArrayList<>();
   try(PreparedStatement s=c.prepareStatement("select table_name from information_schema.tables where table_schema=? and table_type='BASE TABLE' order by table_name")){
    s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){while(r.next())tables.add(r.getString(1));}
   }
-  if(tables.size()!=31)throw new SQLException("Unexpected table count","SF002");
+  if(tables.size()!=expectedTables)throw new SQLException("Unexpected table count","SF002");
   for(String table:tables)try(Statement s=c.createStatement();ResultSet r=s.executeQuery("select count(*) from "+TARGET+".\""+table.replace("\"","\"\"")+"\"")){r.next();if(r.getLong(1)!=0)throw new SQLException("Unexpected data","SF003");}
   try(PreparedStatement s=c.prepareStatement("select count(*) from pg_constraint k join pg_class t on t.oid=k.conrelid join pg_namespace n on n.oid=t.relnamespace join pg_class rt on rt.oid=k.confrelid join pg_namespace rn on rn.oid=rt.relnamespace where n.nspname=? and k.contype='f' and rn.nspname<>?")){
    s.setString(1,TARGET);s.setString(2,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getLong(1)!=0)throw new SQLException("External foreign key","SF004");}
@@ -73,21 +75,23 @@ public class ApprovedBatchRunner {
   try(PreparedStatement s=c.prepareStatement("select count(*) from pg_namespace n cross join lateral aclexplode(n.nspacl) a left join pg_roles r on r.oid=a.grantee where n.nspname=? and a.privilege_type='USAGE' and (a.grantee=0 or r.rolname in ('anon','authenticated'))")){
    s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getLong(1)!=0)throw new SQLException("Client schema usage","SF006");}
   }
-  System.out.println("TARGET_VERIFIED|"+TARGET+"|tables=31|rows=0|external_fks=0|rls=all|direct_client_usage=none");
+  System.out.println("TARGET_VERIFIED|"+TARGET+"|tables="+expectedTables+"|rows=0|external_fks=0|rls=all|direct_client_usage=none");
  }
  public static void main(String[] args){
   String stage="checksum";int applied=0;
   try{
-   if(args.length!=3||!"--approved-g2-20261013".equals(args[2]))throw new IllegalArgumentException("Explicit batch approval required");
+   if(args.length!=3||(!"--approved-g2-20261013".equals(args[2])&&!"--approved-g2-transactions-20261013".equals(args[2])))throw new IllegalArgumentException("Explicit batch approval required");
+   boolean transactionBatch="--approved-g2-transactions-20261013".equals(args[2]);
+   String[] selectedFiles=transactionBatch?TRANSACTION_FILES:FILES,selectedHashes=transactionBatch?TRANSACTION_HASHES:HASHES;
    Path root=Path.of(args[1]).toRealPath();
    List<String> sql=new ArrayList<>();StringBuilder expectedManifest=new StringBuilder();
-   for(int i=0;i<FILES.length;i++){
-    Path p=root.resolve(FILES[i]).toRealPath();if(!p.startsWith(root))throw new IllegalArgumentException("Path outside worktree");
-    String source=normalized(p);if(!HASHES[i].equals(hash(source)))throw new IllegalArgumentException("Frozen checksum changed");
-    sql.add(source);expectedManifest.append(HASHES[i]).append("  ").append(FILES[i]).append('\n');
+   for(int i=0;i<selectedFiles.length;i++){
+    Path p=root.resolve(selectedFiles[i]).toRealPath();if(!p.startsWith(root))throw new IllegalArgumentException("Path outside worktree");
+    String source=normalized(p);if(!selectedHashes[i].equals(hash(source)))throw new IllegalArgumentException("Frozen checksum changed");
+    sql.add(source);expectedManifest.append(selectedHashes[i]).append("  ").append(selectedFiles[i]).append('\n');
    }
-   if(!normalized(root.resolve("Backend/database/test/g2-batch-2026-10-13.sha256")).equals(expectedManifest.toString()))throw new IllegalArgumentException("Manifest changed");
-   System.out.println("CHECKSUMS_VERIFIED|files=5|target="+TARGET);
+   if(!normalized(root.resolve("Backend/database/test/"+(transactionBatch?"g2-transactions-2026-10-13.sha256":"g2-batch-2026-10-13.sha256"))).equals(expectedManifest.toString()))throw new IllegalArgumentException("Manifest changed");
+   System.out.println("CHECKSUMS_VERIFIED|files="+selectedFiles.length+"|target="+TARGET);
    Properties cfg=new Properties();try(Reader r=Files.newBufferedReader(Path.of(args[0]),StandardCharsets.UTF_8)){cfg.load(r);}
    Properties login=new Properties();login.setProperty("user",env(cfg,"SPRING_DATASOURCE_USERNAME"));login.setProperty("password",env(cfg,"SPRING_DATASOURCE_PASSWORD"));
    login.setProperty("prepareThreshold","0");login.setProperty("connectTimeout","10");login.setProperty("socketTimeout","45");login.setProperty("ApplicationName","StayFinderApprovedG2TestBatch");DriverManager.setLoginTimeout(10);
@@ -99,18 +103,22 @@ public class ApprovedBatchRunner {
      try(Statement s=c.createStatement()){s.execute("set statement_timeout='30s'");s.execute("set lock_timeout='5s'");}
      stage="preflight";
      try(PreparedStatement s=c.prepareStatement("select exists(select 1 from pg_namespace where nspname=?)")){
-      s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getBoolean(1))throw new SQLException("Target exists; reset forbidden","SF007");}
+      s.setString(1,TARGET);try(ResultSet r=s.executeQuery()){r.next();if(r.getBoolean(1)!=transactionBatch)throw new SQLException("Unexpected target existence; reset forbidden","SF007");}
+     }
+     if(transactionBatch){
+      verifyTarget(c,31);
+      try(Statement s=c.createStatement();ResultSet r=s.executeQuery("select count(*) from information_schema.tables where table_schema=\'stayfinder_test_20261013\' and table_name in (\'booking_quotes\',\'outbox_events\',\'payment_webhook_events\',\'refund_requests\')")){r.next();if(r.getInt(1)!=0)throw new SQLException("Transactions already present; reset forbidden","SF009");}
      }
      String before=fingerprintPublic(c);c.rollback();
-     for(int i=0;i<FILES.length;i++){
-      stage=FILES[i];
+     for(int i=0;i<selectedFiles.length;i++){
+      stage=selectedFiles[i];
       // SET LOCAL and the reviewed script share one pinned transaction even through transaction pooling.
       try(PreparedStatement s=c.prepareStatement("select set_config('stayfinder.target_schema',?,true)")){s.setString(1,TARGET);s.execute();}
       searchPath(c,TARGET);
       try(Statement s=c.createStatement()){s.execute(sql.get(i));}
-      applied++;System.out.println("APPLIED|"+FILES[i]);
+      applied++;System.out.println("APPLIED|"+selectedFiles[i]);
      }
-     stage="verify";verifyTarget(c);
+     stage="verify";verifyTarget(c,transactionBatch?35:31);
      String after=fingerprintPublic(c);if(!before.equals(after))throw new SQLException("Public fingerprint differs; investigate concurrent changes","SF008");
      System.out.println("PUBLIC_UNCHANGED|metadata_and_counts_sha256="+after);
      c.rollback();System.out.println("G2_BATCH_COMPLETE|committed_scripts="+applied);

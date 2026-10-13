@@ -24,10 +24,11 @@ import java.time.*;
 import java.util.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.AdditionalMatchers.aryEq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -41,6 +42,9 @@ class AuthHttpBoundaryTest {
     @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingService bookings;
     @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingLifecycleService lifecycle;
     @MockitoBean io.github.hienpham0344.stayfinder.booking.service.BookingQuoteService quotes;
+    @MockitoBean io.github.hienpham0344.stayfinder.payment.service.PaymentService payments;
+    @MockitoBean io.github.hienpham0344.stayfinder.payment.service.SepayReceiptService receipts;
+    @MockitoBean io.github.hienpham0344.stayfinder.payment.service.PaymentProvider paymentProvider;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -58,6 +62,49 @@ class AuthHttpBoundaryTest {
         live=new RefreshSession();live.setId(sid);live.setUserId(id);live.setExpiresAt(Instant.now().plusSeconds(9000));
         when(users.findById(id)).thenReturn(Optional.of(u));when(sessions.findById(sid)).thenReturn(Optional.of(live));
     }
+    @Test void paymentMethodsArePublicAndDisabledBankHasNoFakeInstructions() throws Exception {
+        mvc.perform(get("/api/payment-methods")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.result[0].method").value("bank_transfer")).andExpect(jsonPath("$.result[0].enabled").value(false))
+            .andExpect(jsonPath("$.result[1].method").value("pay_at_property")).andExpect(jsonPath("$.result[1].enabled").value(true));
+    }
+    @Test void paymentCreateUsesAuthenticatedOwnerAndRejectsLegacyAmountOrMissingKey() throws Exception {
+        UUID bid=UUID.randomUUID();String path="/api/bookings/"+bid+"/payments",token=accessToken();
+        mvc.perform(post(path).contentType("application/json").content("{\"method\":\"bank_transfer\"}")).andExpect(status().isUnauthorized());
+        mvc.perform(post(path).header("Authorization","Bearer "+token).contentType("application/json").content("{\"method\":\"bank_transfer\"}")).andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization","Bearer "+token).header("Idempotency-Key","pay-1").contentType("application/json")
+            .content("{\"method\":\"bank_transfer\",\"amount\":1}")).andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization","Bearer "+token).header("Idempotency-Key","pay-1").contentType("application/json")
+            .content("{\"paymentMethodId\":\""+UUID.randomUUID()+"\"}")).andExpect(status().isBadRequest());
+        verifyNoInteractions(payments);
+        mvc.perform(post(path).header("Authorization","Bearer "+token).header("Idempotency-Key","pay-1").contentType("application/json")
+            .content("{\"method\":\"bank_transfer\"}")).andExpect(status().isOk());
+        verify(payments).create(id,bid,"bank_transfer","pay-1");
+    }
+    @Test void paymentStatusRequiresBearerAndPassesOnlyCurrentOwner() throws Exception {
+        UUID paymentId=UUID.randomUUID();
+        mvc.perform(get("/api/payments/"+paymentId+"/status")).andExpect(status().isUnauthorized());verifyNoInteractions(payments);
+        mvc.perform(get("/api/payments/"+paymentId+"/status").header("Authorization","Bearer "+accessToken())).andExpect(status().isOk());
+        verify(payments).getOwned(id,paymentId);
+    }
+    @Test void nativeWebhookPreservesRawUtf8AndUsesOnlyProviderAcknowledgement() throws Exception {
+        byte[] raw="{ \"synthetic\": \"chuyển tiền\" }".getBytes(StandardCharsets.UTF_8);
+        when(receipts.receive(any(),any(),any())).thenReturn(new io.github.hienpham0344.stayfinder.payment.dto.ProviderAcknowledgement(true));
+        mvc.perform(post("/api/payments/webhook/sepay").header("X-SePay-Signature","fixture-signature").header("X-SePay-Timestamp","fixture-timestamp")
+            .contentType("application/json").content(raw)).andExpect(status().isOk()).andExpect(content().json("{\"success\":true}"))
+            .andExpect(jsonPath("$.result").doesNotExist());
+        verify(receipts).receive(aryEq(raw),eq("fixture-signature"),eq("fixture-timestamp"));
+    }
+    @Test void webhookFailureReturnsNoSuccessfulAcknowledgementAndBodyReadIsBounded() throws Exception {
+        when(receipts.receive(any(),any(),any())).thenThrow(new io.github.hienpham0344.stayfinder.common.exception.BusinessException(
+            io.github.hienpham0344.stayfinder.common.exception.ErrorCode.UNAUTHORIZED));
+        mvc.perform(post("/api/payments/webhook/sepay").contentType("application/json").content("{}")).andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").doesNotExist());
+        reset(receipts);when(receipts.receive(any(),any(),any())).thenThrow(new IllegalStateException("Synthetic receipt outage"));
+        mvc.perform(post("/api/payments/webhook/sepay").contentType("application/json").content(new byte[70000])).andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.success").doesNotExist());
+        verify(receipts).receive(argThat(raw->raw.length==65537),isNull(),isNull());
+    }
+
     private String accessToken() {
         String secret=Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
         return new JwtTokenProvider(secret,Clock.systemUTC()).issue(id,sid);

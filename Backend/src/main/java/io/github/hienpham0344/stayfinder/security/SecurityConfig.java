@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,"/api/auth/register","/api/auth/login","/api/auth/refresh","/api/auth/logout",
                     "/api/payments/webhook/sepay").permitAll()
                 .requestMatchers(HttpMethod.GET,"/actuator/health","/api/catalog/filters","/api/locations/suggestions",
-                    "/api/accommodations","/api/accommodations/**").permitAll()
+                    "/api/accommodations","/api/accommodations/**","/api/payment-methods").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(resource->resource.authenticationEntryPoint(entry).accessDeniedHandler(denied)

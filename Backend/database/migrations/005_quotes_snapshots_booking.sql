@@ -98,10 +98,10 @@ DO $access$
 DECLARE role_name text;
 BEGIN
  ALTER TABLE booking_quotes ENABLE ROW LEVEL SECURITY;
- REVOKE ALL ON TABLE booking_quotes FROM PUBLIC;
+ REVOKE ALL ON TABLE booking_quotes, bookings, booking_details, room_snapshot, accommodation_snapshot FROM PUBLIC;
  FOREACH role_name IN ARRAY ARRAY['anon','authenticated'] LOOP
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname=role_name) THEN
-   EXECUTE format('REVOKE ALL ON TABLE %I.booking_quotes, %I.outbox_events FROM %I',current_schema(),current_schema(),role_name);
+   EXECUTE format('REVOKE ALL ON TABLE %I.booking_quotes, %I.outbox_events, %I.bookings, %I.booking_details, %I.room_snapshot, %I.accommodation_snapshot FROM %I',current_schema(),current_schema(),current_schema(),current_schema(),current_schema(),current_schema(),role_name);
   END IF;
  END LOOP;
 END
