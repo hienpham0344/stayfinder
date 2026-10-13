@@ -7,7 +7,7 @@ import io.github.hienpham0344.stayfinder.common.enums.UserRole;
 import io.github.hienpham0344.stayfinder.common.exception.*;
 import io.github.hienpham0344.stayfinder.security.JwtTokenProvider;
 import io.github.hienpham0344.stayfinder.user.entity.User;
-import io.github.hienpham0344.stayfinder.user.mapper.UserMapper;
+import io.github.hienpham0344.stayfinder.user.service.UserProfileProjection;
 import io.github.hienpham0344.stayfinder.user.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.*;
@@ -31,13 +31,13 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository tokens;
     private final PasswordEncoder passwords;
     private final JwtTokenProvider jwt;
-    private final UserMapper mapper;
+    private final UserProfileProjection mapper;
     private final AuthAuditRepository audit;
     private final Clock clock;
     private final SecureRandom random=new SecureRandom();
 
     public AuthServiceImpl(AuthenticationManager authentication,UserRepository users,RefreshSessionRepository sessions,
-            RefreshTokenRepository tokens,PasswordEncoder passwords,JwtTokenProvider jwt,UserMapper mapper,
+            RefreshTokenRepository tokens,PasswordEncoder passwords,JwtTokenProvider jwt,UserProfileProjection mapper,
             AuthAuditRepository audit,Clock clock) {
         this.authentication=authentication; this.users=users; this.sessions=sessions; this.tokens=tokens;
         this.passwords=passwords; this.jwt=jwt; this.mapper=mapper; this.audit=audit; this.clock=clock;

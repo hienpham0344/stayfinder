@@ -8,10 +8,10 @@ Availability resolves snapshots to source room IDs and subtracts the peak occupi
 
 Search/read projections use the existing NamedParameterJdbcTemplate for PostgreSQL daily inventory/lateral aggregates, avoiding per-card image/review/favorite queries. Services retain transactions and ownership; controllers do not query persistence. Favorite flags use the current principal only. Comparison uses stored demo offers and owned room prices, echoes the complete selection and ranks only offers with matching USD/full fees/cancellation basis.
 
-Proposed mappings awaiting current metadata/G2 review:
+Proposed mappings awaiting G2 review/application (current baseline metadata verified read-only on 2026-10-13):
 - room: nightly_price_cents, stock_total, max_guests_per_room, size_sqm, bed_type, includes_breakfast, image_urls (text array).
 - accommodations: location_id, timezone, cleaning_fee_cents, service_fee_cents, bedrooms/beds/baths, curated ranks.
 - features.icon_key; locations(id,city,country); demo_price_comparisons offer/fee/currency/condition/observation columns.
 - room_snapshot.source_room_id; accommodation_snapshot.source_accommodation_id; bookings.hold_expires_at.
 
-These mappings are code targets, not claims that the paused database contains those columns. No DDL or DB query was executed. Actual SQL/pagination/aggregate/stock behavior and snapshot compatibility require the isolated PostgreSQL tests after metadata reconciliation. Unit/MVC tests cover policies, DTO/service behavior and HTTP binding only.
+The restored database was inspected read-only on 2026-10-13: all baseline tables are empty, and these new columns/tables are absent. Existing snapshot links are room_snapshot.room_id and accommodation_snapshot.accommodation_id, both ON DELETE SET NULL; reviewed additive source columns must retain immutable source identities. No DDL or row mutation was executed. Actual SQL/pagination/aggregate/stock behavior and snapshot compatibility require the isolated PostgreSQL tests after G2 approval. Unit/MVC tests cover policies, DTO/service behavior and HTTP binding only.

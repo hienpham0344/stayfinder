@@ -32,7 +32,7 @@ class AuthPolicyTest {
     }
     private AuthSessionResponse session() {
         return new AuthSessionResponse("access","Bearer",clock.instant().plusSeconds(900),UUID.randomUUID(),
-            new UserResponse(UUID.randomUUID(),"Name","name@example.com",null,UserRole.CUSTOMER,null,0,0),"private-refresh");
+            new UserResponse(UUID.randomUUID(),"Name","name@example.com",null,UserRole.CUSTOMER,null,0L,0),"private-refresh");
     }
 
     @Test void browserReadsRefreshOnlyFromCookie() {

@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -37,6 +37,7 @@ class AuthHttpBoundaryTest {
     @Autowired MockMvc mvc;
     @MockitoBean AuthService auth;
     @MockitoBean UserService userService;
+    @MockitoBean io.github.hienpham0344.stayfinder.reward.service.RewardService rewards;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -45,7 +46,7 @@ class AuthHttpBoundaryTest {
     private RefreshSession live;
 
     @BeforeEach void setup() {
-        profile=new UserResponse(id,"Hien","hien@example.com",null,UserRole.CUSTOMER,null,0,0);
+        profile=new UserResponse(id,"Hien","hien@example.com",null,UserRole.CUSTOMER,null,0L,0);
         response=new AuthSessionResponse("test-access","Bearer",Instant.now().plusSeconds(900),sid,profile,"test-refresh");
         when(auth.register(any())).thenReturn(response);when(auth.login(any())).thenReturn(response);when(auth.refresh(any())).thenReturn(response);
         when(userService.getCurrentUser()).thenReturn(profile);
@@ -53,6 +54,35 @@ class AuthHttpBoundaryTest {
         u.setCredentialState("active");u.setPasswordHash("test-hash");
         live=new RefreshSession();live.setId(sid);live.setUserId(id);live.setExpiresAt(Instant.now().plusSeconds(9000));
         when(users.findById(id)).thenReturn(Optional.of(u));when(sessions.findById(sid)).thenReturn(Optional.of(live));
+    }
+    private String accessToken() {
+        String secret=Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
+        return new JwtTokenProvider(secret,Clock.systemUTC()).issue(id,sid);
+    }
+    @Test void missingRewardIdempotencyHeaderIsValidationErrorWithoutMutation() throws Exception {
+        mvc.perform(post("/api/rewards/claims").header("Authorization","Bearer "+accessToken())
+            .contentType("application/json").content("{\"offerId\":\""+UUID.randomUUID()+"\"}"))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        verify(rewards,never()).claim(any(),any(),any());
+    }
+    @Test void rewardOwnerAndBalanceCannotBeSuppliedByClient() throws Exception {
+        mvc.perform(get("/api/rewards/wallet")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/rewards/claims").header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","claim-1")
+            .contentType("application/json").content("{\"offerId\":\""+UUID.randomUUID()+"\",\"userId\":\""+UUID.randomUUID()+"\",\"availablePoints\":10000}"))
+            .andExpect(status().isBadRequest());
+        verify(rewards,never()).claim(any(),any(),any());
+    }
+    @Test void rewardClaimUsesAuthenticatedOwnerAndExposesDemoContract() throws Exception {
+        UUID offerId=UUID.randomUUID();
+        var offer=new io.github.hienpham0344.stayfinder.reward.dto.RewardOfferResponse(offerId,"DEMO","Demo voucher",1000,"discount_voucher",true,true,null,"Demo entitlement",
+            new io.github.hienpham0344.stayfinder.reward.dto.RewardOfferResponse.Terms(5,
+                io.github.hienpham0344.stayfinder.common.dto.MoneyUsd.cents(2500),io.github.hienpham0344.stayfinder.common.dto.MoneyUsd.cents(10000),null,30));
+        when(rewards.claim(id,offerId,"claim-1")).thenReturn(new io.github.hienpham0344.stayfinder.reward.dto.RewardClaimResponse(UUID.randomUUID(),offer,"available",Instant.now().plusSeconds(3600)));
+        mvc.perform(post("/api/rewards/claims").header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","claim-1")
+            .contentType("application/json").content("{\"offerId\":\""+offerId+"\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.result.offer.isDemo").value(true))
+            .andExpect(jsonPath("$.result.offer.terms.discountCap.amountCents").value(2500));
+        verify(rewards).claim(id,offerId,"claim-1");
     }
     @Test void nativeRegisterReturns201AndExplicitRefresh() throws Exception {
         mvc.perform(post("/api/auth/register").header("X-Client-Platform","native").contentType("application/json")

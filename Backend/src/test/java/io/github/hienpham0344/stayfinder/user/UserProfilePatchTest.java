@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 class UserProfilePatchTest {
     private final UserRepository users=mock(UserRepository.class);
-    private final UserServiceImpl service=new UserServiceImpl(users,Mappers.getMapper(UserMapper.class));
+    private final UserServiceImpl service=new UserServiceImpl(users,new io.github.hienpham0344.stayfinder.user.service.UserProfileProjection(Mappers.getMapper(UserMapper.class),mock(io.github.hienpham0344.stayfinder.reward.repository.RewardWalletRepository.class)));
     private final User user=new User();
     @BeforeEach void setup(){
         UUID id=UUID.randomUUID();user.setId(id);user.setFullName("Old");user.setEmail("account@example.com");user.setPhone("+84912345678");

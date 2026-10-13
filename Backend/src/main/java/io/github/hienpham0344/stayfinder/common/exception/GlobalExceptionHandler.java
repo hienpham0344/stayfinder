@@ -26,6 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class,
             org.springframework.validation.BindException.class,
             org.springframework.web.bind.MissingServletRequestParameterException.class,
+            org.springframework.web.bind.MissingRequestHeaderException.class,
             org.springframework.web.method.annotation.HandlerMethodValidationException.class,
             jakarta.validation.ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleMalformedRequest(Exception exception) {

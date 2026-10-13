@@ -22,6 +22,10 @@ public enum ErrorCode {
     BOOKING_INVALID_STATE("BOOKING_INVALID_STATE", "Invalid booking state", HttpStatus.CONFLICT),
     BOOKING_SNAPSHOT_REQUIRED("BOOKING_SNAPSHOT_REQUIRED", "Booking snapshot schema is required", HttpStatus.CONFLICT),
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Payment not found", HttpStatus.NOT_FOUND),
+    IDEMPOTENCY_CONFLICT("IDEMPOTENCY_CONFLICT", "Request key was already used with different content", HttpStatus.CONFLICT),
+    INSUFFICIENT_POINTS("INSUFFICIENT_POINTS", "Insufficient available points", HttpStatus.UNPROCESSABLE_ENTITY),
+    REWARD_INELIGIBLE("REWARD_INELIGIBLE", "Reward cannot be used for this request", HttpStatus.UNPROCESSABLE_ENTITY),
+    VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher has expired", HttpStatus.UNPROCESSABLE_ENTITY),
     DUPLICATE_RESOURCE("DUPLICATE_RESOURCE", "Resource already exists", HttpStatus.CONFLICT),
     DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "Service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
