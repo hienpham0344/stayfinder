@@ -28,7 +28,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class,io.github.hienpham0344.stayfinder.demo.controller.DemoPaymentOperationsController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -45,6 +45,7 @@ class AuthHttpBoundaryTest {
     @MockitoBean io.github.hienpham0344.stayfinder.payment.service.PaymentService payments;
     @MockitoBean io.github.hienpham0344.stayfinder.payment.service.SepayReceiptService receipts;
     @MockitoBean io.github.hienpham0344.stayfinder.payment.service.PaymentProvider paymentProvider;
+    @MockitoBean io.github.hienpham0344.stayfinder.demo.service.DemoPaymentOperationsService demoOperations;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -103,6 +104,31 @@ class AuthHttpBoundaryTest {
         mvc.perform(post("/api/payments/webhook/sepay").contentType("application/json").content(new byte[70000])).andExpect(status().isInternalServerError())
             .andExpect(jsonPath("$.success").doesNotExist());
         verify(receipts).receive(argThat(raw->raw.length==65537),isNull(),isNull());
+    }
+
+    @Test void demoOperatorRoutesDenyUserAndRequireAdminKeyAndServerAmount() throws Exception {
+        String path="/api/demo/bookings/"+UUID.randomUUID()+"/settle";
+        mvc.perform(post(path)).andExpect(status().isUnauthorized());
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","demo-1").contentType("application/json").content("{}"))
+            .andExpect(status().isForbidden());verifyNoInteractions(demoOperations);
+        var admin=users.findById(id).orElseThrow();admin.setRole(UserRole.ADMIN);
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{}")).andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","demo-1").contentType("application/json").content("{\"amount\":1}"))
+            .andExpect(status().isBadRequest());verifyNoInteractions(demoOperations);
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","demo-1").contentType("application/json").content("{}"))
+            .andExpect(status().isOk());verify(demoOperations).settleAtProperty(eq(id),any(),eq("demo-1"));
+    }
+    @Test void demoRefundRequiresAdminAndRejectsClientAmountOrEmptyConfirmationReference() throws Exception {
+        String path="/api/demo/refunds/"+UUID.randomUUID()+"/confirm";
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","refund-1").contentType("application/json").content("{\"reference\":\"Synthetic ref\"}"))
+            .andExpect(status().isForbidden());verifyNoInteractions(demoOperations);
+        users.findById(id).orElseThrow().setRole(UserRole.ADMIN);
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","refund-1").contentType("application/json").content("{\"reference\":\"\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","refund-1").contentType("application/json").content("{\"reference\":\"Synthetic ref\",\"amount\":1}"))
+            .andExpect(status().isBadRequest());verifyNoInteractions(demoOperations);
+        mvc.perform(post(path).header("Authorization","Bearer "+accessToken()).header("Idempotency-Key","refund-1").contentType("application/json").content("{\"reference\":\"Synthetic ref\"}"))
+            .andExpect(status().isOk());verify(demoOperations).confirmRefund(eq(id),any(),eq("Synthetic ref"),eq("refund-1"));
     }
 
     private String accessToken() {

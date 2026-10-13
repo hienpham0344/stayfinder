@@ -6,7 +6,7 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
 import javax.sql.DataSource;import java.sql.*;import java.time.*;
 @TestConfiguration(proxyBeanMethods=false)
 public class ApprovedPostgresContext {
- @Bean @Primary Clock fixtureClock(){return Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"),ZoneOffset.UTC);}
+ @Bean @Primary MutableFixtureClock fixtureClock(){return new MutableFixtureClock();}
  @Bean SmartInitializingSingleton pinApprovedSchema(PlatformTransactionManager manager,DataSource dataSource){
   return ()->{
    if(!(manager instanceof AbstractPlatformTransactionManager tx))throw new IllegalStateException("Unsupported test transaction manager");
@@ -15,7 +15,9 @@ public class ApprovedPostgresContext {
      if(failure!=null)return;
      Connection c=DataSourceUtils.getConnection(dataSource);
      try(var s=c.createStatement()){
+      s.execute("set local application_name=\'StayFinderIsolatedQA\'");
       s.execute("set local search_path=stayfinder_test_20261013,pg_catalog");s.execute("set local statement_timeout='15s'");s.execute("set local lock_timeout='5s'");
+      try(var r=s.executeQuery("select pg_backend_pid()")){r.next();TransactionBackendTracker.PIDS.put(Thread.currentThread().threadId(),r.getInt(1));}
       try(var r=s.executeQuery("select current_schema()")){r.next();if(!PostgresTestTarget.SCHEMA.equals(r.getString(1)))throw new IllegalStateException("Wrong PostgreSQL test schema");}
      }catch(SQLException e){throw new IllegalStateException("Cannot pin approved test transaction; SQLSTATE="+e.getSQLState());}
      finally{DataSourceUtils.releaseConnection(c,dataSource);}

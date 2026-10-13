@@ -55,7 +55,7 @@ class AuthServiceTest {
         provider.setPasswordEncoder(passwords);
         String secret=Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
         service=new AuthServiceImpl(new ProviderManager(provider),users,sessions,tokens,passwords,
-            new JwtTokenProvider(secret,clock),new io.github.hienpham0344.stayfinder.user.service.UserProfileProjection(Mappers.getMapper(UserMapper.class),mock(io.github.hienpham0344.stayfinder.reward.repository.RewardWalletRepository.class)),audit,clock);
+            new JwtTokenProvider(secret,clock),new io.github.hienpham0344.stayfinder.user.service.UserProfileProjection(Mappers.getMapper(UserMapper.class),mock(io.github.hienpham0344.stayfinder.reward.repository.RewardWalletRepository.class)),audit,clock,mock(jakarta.persistence.EntityManager.class));
     }
 
     @Test void registersNormalizedEmailWithBcryptAndServerOwnedCustomerIdentity() {

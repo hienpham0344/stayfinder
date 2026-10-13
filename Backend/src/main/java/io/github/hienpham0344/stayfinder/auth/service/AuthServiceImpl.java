@@ -34,13 +34,14 @@ public class AuthServiceImpl implements AuthService {
     private final UserProfileProjection mapper;
     private final AuthAuditRepository audit;
     private final Clock clock;
+    private final jakarta.persistence.EntityManager entityManager;
     private final SecureRandom random=new SecureRandom();
 
     public AuthServiceImpl(AuthenticationManager authentication,UserRepository users,RefreshSessionRepository sessions,
             RefreshTokenRepository tokens,PasswordEncoder passwords,JwtTokenProvider jwt,UserProfileProjection mapper,
-            AuthAuditRepository audit,Clock clock) {
+            AuthAuditRepository audit,Clock clock,jakarta.persistence.EntityManager entityManager) {
         this.authentication=authentication; this.users=users; this.sessions=sessions; this.tokens=tokens;
-        this.passwords=passwords; this.jwt=jwt; this.mapper=mapper; this.audit=audit; this.clock=clock;
+        this.passwords=passwords; this.jwt=jwt; this.mapper=mapper; this.audit=audit; this.clock=clock;this.entityManager=entityManager;
     }
 
     @Override @Transactional
@@ -62,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
         User existing=users.findByEmailIgnoreCase(email).orElseThrow(()->new BusinessException(ErrorCode.INVALID_CREDENTIALS));
         // Serialize credential changes with session creation before the provider verifies the password.
         User user=users.lockById(existing.getId()).orElseThrow(()->new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        entityManager.refresh(user,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         if(!active(user)||!boundedPassword(request.password()))throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         try {
             authentication.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(email,request.password()));
@@ -75,8 +77,11 @@ public class AuthServiceImpl implements AuthService {
         // Family lock precedes token lock. Credential updates never acquire a family then user write lock.
         RefreshSession session=sessions.lockById(located.getSessionId())
                 .orElseThrow(()->new BusinessException(ErrorCode.SESSION_EXPIRED));
+        entityManager.refresh(session,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         requireLive(session);
         RefreshToken old=tokens.lockById(located.getId()).orElseThrow(()->new BusinessException(ErrorCode.SESSION_EXPIRED));
+        // located was managed before the family wait; a lock query alone retains its stale consumed state.
+        entityManager.refresh(old,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         Instant now=clock.instant();
         if(old.getConsumedAt()!=null) {
             if(now.isBefore(old.getConsumedAt().plusSeconds(10)))throw new BusinessException(ErrorCode.REFRESH_RETRY);
@@ -95,6 +100,7 @@ public class AuthServiceImpl implements AuthService {
     @Override @Transactional
     public void logout(String rawRefreshToken) {
         findRefresh(rawRefreshToken).ifPresent(token->sessions.lockById(token.getSessionId()).ifPresent(session->{
+            entityManager.refresh(session,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
             if(session.getRevokedAt()==null){session.setRevokedAt(clock.instant());sessions.save(session);}
         }));
     }
@@ -115,6 +121,7 @@ public class AuthServiceImpl implements AuthService {
 
     private User reauthenticate(UUID userId,String password) {
         User user=users.lockById(userId).orElseThrow(()->new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        entityManager.refresh(user,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         if(!active(user)||!boundedPassword(password)||!passwords.matches(password,user.getPasswordHash()))
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         return user;

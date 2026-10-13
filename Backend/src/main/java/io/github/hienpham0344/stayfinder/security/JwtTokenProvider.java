@@ -25,11 +25,21 @@ public final class JwtTokenProvider {
         decoder=NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
         JwtTimestampValidator timestamps=new JwtTimestampValidator(Duration.ZERO); timestamps.setClock(clock);
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(timestamps,
+                this::validateLifetime,
                 new JwtIssuerValidator(ISSUER),
                 new JwtClaimValidator<List<String>>("aud",v->v!=null&&v.contains(AUDIENCE)),
                 new JwtClaimValidator<String>("sid",JwtTokenProvider::validUuid),
                 new JwtClaimValidator<String>("sub",JwtTokenProvider::validUuid),
                 new JwtClaimValidator<String>("jti",v->v!=null&&!v.isBlank())));
+    }
+    private org.springframework.security.oauth2.core.OAuth2TokenValidatorResult validateLifetime(Jwt token) {
+        Instant issued=token.getIssuedAt(),notBefore=token.getNotBefore(),expires=token.getExpiresAt();
+        boolean valid=issued!=null&&notBefore!=null&&expires!=null
+            &&!issued.isAfter(clock.instant())&&!notBefore.isBefore(issued)&&notBefore.isBefore(expires)
+            &&expires.isAfter(issued)&&Duration.between(issued,expires).compareTo(Duration.ofMinutes(15))<=0;
+        return valid?org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.success():
+            org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.failure(
+                new org.springframework.security.oauth2.core.OAuth2Error("invalid_token","Invalid access token lifetime",null));
     }
     private static boolean validUuid(String value) {
         if(value==null)return false;

@@ -18,7 +18,7 @@ public class ApprovedPostgresInitializer implements ApplicationContextInitialize
   p.put("spring.datasource.hikari.data-source-properties.prepareThreshold","0");p.put("spring.datasource.hikari.data-source-properties.currentSchema",PostgresTestTarget.SCHEMA);
   p.put("spring.datasource.hikari.maximum-pool-size","4");p.put("spring.datasource.hikari.minimum-idle","0");p.put("spring.datasource.hikari.connection-timeout","10000");
   p.put("spring.jpa.hibernate.ddl-auto","validate");p.put("spring.jpa.properties.hibernate.default_schema",PostgresTestTarget.SCHEMA);
-  p.put("spring.config.import","");p.put("stayfinder.workers.enabled","false");p.put("stayfinder.demo-operations.enabled","false");
+  p.put("spring.config.import","");p.put("stayfinder.workers.enabled","false");
   p.put("spring.security.jwt.secret-base64","MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=");
   p.put("SEPAY_TEST_MODE","true");p.put("SEPAY_TEST_BANK_NAME","MBBank");p.put("SEPAY_TEST_BANK_CODE","MB");p.put("SEPAY_TEST_ACCOUNT_NUMBER","000123456789");
   p.put("SEPAY_TEST_ACCOUNT_HOLDER","Synthetic holder");p.put("SEPAY_TEST_SUB_ACCOUNT","");

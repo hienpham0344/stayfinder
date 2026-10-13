@@ -46,7 +46,7 @@ public class SecurityConfig {
                     "/api/payments/webhook/sepay").permitAll()
                 .requestMatchers(HttpMethod.GET,"/actuator/health","/api/catalog/filters","/api/locations/suggestions",
                     "/api/accommodations","/api/accommodations/**","/api/payment-methods").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**","/api/demo/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(resource->resource.authenticationEntryPoint(entry).accessDeniedHandler(denied)
                 .jwt(config->config.decoder(jwt.decoder()).jwtAuthenticationConverter(converter)));

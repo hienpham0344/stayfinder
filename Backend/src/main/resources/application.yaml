@@ -41,3 +41,10 @@ spring:
 
 
 
+
+stayfinder:
+  payment:
+    demo-usd-vnd-rate: ${DEMO_USD_VND_RATE:25000}
+    demo-rate-version: ${DEMO_RATE_VERSION:demo-v1}
+  demo-operations:
+    enabled: ${DEMO_OPERATIONS_ENABLED:false}
