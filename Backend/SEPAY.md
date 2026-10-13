@@ -14,4 +14,4 @@ Test and Live use the same JSON shape. Environment must come from dedicated Test
 
 G3 remains: prepare complete adapter/runtime instructions, configure only Test Mode locally, and capture an actual authenticated native delivery. Primary Backend/.env was inspected only as booleans; adequate secret and test-mode/bank/account/holder configuration are not present. No values copied/printed or external configuration/payment action performed.
 
-G2 remains: no migration/fixture write performed. 000 +001–004 approval is pending for exact stayfinder_test_20261013; 005/006 are later unapproved drafts. Current unit/security-MVC tests do not establish PostgreSQL transaction/locking/rollback or native provider delivery.
+G2: the user approved and applied the frozen 000 +001–004 batch only to stayfinder_test_20261013. Four guarded PostgreSQL foundation tests pass with fixture rollback; public structure/counts are unchanged. 005/006 remain unapproved and unapplied. Current unit/security-MVC tests do not establish PostgreSQL transaction/locking/rollback or native provider delivery.

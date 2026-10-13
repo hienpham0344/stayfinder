@@ -106,9 +106,10 @@ public class AccommodationSearchRepository {
             .addValue("now",OffsetDateTime.ofInstant(now,ZoneOffset.UTC)).addValue("supportedZones",ZoneId.getAvailableZoneIds());
     }
     private static StayCardResponse card(ResultSet row,int index) throws SQLException {
+        java.math.BigDecimal rating=row.getBigDecimal("rating_average");
         return new StayCardResponse(row.getObject("id",UUID.class),row.getString("name"),row.getObject("type_id",UUID.class),
             row.getString("type_name"),row.getString("city"),row.getString("address"),row.getBigDecimal("latitude"),row.getBigDecimal("longitude"),
-            MoneyUsd.cents(row.getLong("nightly_price_cents")),row.getString("cover_image_url"),row.getObject("rating_average",Double.class),
+            MoneyUsd.cents(row.getLong("nightly_price_cents")),row.getString("cover_image_url"),rating==null?null:rating.doubleValue(),
             row.getLong("review_count"),row.getBoolean("is_favorite"));
     }
 }

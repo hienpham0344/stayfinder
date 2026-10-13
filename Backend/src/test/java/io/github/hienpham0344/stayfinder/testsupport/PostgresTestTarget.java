@@ -17,12 +17,13 @@ public final class PostgresTestTarget {
   Properties cfg=new Properties();try(Reader r=Files.newBufferedReader(Path.of(envFile))){cfg.load(r);}
   Properties login=new Properties();login.setProperty("user",value(cfg,"SPRING_DATASOURCE_USERNAME"));
   login.setProperty("password",value(cfg,"SPRING_DATASOURCE_PASSWORD"));login.setProperty("currentSchema",SCHEMA);
-  login.setProperty("connectTimeout","10");login.setProperty("socketTimeout","30");login.setProperty("ApplicationName","StayFinderIsolatedTest");
+  login.setProperty("prepareThreshold","0");login.setProperty("connectTimeout","10");login.setProperty("socketTimeout","30");login.setProperty("ApplicationName","StayFinderIsolatedTest");
   DriverManager.setLoginTimeout(10);
   Connection c;
   try{c=DriverManager.getConnection(value(cfg,"SPRING_DATASOURCE_URL"),login);}
   catch(SQLException e){throw new IllegalStateException("Test connection failed; SQLSTATE="+e.getSQLState());}
   try{
+   c.unwrap(org.postgresql.PGConnection.class).setPrepareThreshold(0);
    c.setAutoCommit(false);
    try(Statement s=c.createStatement()){
     s.execute("set local search_path="+SCHEMA+",pg_catalog");s.execute("set local lock_timeout='5s'");
