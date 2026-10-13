@@ -2,6 +2,11 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -43,6 +48,9 @@ spring:
 
 
 stayfinder:
+  media:
+    storage-root: ${MEDIA_STORAGE_ROOT:storage/reviews}
+    signing-secret: ${MEDIA_SIGNING_SECRET:}
   payment:
     demo-usd-vnd-rate: ${DEMO_USD_VND_RATE:25000}
     demo-rate-version: ${DEMO_RATE_VERSION:demo-v1}

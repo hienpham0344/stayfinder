@@ -15,11 +15,12 @@ import java.util.UUID;
 
 @Entity @Table(name = "reviews") @Getter @Setter @NoArgsConstructor
 public class Review {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id private UUID id;
     @Column(name = "user_id") private UUID userId;
     @Column(name = "booking_id") private UUID bookingId;
     @Column(name = "accommodation_id") private UUID accommodationId;
     private Integer rating;
     private String comment;
     @Column(name = "created_at") private Instant createdAt;
+    @Column(name = "updated_at") private Instant updatedAt;
 }

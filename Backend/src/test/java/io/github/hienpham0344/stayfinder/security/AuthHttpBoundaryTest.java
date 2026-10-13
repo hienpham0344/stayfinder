@@ -28,7 +28,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class,io.github.hienpham0344.stayfinder.demo.controller.DemoPaymentOperationsController.class},properties={
+@WebMvcTest(controllers={AuthController.class,UserController.class,io.github.hienpham0344.stayfinder.reward.controller.RewardController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingQuoteController.class,io.github.hienpham0344.stayfinder.booking.controller.BookingCancellationController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentController.class,io.github.hienpham0344.stayfinder.payment.controller.PaymentMethodController.class,io.github.hienpham0344.stayfinder.demo.controller.DemoPaymentOperationsController.class,io.github.hienpham0344.stayfinder.media.controller.MediaController.class,io.github.hienpham0344.stayfinder.review.controller.ReviewController.class},properties={
     "spring.security.jwt.secret-base64=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
     "spring.web.cors.allowed-origins=https://demo.example",
     "spring.jackson.deserialization.fail-on-unknown-properties=true"})
@@ -46,6 +46,8 @@ class AuthHttpBoundaryTest {
     @MockitoBean io.github.hienpham0344.stayfinder.payment.service.SepayReceiptService receipts;
     @MockitoBean io.github.hienpham0344.stayfinder.payment.service.PaymentProvider paymentProvider;
     @MockitoBean io.github.hienpham0344.stayfinder.demo.service.DemoPaymentOperationsService demoOperations;
+    @MockitoBean io.github.hienpham0344.stayfinder.media.service.MediaService media;
+    @MockitoBean io.github.hienpham0344.stayfinder.review.service.ReviewService reviews;
     @MockitoBean UserRepository users;
     @MockitoBean RefreshSessionRepository sessions;
     private final UUID id=UUID.randomUUID(),sid=UUID.randomUUID();
@@ -62,6 +64,31 @@ class AuthHttpBoundaryTest {
         u.setCredentialState("active");u.setPasswordHash("test-hash");
         live=new RefreshSession();live.setId(sid);live.setUserId(id);live.setExpiresAt(Instant.now().plusSeconds(9000));
         when(users.findById(id)).thenReturn(Optional.of(u));when(sessions.findById(sid)).thenReturn(Optional.of(live));
+    }
+    @Test void mediaUploadAndDeleteRequireAuthenticationWhileSignedContentIsAnonymous() throws Exception {
+        UUID image=UUID.randomUUID();var file=new org.springframework.mock.web.MockMultipartFile("image","synthetic.png","image/png",new byte[]{1,2,3});
+        mvc.perform(multipart("/api/media").file(file)).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/media/"+image)).andExpect(status().isUnauthorized());
+        when(media.upload(eq(id),any())).thenReturn(new io.github.hienpham0344.stayfinder.media.dto.MediaUploadResponse(image,"/api/media/"+image+"/content?expires=1790000000&signature=synthetic",Instant.now().plusSeconds(900),"image/png",3));
+        mvc.perform(multipart("/api/media").file(file).header("Authorization","Bearer "+accessToken())).andExpect(status().isOk()).andExpect(jsonPath("$.result.id").value(image.toString())).andExpect(jsonPath("$.result.sizeBytes").value(3));
+        when(media.openSigned(eq(image),any(),eq("verified-signature"))).thenReturn(new io.github.hienpham0344.stayfinder.media.service.MediaService.Content(new byte[]{1,2,3},"image/png"));
+        mvc.perform(get("/api/media/"+image+"/content").param("expires","1790000000").param("signature","verified-signature")).andExpect(status().isOk()).andExpect(content().contentType("image/png")).andExpect(header().string("X-Content-Type-Options","nosniff")).andExpect(header().string("Cache-Control","no-store"));
+    }
+    @Test void malformedSignedExpiryAndUntrustedSignatureFailClosed() throws Exception {
+        UUID image=UUID.randomUUID();
+        when(media.openSigned(eq(image),any(),eq("bad"))).thenThrow(new io.github.hienpham0344.stayfinder.common.exception.BusinessException(io.github.hienpham0344.stayfinder.common.exception.ErrorCode.MEDIA_INVALID));
+        mvc.perform(get("/api/media/"+image+"/content").param("expires","1790000000").param("signature","bad")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/media/"+image+"/content").param("expires","9223372036854775807").param("signature","bad")).andExpect(status().isBadRequest());
+    }
+    @Test void reviewsUseOwnerBoundaryValidatedMediaAndPublicPagination() throws Exception {
+        UUID stay=UUID.randomUUID(),booking=UUID.randomUUID(),review=UUID.randomUUID();
+        String body="{\"bookingId\":\""+booking+"\",\"rating\":5,\"comment\":\"Synthetic review\",\"mediaIds\":[]}";
+        mvc.perform(post("/api/accommodations/"+stay+"/reviews").contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+        when(reviews.create(eq(id),eq(stay),any())).thenReturn(new io.github.hienpham0344.stayfinder.review.dto.ReviewResponse(review,stay,"Synthetic author",null,5,"Synthetic review",Instant.now(),List.of(),true));
+        mvc.perform(post("/api/accommodations/"+stay+"/reviews").header("Authorization","Bearer "+accessToken()).contentType("application/json").content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.result.isMine").value(true)).andExpect(jsonPath("$.result.userId").doesNotExist()).andExpect(jsonPath("$.result.bookingId").doesNotExist());
+        mvc.perform(post("/api/accommodations/"+stay+"/reviews").header("Authorization","Bearer "+accessToken()).contentType("application/json").content("{\"rating\":5,\"comment\":\"x\",\"mediaIds\":[]}")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/accommodations/"+stay+"/reviews").param("star","6")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/accommodations/"+stay+"/reviews").param("size","101")).andExpect(status().isBadRequest());
     }
     @Test void paymentMethodsArePublicAndDisabledBankHasNoFakeInstructions() throws Exception {
         mvc.perform(get("/api/payment-methods")).andExpect(status().isOk())

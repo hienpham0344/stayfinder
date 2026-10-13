@@ -32,6 +32,10 @@ public enum ErrorCode {
     INSUFFICIENT_POINTS("INSUFFICIENT_POINTS", "Insufficient available points", HttpStatus.UNPROCESSABLE_ENTITY),
     REWARD_INELIGIBLE("REWARD_INELIGIBLE", "Reward cannot be used for this request", HttpStatus.UNPROCESSABLE_ENTITY),
     VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher has expired", HttpStatus.UNPROCESSABLE_ENTITY),
+    MEDIA_INVALID("MEDIA_INVALID", "Image or display link is invalid", HttpStatus.BAD_REQUEST),
+    MEDIA_TOO_LARGE("MEDIA_TOO_LARGE", "Image must be at most 5 MiB", HttpStatus.PAYLOAD_TOO_LARGE),
+    REVIEW_NOT_ELIGIBLE("REVIEW_NOT_ELIGIBLE", "A completed paid stay is required", HttpStatus.CONFLICT),
+    REVIEW_NOT_FOUND("REVIEW_NOT_FOUND", "Review not found", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("DUPLICATE_RESOURCE", "Resource already exists", HttpStatus.CONFLICT),
     DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "Service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
