@@ -31,13 +31,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthSessionResponse>> login(@Valid @RequestBody LoginRequest body,
             HttpServletRequest request,HttpServletResponse response) {
-        transport.platform(request);limiter.checkLogin(body.email(),request.getRemoteAddr());
-        try {
-            return ResponseEntity.ok(ApiResponse.success(transport.writeSession(request,response,auth.login(body))));
-        } catch(BusinessException exception) {
-            if(exception.getErrorCode()==ErrorCode.INVALID_CREDENTIALS)limiter.recordLoginFailure(body.email(),request.getRemoteAddr());
-            throw exception;
-        }
+        transport.platform(request);
+        return limiter.loginAttempt(body.email(),request.getRemoteAddr(),()->
+            ResponseEntity.ok(ApiResponse.success(transport.writeSession(request,response,auth.login(body)))));
     }
 
     @PostMapping("/refresh")

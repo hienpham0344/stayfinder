@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSession } from '../../state/SessionProvider';
@@ -8,6 +8,11 @@ import { Action, CatalogPage, Field, ResourceStatus, catalogStyles as s } from '
 import {useBookingDraft} from '../../state/BookingDraftProvider';
 import {validateGuest} from '../../utils/guestValidation';
 export function GuestInformationExperience(){
+ const {user}=useSession();
+ return <GuestInformationForm key={user?.id??'signed-out'}/>;
+}
+function GuestInformationForm(){
+ const active=useRef(true);useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
  const [hydrated,setHydrated]=useState(false);useEffect(()=>setHydrated(true),[]);
  const params=useLocalSearchParams<{accommodationId?:string;roomId?:string;checkIn?:string;checkOut?:string;quantity?:string;adults?:string;children?:string}>();
  const {selection,catalog}=useCatalog();const {user}=useSession();const draft=useBookingDraft();
@@ -18,14 +23,14 @@ export function GuestInformationExperience(){
  const room=rooms.data?.find(r=>r.id===params.roomId);
  const [name,setName]=useState(user?.fullName||''),[email,setEmail]=useState(user?.email||''),[phone,setPhone]=useState(user?.phone||''),[request,setRequest]=useState('');
  const [error,setError]=useState('');
- useEffect(()=>{setName(value=>value||user?.fullName||'');setEmail(value=>value||user?.email||'');setPhone(value=>value||user?.phone||'');},[user?.id]);
  const continueToPayment=async()=>{
   const errors=validateGuest(name,email,phone);const invalid=Object.values(errors).filter(Boolean).join(' ');
   if(invalid||request.trim().length>2000){setError(invalid||'Special requests must be at most 2000 characters.');return;}
   setError('');try{
    await draft.store.setGuest(selectionForRoom(criteria,params.accommodationId!,params.roomId!),{fullName:name.trim(),email:email.trim().toLowerCase(),phone:phone.replace(/\s/g,''),specialRequest:request.trim()||null});
-   await draft.store.refreshQuote();router.push('/booking/checkout');
-  }catch(e){setError(e instanceof Error?e.message:'Unable to get a quote. Please retry.');}
+   if(!active.current)return;
+   await draft.store.refreshQuote();if(active.current)router.push('/booking/checkout');
+  }catch(e){if(active.current)setError(e instanceof Error?e.message:'Unable to get a quote. Please retry.');}
  };
  if(!hydrated)return <CatalogPage title="Guest information" back><Text style={s.text}>Loading selected room…</Text></CatalogPage>;
  return <CatalogPage title="Guest information" back>

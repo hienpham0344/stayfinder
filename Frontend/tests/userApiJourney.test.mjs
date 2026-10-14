@@ -1,0 +1,57 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{registerHooks}from'node:module';
+registerHooks({resolve(s,c,n){try{return n(s,c);}catch(e){if(e.code==='ERR_MODULE_NOT_FOUND'&&/^\.{1,2}\//.test(s)&&!/\.[a-z]+$/i.test(s))return n(s+'.ts',c);throw e;}}});
+const {ApiClient}=await import('../services/apiClient.ts');const{createAuthApi}=await import('../services/authApi.ts');const{SessionCoordinator}=await import('../services/sessionCoordinator.ts');
+const{createBookingApi}=await import('../services/bookingApi.ts');const{createPaymentApi}=await import('../services/paymentApi.ts');const{createRewardsApi}=await import('../services/rewardsApi.ts');
+const{createProfileApi}=await import('../services/profileApi.ts');const{createReviewsApi}=await import('../services/reviewsApi.ts');const{createMediaApi}=await import('../services/mediaApi.ts');const{createNotificationsApi}=await import('../services/notificationsApi.ts');
+function client(baseUrl){let refresh=null;const trace=async(url,options)=>{const started=Date.now();const route=new URL(url).pathname.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g,':fixture-id');console.info('HTTP_REQUEST|'+options.method+'|'+route);const response=await fetch(url,options);console.info('HTTP_RESPONSE|'+response.status+'|'+options.method+'|'+route+'|elapsed_ms='+(Date.now()-started));return response;};const api=new ApiClient({baseUrl,platform:'native',allowInsecureHttp:true,fetch:trace,timeoutMs:10000}),auth=createAuthApi(api),session=new SessionCoordinator({auth,store:{kind:'native',readRefresh:async()=>refresh,writeRefresh:async value=>{refresh=value;},clearRefresh:async()=>{refresh=null;}}});api.setSession(session);return{api,auth,session};}
+test('actual frontend adapters traverse guarded Spring HTTP and PostgreSQL USER contracts',{skip:!process.env.STAYFINDER_HTTP_FIXTURE,timeout:600000},async()=>{
+ const f=JSON.parse(process.env.STAYFINDER_HTTP_FIXTURE);
+ assert.equal(f.schema,'stayfinder_test_20261013');assert.match(f.baseUrl,/^http:\/\/127\.0\.0\.1:\d+\/api$/);for(const id of[f.ownerId,f.stayId,f.roomId,f.completedBookingId,f.offerId])assert.match(id,/^[0-9a-f-]{36}$/);
+ assert.match(f.ownerEmail,/^fixture-http-/);assert.match(f.otherEmail,/^fixture-http-/);
+ const a=client(f.baseUrl),b=client(f.baseUrl),admin=client(f.baseUrl);
+ try{
+  await a.session.login({email:f.ownerEmail,password:f.password});assert.equal(a.session.getUser().id,f.ownerId);
+  await b.session.register({fullName:'Synthetic HTTP other',email:f.otherEmail,password:f.password});await admin.session.login({email:f.adminEmail,password:f.password});
+  const booking=createBookingApi(a.api),payment=createPaymentApi(a.api),reward=createRewardsApi(a.api),profile=createProfileApi(a.api),review=createReviewsApi(a.api),media=createMediaApi(a.api),notifications=createNotificationsApi(a.api);
+  const current=await booking.get(f.completedBookingId);assert.equal(current.status,'completed');assert.equal(current.paymentStatus,'success');assert.equal(current.allowedActions.review,true);
+  await assert.rejects(createBookingApi(b.api).get(current.id),e=>e.code==='BOOKING_NOT_FOUND');
+  await assert.rejects(a.api.request('/users/me',{method:'PATCH',body:{role:'admin'}}),e=>e.code==='VALIDATION_ERROR');
+  const updated=await profile.patch({fullName:'Synthetic HTTP updated',phone:'+84912345678'});assert.equal(updated.fullName,'Synthetic HTTP updated');
+  await profile.patchPreferences({language:'vi-VN',bookingNotifications:false});assert.deepEqual(await profile.preferences(),{language:'vi-VN',bookingNotifications:false});
+  assert.equal((await createProfileApi(b.api).preferences()).language,'en-US');
+  const reportBody={category:'Booking',description:'Synthetic HTTP report',bookingId:current.id};
+  const report=await profile.report(reportBody,'http-report');assert.equal(report.status,'submitted');assert.equal((await profile.report(reportBody,'http-report')).reportId,report.reportId);
+  await assert.rejects(createProfileApi(b.api).report(reportBody,'http-report'),e=>e.code==='BOOKING_NOT_FOUND');
+  const wallet=await reward.wallet();assert.equal(wallet.availablePoints,1032);
+  const claim=await reward.claim(f.offerId,'http-claim');assert.equal((await reward.claim(f.offerId,'http-claim')).id,claim.id);assert.equal((await reward.wallet()).availablePoints,32);
+  const quote=await booking.quote({accommodationId:f.stayId,roomId:f.roomId,checkIn:'2026-11-10',checkOut:'2026-11-13',quantity:1,adults:1,children:0,voucherId:null,rewardPoints:0});
+  assert.deepEqual(quote.total,{amountCents:103200,currency:'USD'});
+  const guest={fullName:'Synthetic HTTP guest',email:f.ownerEmail,phone:'+84912345678',specialRequest:null};
+  const created=await booking.create({quoteId:quote.id,guest,paymentMethod:'pay_at_property'},'http-property');
+  assert.equal(created.status,'confirmed');assert.equal(created.paymentStatus,'pending');assert.equal((await booking.create({quoteId:quote.id,guest,paymentMethod:'pay_at_property'},'http-property')).id,created.id);
+  const propertyPayment=await payment.create(created.id,'pay_at_property','http-property-payment');assert.equal(propertyPayment.status,'pending');assert.equal(propertyPayment.settlement,null);
+  await assert.rejects(review.create(f.stayId,{bookingId:created.id,rating:5,comment:'Unpaid',mediaIds:[]}),e=>e.code==='REVIEW_NOT_ELIGIBLE');
+  await assert.rejects(a.api.request('/demo/bookings/'+created.id+'/settle',{method:'POST',body:{},idempotencyKey:'http-denied-settle'}),e=>e.code==='FORBIDDEN');
+  const settled=await admin.api.request('/demo/bookings/'+created.id+'/settle',{method:'POST',body:{},idempotencyKey:'http-settle'});assert.equal(settled.status,'success');
+  const preview=await booking.previewCancellation(created.id);assert.equal(preview.requiresRefundConfirmation,true);const cancelled=await booking.cancel(created.id,'Synthetic HTTP cancellation','http-cancel');assert.equal(cancelled.status,'cancelled');assert.equal(cancelled.refundStatus,'requested');
+  const bankQuote=await booking.quote({accommodationId:f.stayId,roomId:f.roomId,checkIn:'2026-11-20',checkOut:'2026-11-23',quantity:1,adults:1,children:0,voucherId:null,rewardPoints:0});
+  const bank=await booking.create({quoteId:bankQuote.id,guest,paymentMethod:'bank_transfer'},'http-bank'),instructions=await payment.create(bank.id,'bank_transfer','http-bank-payment');
+  assert.equal(instructions.status,'pending');assert.equal(instructions.settlement.amount,25800000);assert.equal(instructions.settlement.usdToVndRate,'25000');assert.equal((await payment.create(bank.id,'bank_transfer','http-bank-payment')).id,instructions.id);
+  await assert.rejects(a.api.request('/payments/webhook/sepay',{auth:false,method:'POST',body:{}}),e=>e.status===401);assert.equal((await booking.get(bank.id)).paymentStatus,'pending');
+  const image=new FormData();const png=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1]);image.append('image',new Blob([png],{type:'image/png'}),'synthetic.png');
+  const uploaded=await media.upload(image);assert.equal(uploaded.mimeType,'image/png');const photo=await fetch(a.api.mediaUrl(uploaded.displayUrl));assert.equal(photo.status,200);assert.equal(photo.headers.get('content-type'),'image/png');assert.deepEqual(new Uint8Array(await photo.arrayBuffer()),png);
+  await assert.rejects(createMediaApi(b.api).delete(uploaded.id),e=>e.code==='FORBIDDEN');
+  const saved=await review.create(f.stayId,{bookingId:current.id,rating:4,comment:'Synthetic HTTP review',mediaIds:[uploaded.id]});assert.equal(saved.isMine,true);assert.equal(saved.imageUrls.length,1);assert.equal((await booking.get(current.id)).allowedActions.review,false);
+  await assert.rejects(review.create(f.stayId,{bookingId:current.id,rating:5,comment:'Duplicate',mediaIds:[]}),e=>e.code==='DUPLICATE_RESOURCE');
+  await assert.rejects(createReviewsApi(b.api).patch(saved.id,{rating:1,comment:'Foreign',mediaIds:[]}),e=>e.code==='FORBIDDEN');
+  assert.equal((await review.summary(f.stayId)).average,4);await review.patch(saved.id,{rating:5,comment:'Edited',mediaIds:[uploaded.id]});assert.equal((await review.summary(f.stayId)).average,5);
+  await review.delete(saved.id);assert.equal((await review.summary(f.stayId)).count,0);await media.delete(uploaded.id);
+  const page=await notifications.list();assert.ok(page.items.length>0);await assert.rejects(createNotificationsApi(b.api).read(page.items[0].id),e=>e.code==='NOTIFICATION_NOT_FOUND');
+  const readAll=await notifications.readAll(page.snapshotTime,'http-read-all');assert.equal(readAll.unreadCount,0);assert.equal((await notifications.count()).count,0);
+  const oldAccess=a.session.getAccessToken();await a.auth.changePassword({currentPassword:f.password,newPassword:'Synthetic HTTP replacement 123!'});a.session.clearUserState();
+  const revoked=await fetch(f.baseUrl+'/users/me',{headers:{Authorization:'Bearer '+oldAccess}});assert.equal(revoked.status,401);
+  await assert.rejects(a.session.login({email:f.ownerEmail,password:f.password}));await a.session.login({email:f.ownerEmail,password:'Synthetic HTTP replacement 123!'});
+  await a.auth.changeEmail({currentPassword:'Synthetic HTTP replacement 123!',newEmail:f.changedEmail});a.session.clearUserState();await a.session.login({email:f.changedEmail,password:'Synthetic HTTP replacement 123!'});
+  assert.equal((await profile.get()).email,f.changedEmail);await a.session.logout();assert.equal(a.session.getUser(),null);await assert.rejects(profile.get(),e=>e.status===401);
+ }finally{await Promise.allSettled([a.session.logout(),b.session.logout(),admin.session.logout()]);}
+});

@@ -103,6 +103,37 @@ class ConcurrentTransactionsPostgresIntegrationTest {
   assertEquals(1,read(()->j.queryForObject("select count(*) from support_reports where user_id=?",Integer.class,owner)));
  }
 
+
+ @Autowired BookingLifecycleService lifecycle;
+ @Autowired CompletedStayService completed;
+ @Autowired io.github.hienpham0344.stayfinder.room.service.RoomAvailability inventory;
+ QuoteResponse discountedQuote(){tx(()->j.update("insert into reward_wallets(user_id,available_points,reserved_points,lifetime_earned_points) values(?,10000,0,10000)",owner));return quotes.create(owner,new QuoteRequest(stay,room,LocalDate.of(2026,11,1),LocalDate.of(2026,11,4),1,1,0,null,1000L));}
+ UUID nativeReceipt(io.github.hienpham0344.stayfinder.payment.dto.PaymentResponse p)throws Exception{
+  nativeId=Long.toString(ThreadLocalRandom.current().nextLong(9_000_000_000_000_000L,9_000_000_100_000_000L));byte[] raw=body(p.settlement().transferReference(),p.settlement().amount());nativeHash=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(raw));String ts=Long.toString(clock.instant().getEpochSecond());receipts.receive(raw,signature(raw,ts),ts);
+  return read(()->j.queryForObject("select id from payment_webhook_events where provider='sepay' and environment='test' and event_id=?",UUID.class,nativeId));
+ }
+ @Test void cancellationAndExpiryRaceReleaseHeldPointsAndInventoryExactlyOnce()throws Exception{
+  var q=discountedQuote();var b=bookings.create(owner,request(q,"bank_transfer"),"race-expiry");clock.set(b.holdExpiresAt());
+  parallel(()->lifecycle.cancel(owner,b.id(),"Synthetic deadline cancel","race-cancel"),()->lifecycle.expirePending(b.id(),clock.instant()));
+  var cancelled=bookings.get(owner,b.id());assertEquals("cancelled",cancelled.status());assertEquals("payment_timeout",cancelled.cancellationReason());
+  read(()->{assertEquals(10000,j.queryForObject("select available_points from reward_wallets where user_id=?",Long.class,owner));assertEquals(0,j.queryForObject("select reserved_points from reward_wallets where user_id=?",Long.class,owner));assertEquals("released",j.queryForObject("select state from reward_reservations where booking_id=?",String.class,b.id()));assertEquals(1,j.queryForObject("select count(*) from outbox_events where source_id=? and event_type='booking_expired'",Integer.class,b.id()));return null;});
+  assertFalse(lifecycle.expirePending(b.id(),clock.instant()));lifecycle.cancel(owner,b.id(),"Synthetic retry","race-cancel-again");
+  var replacement=bookings.create(other,request(quote(other,1),"pay_at_property"),"race-replacement");assertEquals("confirmed",replacement.status());
+ }
+ @Test void exactCollectionAndCancellationRaceKeepsRefundAndBenefitStateConsistent()throws Exception{
+  var q=discountedQuote();var b=bookings.create(owner,request(q,"bank_transfer"),"race-collection");var p=payments.create(owner,b.id(),"bank_transfer","race-payment");UUID event=nativeReceipt(p);
+  parallel(()->lifecycle.cancel(owner,b.id(),"Synthetic concurrent cancellation","race-cancel"),()->{reconciliation.process(event);return true;});
+  assertEquals("cancelled",bookings.get(owner,b.id()).status());assertEquals("requested",bookings.get(owner,b.id()).refundStatus());assertEquals("success",payments.getOwned(owner,p.id()).status());
+  long balance=read(()->{String state=j.queryForObject("select state from reward_reservations where booking_id=?",String.class,b.id());assertTrue(Set.of("released","consumed").contains(state));long available=j.queryForObject("select available_points from reward_wallets where user_id=?",Long.class,owner);assertEquals(state.equals("released")?10000:9000,available);assertEquals(0,j.queryForObject("select reserved_points from reward_wallets where user_id=?",Long.class,owner));assertEquals(1,j.queryForObject("select count(*) from refund_requests where booking_id=?",Integer.class,b.id()));assertEquals(1,j.queryForObject("select count(*) from outbox_events where source_id=? and event_type='booking_cancelled'",Integer.class,b.id()));return available;});
+  reconciliation.process(event);lifecycle.cancel(owner,b.id(),"Synthetic retry","race-cancel-again");assertEquals(balance,read(()->j.queryForObject("select available_points from reward_wallets where user_id=?",Long.class,owner)));
+  assertEquals(1,read(()->inventory.remaining(room,LocalDate.of(2026,11,1),LocalDate.of(2026,11,4),clock.instant())));
+ }
+ @Test void twoCompletionWorkersEarnOnceAfterPaidLocalCheckout()throws Exception{
+  var b=bookings.create(owner,request(quote(owner,1),"bank_transfer"),"race-completion");var p=payments.create(owner,b.id(),"bank_transfer","race-payment");reconciliation.process(nativeReceipt(p));clock.set(Instant.parse("2026-11-04T04:00:00Z"));
+  var result=parallel(()->completed.completeEligible(b.id(),clock.instant()),()->completed.completeEligible(b.id(),clock.instant()));assertEquals(1,result.stream().filter(Boolean.TRUE::equals).count());assertEquals("completed",bookings.get(owner,b.id()).status());
+  read(()->{assertEquals(1032,j.queryForObject("select available_points from reward_wallets where user_id=?",Long.class,owner));assertEquals(1,j.queryForObject("select count(*) from reward_ledger_entries where user_id=? and source_key=?",Integer.class,owner,"earn:"+b.id()));assertEquals(1,j.queryForObject("select count(*) from outbox_events where source_id=? and event_type='booking_completed'",Integer.class,b.id()));return null;});
+ }
+
  @Test void lastRoomHasOneWinnerAndFailedTransactionLeavesNoSnapshotsWalletOrKey()throws Exception{
   var a=quote(owner,1);var b=quote(other,1);
   var result=parallel(()->bookings.create(owner,request(a,"pay_at_property"),"same-namespace-key"),()->bookings.create(other,request(b,"pay_at_property"),"same-namespace-key"));

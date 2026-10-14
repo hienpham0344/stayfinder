@@ -16,7 +16,9 @@ public class ApprovedPostgresContext {
      Connection c=DataSourceUtils.getConnection(dataSource);
      try(var s=c.createStatement()){
       s.execute("set local application_name=\'StayFinderIsolatedQA\'");
-      s.execute("set local search_path=stayfinder_test_20261013,pg_catalog");s.execute("set local statement_timeout='15s'");s.execute("set local lock_timeout='5s'");
+      s.execute("set local search_path=stayfinder_test_20261013,pg_catalog");// A complete booking holds its advisory mutex across multiple remote DB roundtrips.
+      // Keep finite fixture-only bounds below the 45s worker/future budget.
+      s.execute("set local statement_timeout='35s'");s.execute("set local lock_timeout='30s'");
       try(var r=s.executeQuery("select pg_backend_pid()")){r.next();TransactionBackendTracker.PIDS.put(Thread.currentThread().threadId(),r.getInt(1));}
       try(var r=s.executeQuery("select current_schema()")){r.next();if(!PostgresTestTarget.SCHEMA.equals(r.getString(1)))throw new IllegalStateException("Wrong PostgreSQL test schema");}
      }catch(SQLException e){throw new IllegalStateException("Cannot pin approved test transaction; SQLSTATE="+e.getSQLState());}

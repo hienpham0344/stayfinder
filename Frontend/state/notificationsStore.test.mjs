@@ -32,3 +32,11 @@ test('read-all preserves a later microsecond delivery even during a concurrent p
  const refresh=s.load(),read=s.markAllRead();listReply({...page,items:[late,item],snapshotTime:late.createdAt});await refresh;readReply({updated:1,unreadCount:1});await read;
  assert.equal(s.snapshot().items.find(n=>n.id==='late').readAt,null);assert.ok(s.snapshot().items.find(n=>n.id==='n1').readAt);assert.equal(s.snapshot().unreadCount,1);
 });
+
+for(const mutation of ['single','all'])test(`a ${mutation} read finishing before the pending list releases loading and permits retry`,async()=>{
+ let calls=0,reply;const s=new NotificationsStore({list:()=>++calls===2?new Promise(r=>reply=r):Promise.resolve(page),count:async()=>({count:0}),read:async()=>({...item,readAt:cutoff}),readAll:async()=>({updated:1,unreadCount:0})});
+ s.changeOwner('u1');await s.load();const pending=s.load();assert.equal(s.snapshot().loading,true);
+ if(mutation==='all')await s.markAllRead();else await s.markRead(item.id);
+ reply(page);await pending;assert.equal(s.snapshot().loading,false);assert.ok(s.snapshot().items[0].readAt,'stale unread list must not replace completed mutation');
+ await s.load();assert.equal(calls,3,'the next refresh must reach the API');
+});

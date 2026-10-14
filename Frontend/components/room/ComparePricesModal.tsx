@@ -3,14 +3,14 @@ import { Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { QuoteSelection } from '../../types/catalog';
 import { useCatalog, useCatalogResource } from '../../state/CatalogProvider';
-import{useUsdFormatter}from'../../state/useUsdFormatter';
+import{useUsdFormatter,useUserLocale}from'../../state/useUsdFormatter';
 import { Action, ResourceStatus, catalogStyles as s } from '../catalog/CatalogUi';
 export function ComparePricesModal({visible,onClose,selection}:{visible:boolean;onClose:()=>void;selection:QuoteSelection}){
  if(!visible)return null;
  return <Modal visible animationType="slide" onRequestClose={onClose}><ComparisonContent selection={selection} onClose={onClose}/></Modal>;
 }
 function ComparisonContent({selection,onClose}:{selection:QuoteSelection;onClose:()=>void}){
- const formatUsd=useUsdFormatter();
+ const formatUsd=useUsdFormatter(),locale=useUserLocale();
  const {catalog}=useCatalog();
  const result=useCatalogResource(signal=>catalog.compare(selection,signal),'comparison:'+JSON.stringify(selection));
  return <SafeAreaView style={s.screen}><View style={s.header}><Text style={s.title}>Compare demo prices</Text><Action title="Close" secondary onPress={onClose}/></View>
@@ -22,7 +22,7 @@ function ComparisonContent({selection,onClose}:{selection:QuoteSelection;onClose
  <Text style={s.heading}>{offer.providerName}{offer.isBestValue?' · Best comparable price':''}</Text>
  <Text style={s.price}>{formatUsd(offer.total)} total</Text><Text style={s.text}>{formatUsd(offer.nightlyPrice)} / room / night</Text>
  <Text style={s.text}>{offer.includesFees?'Includes fees':'Fees excluded · not ranked as best price'}</Text>
- <Text style={s.text}>{offer.cancellationDescription}</Text><Text style={s.text}>Demo · Observed {new Date(offer.observedAt).toLocaleString()}</Text>
+ <Text style={s.text}>{offer.cancellationDescription}</Text><Text style={s.text}>Demo · Observed {new Date(offer.observedAt).toLocaleString(locale)}</Text>
  </View>)}
  </ScrollView></SafeAreaView>;
 }

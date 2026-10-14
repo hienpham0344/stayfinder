@@ -1,5 +1,7 @@
 # Reviewed-target migrations
 
+Current state (2026-10-14): separate G2 approvals applied frozen 000–009 only to stayfinder_test_20261013. The test schema has40 base tables with RLS and was empty after the last completed cleanup check; public rollout and persistent seed remain unapproved. Historical checkpoints and batch procedures below describe how the approvals were reached; do not read earlier 'unexecuted' language as the current status.
+
 The 2026-10-13 read-only Supabase preflight found 19 empty baseline public tables, no normalized email/favorite duplicates, RLS enabled with no reported policies, and a backend role with RLS bypass. Existing users_id_fkey still references auth.users(id). The user subsequently approved only the frozen test batch 000–004. It was applied successfully on 2026-10-13; public rollout remains unapproved.
 
 The first proposed target is **stayfinder_test_20261013**, on the currently configured database. This exact test schema is approved and now exists with 31 empty tables, RLS on every table, no external foreign keys and no PUBLIC/anon/authenticated schema usage. Public/application migration is a separate gate.
@@ -59,5 +61,5 @@ Only AFTER a human approves this exact batch, use the same runner with the origi
 
 Rollback limits: failure rolls back the current script; retain earlier committed scripts for diagnosis. Stop on any mismatch or partial application. Do not automatically remove schema/tables/constraints/rows/files or modify public to recover. Code rollback alone can leave additive tables/nullable columns intact; data-bearing incompatible rollback requires a separately reviewed migration. No destructive rollback command is authorized by this proposal. Preserve media files/rows on a deployed code rollback; do not delete published assets.
 
-After successful application, the guarded JPA initializer expects40 tables and ddl-auto=validate; its signing key/storage path are synthetic test-only values. Run rollback/owned-temporary fixtures with the existing exact-schema/approval/envFile gates. New review/media/preferences/reports/notifications PG acceptance has NOT run yet. Public rollout, persistent demo seed and real SePay Test Mode delivery remain separate gates.
+After successful application, the guarded JPA initializer expects40 tables and ddl-auto=validate; its signing key/storage path are synthetic test-only values. Run rollback/owned-temporary fixtures with the existing exact-schema/approval/envFile gates. Review/media/preferences/reports/notifications PostgreSQL acceptance has run in the approved private schema; the execution ledger records the results and later full rerun. Public rollout, persistent demo seed and real SePay Test Mode delivery remain separate gates.
 

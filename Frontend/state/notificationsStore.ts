@@ -26,7 +26,8 @@ export class NotificationsStore{
    this.page=page;this.publish({items:[...new Map((more?[...this.state.items,...r.items]:r.items).map(x=>[x.id,x])).values()],snapshotTime:r.snapshotTime,hasMore:page+1<r.totalPages});
    await this.refreshCount();
   }catch(e){if(g===this.generation&&n===this.readSequence)this.publish({error:e instanceof Error?e.message:'Unable to load notifications.'});}
-  finally{if(g===this.generation&&n===this.readSequence)this.publish({loading:false});}
+  // Mutations invalidate list contents, but the one pending load still owns its spinner.
+  finally{if(g===this.generation)this.publish({loading:false});}
  }
  async markRead(id:string){
   if(!this.owner||this.state.busy)return;const g=this.generation;this.countSequence++;this.publish({busy:true,error:''});
