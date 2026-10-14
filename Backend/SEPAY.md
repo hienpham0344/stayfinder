@@ -27,7 +27,7 @@ Configure locally, never paste values into chat or commit .env:
 - SEPAY_WEBHOOK_SECRET: separate Test Mode HMAC secret,32–2048 UTF8 bytes, matching the provider webhook.
 - stayfinder.payment.demo-usd-vnd-rate and demo-rate-version: labelled demo configuration; edits affect only new payments.
 
-The primary .env has not been modified/copied. Real values and provider native delivery remain G3. Tests use unmistakably synthetic config in the approved private schema; no provider account or transfer is created by tests.
+The primary Backend/.env uses the Supabase session pooler on port 5432 after local JDBC recovery; its existing password was not changed or copied. Real SePay values and provider native delivery remain G3. Tests use unmistakably synthetic config in the approved private schema; no provider account or transfer is created by tests.
 
 When an approved reachable test API endpoint is available, configure a SePay Test Mode MoneyIn JSON webhook at /api/payments/webhook/sepay with HMAC and SF prefix plus10 alphanumeric suffix. Use a fresh owned pending bank booking, then the Test Mode dashboard QR simulator and the exact stored VND/reference/receiving account. Inspect native delivery status, durable receipt, and owned booking/payment GETs; retry the same native ID to prove no second consumption. Test QR uses a Test Mode account/VA and no real bank transfer. [Test webhook setup](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/tao-webhook), [QR simulation](https://developer.sepay.vn/vi/tien-ich-khac/test-mode/mo-phong-tao-ma-vietqr).
 
