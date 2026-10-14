@@ -62,7 +62,7 @@ Controller paths expand under src/main/java/io/github/hienpham0344/stayfinder/; 
 - B03 supports status/page/size with createdAt/id descending. USER tabs are All/Pending/Confirmed/Completed/Cancelled; those screens have no date-filter control. The earlier generic date placeholder is not an implemented filter.
 - P04 also supports /payments/{id}/status. N01 supplies the original server snapshotTime required by N04. U05 supports stable optional idempotency keys; the frontend support draft is memory-only, so reload deduplication is not promised.
 - Language preferences format numbers/currency/dates; they do not translate the app.
-- Migrations000–009 were approved/applied only to stayfinder_test_20261013. Public rollout and persistent demo seed require separate approval. No public deployment was performed.
+- Migrations000–009 were approved/applied only to stayfinder_test_20261013. A [review-only demo seed](database/demo/README.md) is prepared but unapplied. Public rollout and persistent demo seed each require separate approval. No public deployment was performed.
 - Real SePay Test Mode delivery (G3) is deferred by the user. Synthetic native/signed receipt tests verify implementation, not provider delivery.
 - Native Android/iOS permission, keyboard, storage and layout checks remain unverified. Browser QA covers the exercised screens/states/widths only.
 - Bank transfer is disabled without valid dedicated Test Mode configuration. Media needs its own signing key. ADMIN demo operations are disabled by default and do not perform real bank refunds.
