@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.notification.repository;import io.github.hienpham0344.stayfinder.notification.entity.NotificationInboxState;import org.springframework.data.jpa.repository.JpaRepository;import java.util.UUID;public interface NotificationInboxStateRepository extends JpaRepository<NotificationInboxState,UUID>{}

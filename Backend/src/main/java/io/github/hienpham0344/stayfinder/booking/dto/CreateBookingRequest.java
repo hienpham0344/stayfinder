@@ -1,12 +1,6 @@
 package io.github.hienpham0344.stayfinder.booking.dto;
-
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-
-import java.time.LocalDate;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import java.util.UUID;
-
-public record CreateBookingRequest(@NotNull UUID accommodationId, @NotNull UUID roomId,
-                                   @NotNull LocalDate checkIn, @NotNull LocalDate checkOut,
-                                   @Min(1) int quantity, @Min(1) int guests) {
-}
+public record CreateBookingRequest(@NotNull UUID quoteId,@NotNull @Valid GuestInformation guest,
+ @NotNull @Pattern(regexp="bank_transfer|pay_at_property") String paymentMethod){}

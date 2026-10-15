@@ -21,3 +21,13 @@ test('accepts Vietnamese name, email and phone with spaces', () => {
     name: '', email: '', phone: '',
   });
 });
+
+
+test('phone accepts optional plus and 9 to 15 digits while rejecting punctuation and oversize fields',()=>{
+ assert.equal(validateGuest('Guest','g@example.test','+123456789012345').phone,'');
+ assert.equal(validateGuest('Guest','g@example.test','123456789012').phone,'');
+ assert.ok(validateGuest('Guest','g@example.test','+1234567890123456').phone);
+ assert.ok(validateGuest('Guest','g@example.test','123-456-789').phone);
+ assert.ok(validateGuest('x'.repeat(101),'g@example.test','123456789').name);
+ assert.ok(validateGuest('Guest','x'.repeat(250)+'@a.test','123456789').email);
+});

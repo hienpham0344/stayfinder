@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.user.repository;import org.springframework.data.jpa.repository.JpaRepository;import io.github.hienpham0344.stayfinder.user.entity.UserPreferences;import java.util.UUID;public interface UserPreferencesRepository extends JpaRepository<UserPreferences,UUID>{}

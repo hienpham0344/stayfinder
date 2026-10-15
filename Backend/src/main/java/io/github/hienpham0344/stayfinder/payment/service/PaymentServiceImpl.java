@@ -1,97 +1,58 @@
 package io.github.hienpham0344.stayfinder.payment.service;
-
-import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentOperations;
-import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentView;
-import io.github.hienpham0344.stayfinder.common.enums.PaymentStatus;
-import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
-import io.github.hienpham0344.stayfinder.common.exception.ErrorCode;
-import io.github.hienpham0344.stayfinder.payment.dto.CreatePaymentRequest;
+import io.github.hienpham0344.stayfinder.booking.service.BookingTransactionLocks;
+import io.github.hienpham0344.stayfinder.common.enums.*;
+import io.github.hienpham0344.stayfinder.common.exception.*;
+import io.github.hienpham0344.stayfinder.common.idempotency.IdempotencyService;
 import io.github.hienpham0344.stayfinder.payment.dto.PaymentResponse;
-import io.github.hienpham0344.stayfinder.payment.dto.SepayWebhookRequest;
 import io.github.hienpham0344.stayfinder.payment.entity.Payment;
 import io.github.hienpham0344.stayfinder.payment.mapper.PaymentMapper;
-import io.github.hienpham0344.stayfinder.payment.repository.PaymentMethodRepository;
 import io.github.hienpham0344.stayfinder.payment.repository.PaymentRepository;
-import io.github.hienpham0344.stayfinder.security.CurrentUser;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
-
+import io.github.hienpham0344.stayfinder.booking.repository.BookingRepository;
+import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;import java.time.*;import java.util.*;
 @Service
 public class PaymentServiceImpl implements PaymentService {
-    private final PaymentRepository paymentRepository;
-    private final PaymentMethodRepository paymentMethodRepository;
-    private final BookingPaymentOperations bookingPaymentOperations;
-    private final PaymentProvider paymentProvider;
-    private final PaymentMapper mapper;
-
-    public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentMethodRepository paymentMethodRepository,
-                              BookingPaymentOperations bookingPaymentOperations, PaymentProvider paymentProvider, PaymentMapper mapper) {
-        this.paymentRepository = paymentRepository;
-        this.paymentMethodRepository = paymentMethodRepository;
-        this.bookingPaymentOperations = bookingPaymentOperations;
-        this.paymentProvider = paymentProvider;
-        this.mapper = mapper;
-    }
-
-    @Override
-    @Transactional
-    public PaymentResponse create(UUID bookingId, CreatePaymentRequest request) {
-        BookingPaymentView booking = ownedBooking(bookingId);
-        if (request != null && request.paymentMethodId() != null
-                && !paymentMethodRepository.existsById(request.paymentMethodId())) {
-            throw new BusinessException(ErrorCode.PAYMENT_NOT_FOUND);
-        }
-        Payment existing = paymentRepository.findByBookingId(bookingId).stream().findFirst().orElse(null);
-        if (existing != null) return mapper.toResponse(existing);
-        Payment payment = new Payment();
-        payment.setBookingId(booking.id());
-        payment.setPaymentMethodId(request == null ? null : request.paymentMethodId());
-        payment.setAmount(booking.totalPrice());
-        payment.setStatus(PaymentStatus.PENDING);
-        return mapper.toResponse(paymentRepository.save(payment));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PaymentResponse> list(UUID bookingId) {
-        ownedBooking(bookingId);
-        return paymentRepository.findByBookingId(bookingId).stream().map(mapper::toResponse).toList();
-    }
-
-    @Override
-    @Transactional
-    public PaymentResponse handleWebhook(SepayWebhookRequest request) {
-        if (!paymentProvider.verifyWebhook(request)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-        Payment existingByTransaction = paymentRepository.findByTransactionId(request.transactionId()).orElse(null);
-        if (existingByTransaction != null) return mapper.toResponse(existingByTransaction);
-        BookingPaymentView booking = bookingPaymentOperations.find(request.bookingId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
-        if (booking.totalPrice() == null || booking.totalPrice().compareTo(request.amount()) != 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
-        }
-        Payment payment = paymentRepository.findByBookingId(booking.id()).stream().findFirst()
-                .orElseGet(Payment::new);
-        if (payment.getStatus() == PaymentStatus.SUCCESS) {
-            return mapper.toResponse(payment);
-        }
-        payment.setBookingId(booking.id());
-        payment.setAmount(request.amount());
-        payment.setTransactionId(request.transactionId());
-        payment.setStatus(request.status());
-        Payment saved = paymentRepository.save(payment);
-        if (request.status() == PaymentStatus.SUCCESS) {
-            bookingPaymentOperations.confirm(booking.id());
-        }
-        return mapper.toResponse(saved);
-    }
-
-    private BookingPaymentView ownedBooking(UUID bookingId) {
-        return bookingPaymentOperations.findOwned(bookingId, CurrentUser.require().id())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
-    }
+ private final PaymentRepository rows;private final BookingTransactionLocks locks;private final IdempotencyService idem;
+ private final BookingRepository bookings;private final PaymentProvider provider;private final PaymentMapper mapper;private final Clock clock;
+ public PaymentServiceImpl(PaymentRepository rows,BookingTransactionLocks locks,IdempotencyService idem,PaymentProvider provider,PaymentMapper mapper,Clock clock,BookingRepository bookings){
+  this.rows=rows;this.locks=locks;this.idem=idem;this.provider=provider;this.mapper=mapper;this.clock=clock;this.bookings=bookings;
+ }
+ @Override @Transactional public PaymentResponse create(UUID owner,UUID bookingId,String method,String key){
+  if(method==null||!Set.of("bank_transfer","pay_at_property").contains(method))throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+  record Payload(UUID bookingId,String method){}
+  return idem.execute(owner,"payment:create",key,idem.fingerprint(new Payload(bookingId,method)),PaymentResponse.class,()->{
+   var resource=locks.lockOwnedBooking(owner,bookingId);var b=resource.booking();Instant now=clock.instant();
+   if(!method.equals(b.getPaymentMethod())||!owner.equals(b.getUserId())||b.getTotalPriceCents()==null
+    ||b.getTotalPriceCents()!=resource.quote().getTotalCents())throw invalidState();
+   if(b.getStatus()!=BookingStatus.PENDING&&b.getStatus()!=BookingStatus.CONFIRMED)throw invalidState();
+   if(method.equals("bank_transfer")&&b.getPaidAt()==null&&(b.getStatus()!=BookingStatus.PENDING||b.getHoldExpiresAt()==null||!now.isBefore(b.getHoldExpiresAt())))throw invalidState();
+   var existing=rows.findByBookingId(bookingId).stream().filter(p->p.getOriginalAmountCents()!=null).toList();
+   if(existing.size()>1)throw invalidState();
+   if(!existing.isEmpty()){
+    var p=existing.getFirst();if(!owner.equals(p.getUserId())||!method.equals(p.getMethod())||!b.getTotalPriceCents().equals(p.getOriginalAmountCents()))throw invalidState();
+    return mapper.toResponse(p);
+   }
+   if(b.getPaidAt()!=null)throw invalidState();
+   var p=new Payment();p.setId(UUID.randomUUID());p.setUserId(owner);p.setBookingId(bookingId);p.setMethod(method);
+   p.setOriginalAmountCents(b.getTotalPriceCents());p.setAmount(BigDecimal.valueOf(b.getTotalPriceCents(),2));
+   p.setStatus(PaymentStatus.PENDING);p.setCreatedAt(now);p.setReconciliationStatus("none");p.setRefundStatus("none");
+   if(method.equals("bank_transfer")){
+    var setup=provider.createBankInstructions(p.getId(),p.getOriginalAmountCents());var i=setup.instructions();
+    p.setProvider("sepay");p.setEnvironment("test");p.setExpiresAt(b.getHoldExpiresAt());p.setSettlementVnd(i.amount());
+    p.setUsdToVndRate(i.usdToVndRate());p.setRateVersion(i.rateVersion());p.setTransferReference(i.transferReference());
+    p.setBankName(i.bankName());p.setBankCode(setup.bankCode());p.setBankAccountNumber(setup.receivingAccountNumber());p.setBankSubAccount(setup.subAccount());
+    p.setBankAccountHolder(i.accountHolder());p.setQrImageUrl(i.qrImageUrl());
+   }else p.setProvider("property");
+   return mapper.toResponse(rows.save(p));
+  });
+ }
+ @Override @Transactional(readOnly=true) public PaymentResponse getOwned(UUID owner,UUID id){
+  var p=rows.findByIdAndUserId(id,owner).filter(x->x.getOriginalAmountCents()!=null).orElseThrow(()->new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+  return mapper.toResponse(p);
+ }
+ @Override @Transactional(readOnly=true) public List<PaymentResponse> list(UUID owner,UUID bookingId){
+  bookings.findByIdAndUserId(bookingId,owner).orElseThrow(()->new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
+  return rows.findByBookingId(bookingId).stream().filter(p->owner.equals(p.getUserId())&&p.getOriginalAmountCents()!=null).map(mapper::toResponse).toList();
+ }
+ private static BusinessException invalidState(){return new BusinessException(ErrorCode.BOOKING_INVALID_STATE);}
 }

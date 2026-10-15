@@ -1,0 +1,2 @@
+f416c78c57da514ff54a2a1e64c8462d1f85ffbe4a473f28b15557216eb64eb7  Backend/database/migrations/005_quotes_snapshots_booking.sql
+8291b67e7c46aa33d695aa1e1e467ba33a49ad98e5a34aea43bc8d7f0d8d2835  Backend/database/migrations/006_payments_events_refunds.sql

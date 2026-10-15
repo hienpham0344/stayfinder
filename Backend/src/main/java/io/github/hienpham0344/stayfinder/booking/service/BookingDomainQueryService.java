@@ -1,41 +1,33 @@
 package io.github.hienpham0344.stayfinder.booking.service;
-
-import io.github.hienpham0344.stayfinder.booking.entity.Booking;
-import io.github.hienpham0344.stayfinder.booking.repository.BookingDetailRepository;
-import io.github.hienpham0344.stayfinder.booking.repository.BookingRepository;
+import io.github.hienpham0344.stayfinder.booking.repository.*;
+import io.github.hienpham0344.stayfinder.snapshot.repository.AccommodationSnapshotRepository;
+import io.github.hienpham0344.stayfinder.room.service.RoomAvailability;
 import io.github.hienpham0344.stayfinder.common.enums.BookingStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
+import java.time.*;
+import java.util.*;
+import java.util.stream.Collectors;
 @Service
-public class BookingDomainQueryService implements RoomBookingAvailability, BookingEligibility {
-    private final BookingRepository bookingRepository;
-    private final BookingDetailRepository bookingDetailRepository;
-
-    public BookingDomainQueryService(BookingRepository bookingRepository,
-                                     BookingDetailRepository bookingDetailRepository) {
-        this.bookingRepository = bookingRepository;
-        this.bookingDetailRepository = bookingDetailRepository;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasOverlap(UUID roomId, LocalDate checkIn, LocalDate checkOut) {
-        return !bookingDetailRepository.findOverlappingRoomBookings(
-                roomId, checkIn, checkOut, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)).isEmpty();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasCompletedBookingForAccommodation(UUID userId, UUID bookingId, UUID accommodationId) {
-        Booking booking = bookingRepository.findByIdAndUserId(bookingId, userId)
-                .filter(item -> item.getStatus() == BookingStatus.COMPLETED)
-                .orElse(null);
-        return booking != null && bookingDetailRepository.findByBookingId(booking.getId()).stream()
-                .anyMatch(detail -> accommodationId.equals(detail.getAccommodationSnapshotId()));
-    }
+public class BookingDomainQueryService implements RoomBookingAvailability,BookingEligibility {
+ private final BookingRepository bookings;private final BookingDetailRepository details;
+ private final AccommodationSnapshotRepository snapshots;private final RoomAvailability inventory;private final Clock clock;
+ public BookingDomainQueryService(BookingRepository bookings,BookingDetailRepository details,AccommodationSnapshotRepository snapshots,
+                                 RoomAvailability inventory,Clock clock){
+  this.bookings=bookings;this.details=details;this.snapshots=snapshots;this.inventory=inventory;this.clock=clock;
+ }
+ @Override @Transactional(readOnly=true)
+ public boolean hasOverlap(UUID roomId,LocalDate checkIn,LocalDate checkOut){
+  return inventory.remaining(roomId,checkIn,checkOut,clock.instant())==0;
+ }
+ @Override @Transactional(readOnly=true)
+ public boolean hasCompletedBookingForAccommodation(UUID userId,UUID bookingId,UUID accommodationId){
+  var booking=bookings.findByIdAndUserId(bookingId,userId)
+    .filter(b->b.getStatus()==BookingStatus.COMPLETED&&b.getPaidAt()!=null).orElse(null);
+  if(booking==null)return false;
+  var snapshotIds=details.findByBookingId(bookingId).stream().map(d->d.getAccommodationSnapshotId())
+    .filter(Objects::nonNull).collect(Collectors.toSet());
+  if(snapshotIds.isEmpty())return false;
+  return snapshots.findAllById(snapshotIds).stream().anyMatch(s->accommodationId.equals(s.getSourceAccommodationId()));
+ }
 }

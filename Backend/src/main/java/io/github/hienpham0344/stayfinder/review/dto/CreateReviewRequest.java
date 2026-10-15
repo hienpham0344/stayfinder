@@ -1,11 +1,2 @@
-package io.github.hienpham0344.stayfinder.review.dto;
-
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
-
-import java.util.UUID;
-
-public record CreateReviewRequest(UUID bookingId, @Min(1) @Max(5) Integer rating,
-                                  @Size(max = 2000) String comment) {
-}
+package io.github.hienpham0344.stayfinder.review.dto;import jakarta.validation.constraints.*;import java.util.*;
+public record CreateReviewRequest(@NotNull UUID bookingId,@NotNull @Min(1) @Max(5) Integer rating,@NotNull @Size(max=2000) String comment,@NotNull @Size(max=5)List<@NotNull UUID> mediaIds){}

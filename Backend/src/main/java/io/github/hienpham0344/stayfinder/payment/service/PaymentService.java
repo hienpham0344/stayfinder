@@ -1,14 +1,7 @@
 package io.github.hienpham0344.stayfinder.payment.service;
-
-import io.github.hienpham0344.stayfinder.payment.dto.CreatePaymentRequest;
-import io.github.hienpham0344.stayfinder.payment.dto.PaymentResponse;
-import io.github.hienpham0344.stayfinder.payment.dto.SepayWebhookRequest;
-
-import java.util.List;
-import java.util.UUID;
-
+import io.github.hienpham0344.stayfinder.payment.dto.PaymentResponse;import java.util.*;
 public interface PaymentService {
-    PaymentResponse create(UUID bookingId, CreatePaymentRequest request);
-    List<PaymentResponse> list(UUID bookingId);
-    PaymentResponse handleWebhook(SepayWebhookRequest request);
+ PaymentResponse create(UUID userId,UUID bookingId,String method,String key);
+ PaymentResponse getOwned(UUID userId,UUID paymentId);
+ List<PaymentResponse> list(UUID userId,UUID bookingId);
 }

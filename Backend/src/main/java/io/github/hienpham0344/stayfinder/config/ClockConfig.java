@@ -1,0 +1,8 @@
+package io.github.hienpham0344.stayfinder.config;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import java.time.Clock;
+@Configuration
+public class ClockConfig {
+    @Bean Clock applicationClock(){return Clock.systemUTC();}
+}

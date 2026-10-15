@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.media.dto;import java.time.Instant;import java.util.UUID;public record MediaUploadResponse(UUID id,String displayUrl,Instant expiresAt,String mimeType,long sizeBytes){}

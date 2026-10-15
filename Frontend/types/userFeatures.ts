@@ -1,0 +1,14 @@
+import type{PageResponse,UserProfile}from'./api';
+export type Preferences={language:'en-US'|'vi-VN'|'fr-FR';bookingNotifications:boolean};
+export type ProfilePatch={fullName?:string;phone?:string|null};
+export type SupportReportRequest={category:'Booking'|'Payment'|'Account'|'Rewards'|'Other';description:string;bookingId:string|null};
+export type SupportReportResult={reportId:string;status:'submitted';createdAt:string};
+export type ReviewRequest={bookingId:string;rating:number;comment:string;mediaIds:string[]};
+export type ReviewPatch=Omit<ReviewRequest,'bookingId'>;
+export type ReviewDto={id:string;accommodationId:string;userName:string;userAvatarUrl:string|null;rating:number;comment:string;createdAt:string;imageUrls:string[];isMine:boolean};
+export type ReviewSummary={average:number|null;count:number;byStar:Record<'1'|'2'|'3'|'4'|'5',number>};
+export type MediaUploadDto={id:string;displayUrl:string;expiresAt:string;mimeType:string;sizeBytes:number};
+export type NotificationDto={id:string;type:string;title:string;body:string;createdAt:string;readAt:string|null;target:{route:'booking'|'rewards';resourceId:string|null}};
+export type NotificationPage=PageResponse<NotificationDto>&{snapshotTime:string};
+export type ReadAllResult={updated:number;unreadCount:number};
+export type ProfileDto=UserProfile;
