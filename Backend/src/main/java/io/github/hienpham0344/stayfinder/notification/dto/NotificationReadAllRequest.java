@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.notification.dto;import jakarta.validation.constraints.NotNull;import java.time.Instant;public record NotificationReadAllRequest(@NotNull Instant snapshotTime){}

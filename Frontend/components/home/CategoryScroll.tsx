@@ -26,12 +26,14 @@ const CATEGORY_ASSETS: Record<string, { selected: number; unselected: number; wi
 };
 
 interface CategoryScrollProps {
+  items?: CategoryItem[];
   selectedCategory?: string;
   onSelectCategory?: (id: string) => void;
 }
 
 export const CategoryScroll: React.FC<CategoryScrollProps> = ({
   selectedCategory = 'Hotel',
+  items = CATEGORIES_DATA,
   onSelectCategory,
 }) => {
   const renderIcon = (iconName: string, isSelected: boolean) => {
@@ -60,7 +62,7 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {CATEGORIES_DATA.map((item) => {
+        {items.map((item) => {
           const isSelected = selectedCategory === item.id;
           return (
             <TouchableOpacity

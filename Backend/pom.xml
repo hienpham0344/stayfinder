@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
+		<!-- Explicit isolated DB gate; -DexcludedGroups= -Dgroups=postgres opts in. -->
+		<excludedGroups>postgres</excludedGroups>
 	</properties>
 	<dependencies>
 		<dependency>

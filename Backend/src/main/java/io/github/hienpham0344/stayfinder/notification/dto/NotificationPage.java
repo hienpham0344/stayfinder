@@ -1,0 +1,2 @@
+package io.github.hienpham0344.stayfinder.notification.dto;import java.time.Instant;import java.util.List;import io.github.hienpham0344.stayfinder.common.response.PageResponse;
+public record NotificationPage(List<NotificationResponse> items,int page,int size,long totalElements,int totalPages,Instant snapshotTime){public static NotificationPage from(PageResponse<NotificationResponse> page,Instant snapshot){return new NotificationPage(page.items(),page.page(),page.size(),page.totalElements(),page.totalPages(),snapshot);}}

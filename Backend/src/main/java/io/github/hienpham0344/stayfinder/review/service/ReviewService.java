@@ -1,15 +1,6 @@
-package io.github.hienpham0344.stayfinder.review.service;
-
-import io.github.hienpham0344.stayfinder.review.dto.CreateReviewRequest;
-import io.github.hienpham0344.stayfinder.review.dto.ReviewResponse;
-import io.github.hienpham0344.stayfinder.review.dto.UpdateReviewRequest;
-
-import java.util.List;
-import java.util.UUID;
-
-public interface ReviewService {
-    List<ReviewResponse> list(UUID accommodationId);
-    ReviewResponse create(UUID accommodationId, CreateReviewRequest request);
-    ReviewResponse update(UUID reviewId, UpdateReviewRequest request);
-    void delete(UUID reviewId);
+package io.github.hienpham0344.stayfinder.review.service;import io.github.hienpham0344.stayfinder.review.dto.*;import io.github.hienpham0344.stayfinder.common.response.PageResponse;import org.springframework.data.domain.Pageable;import java.util.UUID;
+public interface ReviewService{
+ PageResponse<ReviewResponse> list(UUID accommodationId,Integer star,Pageable page,UUID viewer);
+ ReviewSummary summary(UUID accommodationId);ReviewResponse create(UUID userId,UUID accommodationId,CreateReviewRequest request);
+ ReviewResponse update(UUID userId,UUID reviewId,UpdateReviewRequest request);void delete(UUID userId,UUID reviewId);
 }

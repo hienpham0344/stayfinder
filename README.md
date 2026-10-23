@@ -7,7 +7,7 @@
 - Git; Node.js 24.3+ thuộc nhánh 24 và npm để chạy frontend và các test TypeScript trực tiếp. Môi trường kiểm tra hiện tại dùng Node 24.14.1.
 - JDK 21, đặt `JAVA_HOME` tới thư mục JDK và thêm `JAVA_HOME/bin` vào `PATH`.
 - Maven Wrapper có sẵn trong `Backend/`; lần chạy đầu cần Internet để tải Maven/dependencies. Có thể dùng Maven 3.9.16 đã cài trên máy nếu wrapper gặp lỗi.
-- PostgreSQL hoặc Supabase có schema StayFinder tương ứng với các entity backend. Repo hiện không có migration/SQL khởi tạo; cần lấy schema từ nhóm dự án. `ddl-auto: validate` chỉ kiểm tra schema, không tạo bảng.
+- PostgreSQL/Supabase chỉ lưu database; Spring Security quản lý authentication/authorization và JWT. SQL bootstrap/migrations nằm trong [Backend/database](Backend/database/README.md). `ddl-auto: validate` kiểm tra schema, không tạo bảng. Các batch đã phê duyệt mới áp dụng cho schema thử nghiệm; rollout `public` cần phê duyệt riêng.
 
 Các ví dụ dưới đây dùng PowerShell và bắt đầu từ thư mục gốc repository. Trên macOS/Linux, thay `.\mvnw.cmd` bằng `./mvnw`.
 
@@ -33,9 +33,10 @@ Chỉ copy khi chưa có `.env`; nếu đã có, giữ cấu hình của bạn. 
 | `SPRING_DATASOURCE_USERNAME` | Username database của bạn |
 | `SPRING_DATASOURCE_PASSWORD` | Password database của bạn |
 | `JWT_SECRET_BASE64` | Secret Base64 giải mã được thành ít nhất 32 bytes ngẫu nhiên |
-| `JWT_EXPIRATION_MINUTES` | Thời hạn JWT, mặc định `60` |
+| Access JWT | Thời hạn cố định 15 phút; xem [AUTH](Backend/AUTH.md) |
 | `CORS_ALLOWED_ORIGINS` | Origin frontend được phép gọi API, phân tách bằng dấu phẩy; ví dụ `http://localhost:8081` khi Expo dùng cổng này |
-| `SEPAY_WEBHOOK_SECRET` | Secret của môi trường SePay được cấp; để trống thì webhook không được xác thực thành công |
+| `SEPAY_*` | Cấu hình SePay Test Mode riêng theo [SEPAY](Backend/SEPAY.md); chưa đủ cấu hình thì bank transfer bị tắt |
+| `MEDIA_SIGNING_SECRET` | Key riêng ít nhất 32 bytes cho URL ảnh review; xem [MEDIA](Backend/MEDIA.md) |
 
 `.env.example` chỉ là mẫu; thay URL/username mẫu trước khi chạy. Không commit `.env`, mật khẩu hoặc secret. Để tạo JWT secret, dùng bộ sinh ngẫu nhiên mật mã, ví dụ chạy `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"` trên máy của bạn và lưu kết quả vào `.env`.
 
@@ -53,14 +54,14 @@ Nếu test báo `class file version 65.0` nhưng runtime chỉ hỗ trợ `61.0`
 
 ## Backend: test và build
 
-Chạy unit test không khởi động Spring context/database:
+Chạy test không dùng PostgreSQL (các test gắn tag postgres được loại mặc định):
 
 ```powershell
 cd Backend
-.\mvnw.cmd '-Dtest=!StayfinderApplicationTests' test
+.\mvnw.cmd test
 ```
 
-Chạy toàn bộ test và build JAR sau khi database/schema đã sẵn sàng:
+Build JAR với bộ test mặc định:
 
 ```powershell
 .\mvnw.cmd test
@@ -68,7 +69,7 @@ Chạy toàn bộ test và build JAR sau khi database/schema đã sẵn sàng:
 java -jar target/stayfinder-0.0.1-SNAPSHOT.jar
 ```
 
-`StayfinderApplicationTests` là test khởi động Spring context và cần datasource hoạt động; test này không chứng minh toàn bộ luồng API hay thanh toán end-to-end. Kết quả test nằm trong `Backend/target/surefire-reports/`.
+`StayfinderApplicationTests` và các integration test dùng PostgreSQL chỉ chạy khi bật gate schema thử nghiệm rõ ràng; chúng không tự dùng datasource/public mặc định. Lệnh `verify` đầy đủ có gate và bảng đối chiếu 50 API nằm trong [USER API coverage](Backend/USER_API_COVERAGE.md). Kết quả Maven nằm trong `Backend/target/surefire-reports/`. G3 SePay thật và kiểm tra thiết bị native vẫn riêng biệt.
 
 ## Frontend: cài đặt và chạy
 
@@ -89,25 +90,24 @@ npm run android   # cần Android emulator hoặc thiết bị được kết n�
 npm run ios       # cần macOS và iOS Simulator
 ```
 
-Frontend hiện dùng sample data/local mock cho các màn USER; chưa có API client hay biến base URL để kết nối backend. Có thể chạy UI mà không mở backend. Auth, booking, payment và rewards demo không tạo tài khoản, booking hoặc giao dịch thật.
+Cấu hình `EXPO_PUBLIC_API_BASE_URL` theo `Frontend/.env.example` (bao gồm `/api`) rồi khởi động lại Expo. Trên thiết bị, dùng địa chỉ API mà thiết bị truy cập được; localhost của thiết bị không trỏ tới máy phát triển. Với web localhost, cấu hình exact CORS origin và cookie theo [AUTH](Backend/AUTH.md).
 
-Một số màn dùng fixture cố định để tái hiện Figma: tổng tiền checkout/confirmation chưa tính lại theo hạng phòng hoặc switch đổi điểm; màn chi tiết hiện hiển thị Villa Azure Retreat. Không dùng các màn demo này để kiểm chứng tính đúng của giá hay luồng đặt phòng thực tế.
+Các màn USER đã nối production API adapters: tìm kiếm/catalog, wishlist, quote/booking, bank transfer hoặc pay at property, rewards, profile/settings/reports, review/ảnh và inbox. Giá USD cents, trạng thái và quyền thao tác lấy từ server. Dữ liệu so sánh giá/perk là demo có nhãn; không scrape hay hứa dịch vụ thật. `/ui-gallery` vẫn là gallery giao diện.
 
-Các điểm cần review thêm: Cancel/dismiss trong search picker hiện giữ lại chỉnh sửa; date sheet có thể clipping nút Apply/Cancel trên viewport thấp như 320×568. Các unit test utility bên dưới chưa bao phủ handler/state của màn UI.
-
-Các route để kiểm tra: `/`, `/search`, `/room/villa-azure`, `/room/select`, `/booking/guest-info`, `/booking/checkout`, `/booking/confirmation`, `/bookings`, `/wishlist`, `/rewards`, `/profile`, `/auth/demo` và `/ui-gallery` (các trạng thái shared UI).
+Route chi tiết dùng UUID từ API: `/room/{id}`. Kiểm tra thêm `/notifications`, các tab và các route booking. Chưa rollout/seed public nên không coi một backend trỏ tới schema public cũ là môi trường đã sẵn sàng.
 
 ## Frontend: test và kiểm tra export
 
 Chạy từ `Frontend/`:
 
 ```powershell
-node --test utils/bookingPrice.test.mjs utils/demoBookings.test.mjs utils/guestValidation.test.mjs
+$taskTests=@(rg --files -g '*.test.mjs' -g '!tests/userApiJourney.test.mjs')
+node --test $taskTests
 node node_modules/typescript/bin/tsc --noEmit
 node node_modules/expo/bin/cli export --platform web --output-dir dist
 ```
 
-Ba file test hiện kiểm tra tính giá booking, chuyển trạng thái booking demo và validation thông tin khách. Repo chưa khai báo script lint/test trong `package.json`; dùng các lệnh trực tiếp ở trên. Node có thể báo `MODULE_TYPELESS_PACKAGE_JSON` khi đọc file `.ts`; đây là warning, cần xem exit code và tổng số test pass/fail.
+Các test utility/service/store kiểm tra validation, adapters, phiên đăng nhập, stale responses, retry/idempotency, draft booking, rewards, profile/reviews và inbox. HTTP journey được Maven harness cung cấp fixture schema thử nghiệm và chạy riêng; không tính một lần standalone skip là pass. Repo chưa có script lint/test; dùng lệnh trực tiếp. Warning Node không thay thế việc kiểm tra exit code và tổng pass/fail.
 
 Kiểm tra UI bằng trình duyệt tại viewport **390×844**, rồi **320×844** và **430×844**: xem ảnh/text/icon, spacing, clipping/overflow; thao tác search/filter, chọn phòng, guest validation, các trạng thái checkout, cancellation/review, wishlist, rewards và profile. Kiểm tra console có runtime exception và lưu screenshot cho từng trạng thái cần đối chiếu Figma.
 

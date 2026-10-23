@@ -29,5 +29,7 @@ public class User {
     @Column(name = "avatar_url") private String avatarUrl;
     @Column(name = "loyalty_points") private Integer loyaltyPoints;
     @Column(name = "loyalty_tier") private Integer loyaltyTier;
+    @Column(name = "password_hash") private String passwordHash;
+    @Column(name = "credential_state") private String credentialState = "pending_enrollment";
     @Column(name = "created_at") private Instant createdAt;
 }

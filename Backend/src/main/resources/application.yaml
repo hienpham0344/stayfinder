@@ -2,6 +2,16 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      accept-float-as-int: false
+
   application:
     name: stayfinder
 
@@ -10,6 +20,10 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        # Supabase transaction pooling cannot retain named server prepared statements.
+        prepareThreshold: 0
 
   jpa:
     hibernate:
@@ -23,7 +37,8 @@ spring:
   security:
     jwt:
       secret-base64: ${JWT_SECRET_BASE64:}
-      expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+    auth:
+      localhost-insecure-cookie: ${AUTH_LOCALHOST_INSECURE_COOKIE:false}
 
   web:
     cors:
@@ -31,3 +46,13 @@ spring:
 
 
 
+
+stayfinder:
+  media:
+    storage-root: ${MEDIA_STORAGE_ROOT:storage/reviews}
+    signing-secret: ${MEDIA_SIGNING_SECRET:}
+  payment:
+    demo-usd-vnd-rate: ${DEMO_USD_VND_RATE:25000}
+    demo-rate-version: ${DEMO_RATE_VERSION:demo-v1}
+  demo-operations:
+    enabled: ${DEMO_OPERATIONS_ENABLED:false}

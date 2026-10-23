@@ -23,7 +23,13 @@ public class GlobalExceptionHandler {
         return toResponse(ErrorCode.VALIDATION_ERROR);
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class,
+            org.springframework.validation.BindException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class,
+            org.springframework.web.bind.MissingRequestHeaderException.class,
+            org.springframework.web.multipart.support.MissingServletRequestPartException.class,
+            org.springframework.web.method.annotation.HandlerMethodValidationException.class,
+            jakarta.validation.ConstraintViolationException.class, java.time.DateTimeException.class})
     public ResponseEntity<ErrorResponse> handleMalformedRequest(Exception exception) {
         return toResponse(ErrorCode.VALIDATION_ERROR);
     }
@@ -42,6 +48,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
         return toResponse(ErrorCode.DUPLICATE_RESOURCE);
     }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleLargeMedia(Exception exception) { return toResponse(ErrorCode.MEDIA_TOO_LARGE); }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception) {

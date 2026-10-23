@@ -10,6 +10,9 @@
 # Local documentation/agent notes
 docs/
 
+/Backend/storage/
+/storage/
+
 # Local QA screenshots, logs, manifests, reports and capture scripts
 /Frontend/qa/
 

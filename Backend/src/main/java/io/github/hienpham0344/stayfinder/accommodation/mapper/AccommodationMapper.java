@@ -11,6 +11,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface AccommodationMapper {
     AccommodationResponse toResponse(Accommodation entity);
+    io.github.hienpham0344.stayfinder.accommodation.dto.AmenityDto toAmenity(Feature entity);
     ImageResponse toImageResponse(Image entity);
     FeatureResponse toFeatureResponse(Feature entity);
 }

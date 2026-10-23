@@ -30,7 +30,7 @@ class UserMapperTest {
         assertEquals(id, response.id());
         assertEquals("hien@example.com", response.email());
         assertEquals(UserRole.CUSTOMER, response.role());
-        assertEquals(10, response.loyaltyPoints());
+        assertEquals(10L, response.loyaltyPoints());
         assertFalse(java.util.Arrays.stream(UserResponse.class.getDeclaredFields())
                 .anyMatch(field -> field.getName().toLowerCase().contains("password")));
     }

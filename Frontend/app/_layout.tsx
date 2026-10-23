@@ -4,6 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
 import { COLORS } from '../constants/tokens';
+import { SessionProvider } from '../state/SessionProvider';
+import { CatalogProvider } from '../state/CatalogProvider';
+import { FavoritesProvider } from '../state/FavoritesProvider';
+import {BookingDraftProvider} from '../state/BookingDraftProvider';
+import {RewardsProvider} from '../state/RewardsProvider';
+import {ProfileProvider} from '../state/ProfileProvider';
+import {NotificationsProvider} from '../state/NotificationsProvider';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -18,7 +25,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SessionProvider><CatalogProvider><FavoritesProvider><BookingDraftProvider><RewardsProvider><ProfileProvider><NotificationsProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -30,6 +37,6 @@ export default function RootLayout() {
         <Stack.Screen name="room/[id]" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="booking/checkout" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
-    </>
+    </NotificationsProvider></ProfileProvider></RewardsProvider></BookingDraftProvider></FavoritesProvider></CatalogProvider></SessionProvider>
   );
 }

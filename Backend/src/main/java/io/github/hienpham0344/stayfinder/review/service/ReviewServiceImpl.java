@@ -1,88 +1,18 @@
 package io.github.hienpham0344.stayfinder.review.service;
-
-import io.github.hienpham0344.stayfinder.accommodation.service.AccommodationLookup;
-import io.github.hienpham0344.stayfinder.booking.service.BookingEligibility;
-import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
-import io.github.hienpham0344.stayfinder.common.exception.ErrorCode;
-import io.github.hienpham0344.stayfinder.review.dto.CreateReviewRequest;
-import io.github.hienpham0344.stayfinder.review.dto.ReviewResponse;
-import io.github.hienpham0344.stayfinder.review.dto.UpdateReviewRequest;
-import io.github.hienpham0344.stayfinder.review.entity.Review;
-import io.github.hienpham0344.stayfinder.review.mapper.ReviewMapper;
-import io.github.hienpham0344.stayfinder.review.repository.ReviewRepository;
-import io.github.hienpham0344.stayfinder.security.CurrentUser;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
-@Service
-public class ReviewServiceImpl implements ReviewService {
-    private final ReviewRepository reviewRepository;
-    private final BookingEligibility bookingEligibility;
-    private final AccommodationLookup accommodationLookup;
-    private final ReviewMapper mapper;
-
-    public ReviewServiceImpl(ReviewRepository reviewRepository, BookingEligibility bookingEligibility,
-                             AccommodationLookup accommodationLookup,
-                             ReviewMapper mapper) {
-        this.reviewRepository = reviewRepository;
-        this.bookingEligibility = bookingEligibility;
-        this.accommodationLookup = accommodationLookup;
-        this.mapper = mapper;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ReviewResponse> list(UUID accommodationId) {
-        return reviewRepository.findByAccommodationIdOrderByCreatedAtDesc(accommodationId).stream()
-                .map(mapper::toResponse).toList();
-    }
-
-    @Override
-    @Transactional
-    public ReviewResponse create(UUID accommodationId, CreateReviewRequest request) {
-        UUID userId = CurrentUser.require().id();
-        if (accommodationLookup.findBookingView(accommodationId).isEmpty()) {
-            throw new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND);
-        }
-        if (!bookingEligibility.hasCompletedBookingForAccommodation(userId, request.bookingId(), accommodationId)) {
-            throw new BusinessException(ErrorCode.BOOKING_SNAPSHOT_REQUIRED);
-        }
-        if (reviewRepository.findByBookingIdAndUserId(request.bookingId(), userId).isPresent()) {
-            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE);
-        }
-        Review review = new Review();
-        review.setUserId(userId);
-        review.setBookingId(request.bookingId());
-        review.setAccommodationId(accommodationId);
-        review.setRating(request.rating());
-        review.setComment(request.comment());
-        review.setCreatedAt(Instant.now());
-        return mapper.toResponse(reviewRepository.save(review));
-    }
-
-    @Override
-    @Transactional
-    public ReviewResponse update(UUID reviewId, UpdateReviewRequest request) {
-        Review review = ownedReview(reviewId);
-        review.setRating(request.rating());
-        review.setComment(request.comment());
-        return mapper.toResponse(reviewRepository.save(review));
-    }
-
-    @Override
-    @Transactional
-    public void delete(UUID reviewId) {
-        reviewRepository.delete(ownedReview(reviewId));
-    }
-
-    private Review ownedReview(UUID reviewId) {
-        UUID userId = CurrentUser.require().id();
-        return reviewRepository.findById(reviewId)
-                .filter(review -> userId.equals(review.getUserId()))
-                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-    }
+import io.github.hienpham0344.stayfinder.review.dto.*;import io.github.hienpham0344.stayfinder.review.entity.Review;import io.github.hienpham0344.stayfinder.review.repository.ReviewRepository;import io.github.hienpham0344.stayfinder.review.mapper.ReviewMapper;
+import io.github.hienpham0344.stayfinder.booking.service.BookingEligibility;import io.github.hienpham0344.stayfinder.accommodation.service.AccommodationLookup;import io.github.hienpham0344.stayfinder.media.service.MediaService;import io.github.hienpham0344.stayfinder.user.repository.UserRepository;import io.github.hienpham0344.stayfinder.user.entity.User;
+import io.github.hienpham0344.stayfinder.common.exception.*;import io.github.hienpham0344.stayfinder.common.response.PageResponse;import jakarta.persistence.EntityManager;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import org.springframework.data.domain.Pageable;import java.time.Clock;import java.util.*;
+@Service public class ReviewServiceImpl implements ReviewService{
+ private final ReviewRepository rows;private final BookingEligibility eligibility;private final AccommodationLookup accommodations;private final ReviewMapper mapper;private final MediaService media;private final UserRepository users;private final EntityManager em;private final Clock clock;
+ public ReviewServiceImpl(ReviewRepository rows,BookingEligibility eligibility,AccommodationLookup accommodations,ReviewMapper mapper,MediaService media,UserRepository users,EntityManager em,Clock clock){this.rows=rows;this.eligibility=eligibility;this.accommodations=accommodations;this.mapper=mapper;this.media=media;this.users=users;this.em=em;this.clock=clock;}
+ @Transactional(readOnly=true)public PageResponse<ReviewResponse> list(UUID stay,Integer star,Pageable page,UUID viewer){requireStay(stay);if(star!=null&&(star<1||star>5))throw invalid();var result=star==null?rows.findByAccommodationId(stay,page):rows.findByAccommodationIdAndRating(stay,star,page);return PageResponse.from(result.map(r->display(r,viewer)));}
+ @Transactional(readOnly=true)public ReviewSummary summary(UUID stay){requireStay(stay);Map<String,Long> counts=new LinkedHashMap<>();for(int i=1;i<=5;i++)counts.put(""+i,0L);long count=0,weighted=0;for(var row:rows.ratingCounts(stay)){int rating=row.getRating()==null?0:row.getRating();if(rating>=1&&rating<=5){long n=row.getCount();counts.put(""+rating,n);count=Math.addExact(count,n);weighted=Math.addExact(weighted,Math.multiplyExact(n,rating));}}return new ReviewSummary(count==0?null:(double)weighted/count,count,Collections.unmodifiableMap(counts));}
+ @Transactional public ReviewResponse create(UUID owner,UUID stay,CreateReviewRequest request){requireStay(stay);validate(request.rating(),request.comment(),request.mediaIds());if(!eligibility.hasCompletedBookingForAccommodation(owner,request.bookingId(),stay))throw new BusinessException(ErrorCode.REVIEW_NOT_ELIGIBLE);if(rows.findByBookingIdAndUserId(request.bookingId(),owner).isPresent())throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE);var r=new Review();r.setId(UUID.randomUUID());r.setUserId(owner);r.setAccommodationId(stay);r.setBookingId(request.bookingId());r.setRating(request.rating());r.setComment(request.comment().trim());r.setCreatedAt(clock.instant());r.setUpdatedAt(clock.instant());rows.saveAndFlush(r);media.replaceAttachments(owner,r.getId(),request.mediaIds());return display(r,owner);}
+ @Transactional public ReviewResponse update(UUID owner,UUID id,UpdateReviewRequest request){validate(request.rating(),request.comment(),request.mediaIds());var r=owned(owner,id);media.replaceAttachments(owner,id,request.mediaIds());r.setRating(request.rating());r.setComment(request.comment().trim());r.setUpdatedAt(clock.instant());return display(r,owner);}
+ @Transactional public void delete(UUID owner,UUID id){var r=owned(owner,id);media.replaceAttachments(owner,id,List.of());rows.delete(r);}
+ private Review owned(UUID owner,UUID id){var r=rows.lockById(id).orElseThrow(()->new BusinessException(ErrorCode.REVIEW_NOT_FOUND));em.refresh(r);if(!owner.equals(r.getUserId()))throw new BusinessException(ErrorCode.FORBIDDEN);return r;}
+ private ReviewResponse display(Review r,UUID viewer){var author=users.findById(r.getUserId()).orElseGet(User::new);var publicAuthor=new User();publicAuthor.setFullName(author.getFullName()==null||author.getFullName().isBlank()?"Guest":author.getFullName());publicAuthor.setAvatarUrl(author.getAvatarUrl());return mapper.toResponse(r,publicAuthor,media.reviewUrls(r.getId()),viewer!=null&&viewer.equals(r.getUserId()));}
+ private void requireStay(UUID id){if(accommodations.findBookingView(id).isEmpty())throw new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND);}
+ private void validate(Integer rating,String comment,List<UUID> ids){if(rating==null||rating<1||rating>5||comment==null||comment.length()>2000||ids==null||ids.size()>5||ids.stream().anyMatch(Objects::isNull)||new HashSet<>(ids).size()!=ids.size())throw invalid();}
+ private BusinessException invalid(){return new BusinessException(ErrorCode.VALIDATION_ERROR);}
 }

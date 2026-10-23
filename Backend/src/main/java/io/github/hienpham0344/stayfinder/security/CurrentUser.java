@@ -9,6 +9,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.UUID;
 
 public record CurrentUser(UUID id, String email, UserRole role) {
+    public static java.util.Optional<CurrentUser> optional() {
+        Authentication a = SecurityContextHolder.getContext().getAuthentication();
+        return a != null && a.getPrincipal() instanceof CurrentUser u ? java.util.Optional.of(u) : java.util.Optional.empty();
+    }
     public static CurrentUser require() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof CurrentUser currentUser)) {

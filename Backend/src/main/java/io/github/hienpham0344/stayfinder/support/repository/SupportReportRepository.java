@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.support.repository;import org.springframework.data.jpa.repository.JpaRepository;import io.github.hienpham0344.stayfinder.support.entity.SupportReport;import java.util.UUID;public interface SupportReportRepository extends JpaRepository<SupportReport,UUID>{}

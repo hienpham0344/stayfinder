@@ -1,0 +1,1 @@
+package io.github.hienpham0344.stayfinder.user.dto;import jakarta.validation.constraints.Pattern;public record PreferencesRequest(@Pattern(regexp="en-US|vi-VN|fr-FR")String language,Boolean bookingNotifications){}

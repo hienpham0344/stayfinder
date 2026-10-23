@@ -1,0 +1,7 @@
+package io.github.hienpham0344.stayfinder.media;
+import io.github.hienpham0344.stayfinder.media.service.MediaUrlSigner;import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
+import org.junit.jupiter.api.Test;import java.time.*;import java.util.UUID;import static org.junit.jupiter.api.Assertions.*;
+class MediaUrlSignerTest{
+ @Test void bindsAssetExpiryAndOriginalSignature(){var now=Instant.parse("2026-10-13T12:00:00Z");var id=UUID.randomUUID();var s=new MediaUrlSigner("synthetic-media-key-01234567890123456789",Clock.fixed(now,ZoneOffset.UTC));var ticket=s.ticket(id);assertEquals(now.plusSeconds(900),ticket.expiresAt());s.verify(id,ticket.expiresAt(),ticket.signature());assertThrows(BusinessException.class,()->s.verify(UUID.randomUUID(),ticket.expiresAt(),ticket.signature()));assertThrows(BusinessException.class,()->s.verify(id,ticket.expiresAt().plusSeconds(1),ticket.signature()));assertThrows(BusinessException.class,()->s.verify(id,ticket.expiresAt(),"00"));var later=new MediaUrlSigner("synthetic-media-key-01234567890123456789",Clock.fixed(now.plusSeconds(900),ZoneOffset.UTC));assertThrows(BusinessException.class,()->later.verify(id,ticket.expiresAt(),ticket.signature()));}
+ @Test void absentKeyDisablesSigningWithoutProducingAnUnprotectedUrl(){var s=new MediaUrlSigner("",Clock.systemUTC());assertThrows(BusinessException.class,()->s.ticket(UUID.randomUUID()));}
+}
