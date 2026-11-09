@@ -7,7 +7,7 @@ public class ApprovedPostgresInitializer implements ApplicationContextInitialize
  @Override public void initialize(ConfigurableApplicationContext context){
   try(var c=PostgresTestTarget.openRollbackOnly()){
    try(var s=c.createStatement();var r=s.executeQuery("select count(*) from information_schema.tables where table_schema='stayfinder_test_20261013' and table_type='BASE TABLE'")){
-    r.next();if(r.getInt(1)!=40)throw new IllegalStateException("Approved experience migrations required");
+    r.next();if(r.getInt(1)!=44)throw new IllegalStateException("Approved migrations 000-009 and 011-013 required");
    }finally{c.rollback();}
   }catch(Exception e){throw new IllegalStateException("Approved PostgreSQL context preflight failed; no public fallback");}
   Properties env=new Properties();
