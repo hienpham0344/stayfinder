@@ -3,9 +3,11 @@ import io.github.hienpham0344.stayfinder.review.entity.Review;import org.springf
 public interface ReviewRepository extends JpaRepository<Review,UUID>{
  Optional<Review> findByBookingIdAndUserId(UUID bookingId,UUID userId);
  boolean existsByBookingIdAndUserId(UUID bookingId,UUID userId);
- Page<Review> findByAccommodationId(UUID accommodationId,Pageable page);
- Page<Review> findByAccommodationIdAndRating(UUID accommodationId,Integer rating,Pageable page);
+ @Query("select r from Review r where r.accommodationId=:accommodationId and r.hidden=false")
+ Page<Review> findByAccommodationId(@Param("accommodationId") UUID accommodationId,Pageable page);
+ @Query("select r from Review r where r.accommodationId=:accommodationId and r.rating=:rating and r.hidden=false")
+ Page<Review> findByAccommodationIdAndRating(@Param("accommodationId") UUID accommodationId,@Param("rating") Integer rating,Pageable page);
  @Lock(LockModeType.PESSIMISTIC_WRITE)@Query("select r from Review r where r.id=:id")Optional<Review> lockById(@Param("id")UUID id);
  interface RatingCount{Integer getRating();Long getCount();}
- @Query("select r.rating as rating,count(r) as count from Review r where r.accommodationId=:id group by r.rating")List<RatingCount> ratingCounts(@Param("id")UUID id);
+ @Query("select r.rating as rating,count(r) as count from Review r where r.accommodationId=:id and r.hidden=false group by r.rating")List<RatingCount> ratingCounts(@Param("id")UUID id);
 }

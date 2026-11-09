@@ -108,7 +108,9 @@ public class PartnerAccommodationService {
         accommodation.setBeds(request.beds());
         accommodation.setBaths(request.baths());
         // Listings already waiting for moderation keep their status when the owner edits their details.
-        if (accommodation.getStatus() != AccommodationStatus.PENDING) {
+        if (accommodation.isModerationBlocked()) {
+            accommodation.setStatus(AccommodationStatus.INACTIVE);
+        } else if (accommodation.getStatus() != AccommodationStatus.PENDING) {
             accommodation.setStatus(request.published() ? AccommodationStatus.ACTIVE : AccommodationStatus.INACTIVE);
         }
 

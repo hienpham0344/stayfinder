@@ -21,6 +21,7 @@ public class Review {
     @Column(name = "accommodation_id") private UUID accommodationId;
     private Integer rating;
     private String comment;
+    @Column(nullable = false) private boolean hidden;
     @Column(name = "created_at") private Instant createdAt;
     @Column(name = "updated_at") private Instant updatedAt;
 }

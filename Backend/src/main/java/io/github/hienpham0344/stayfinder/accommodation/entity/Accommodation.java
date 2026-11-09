@@ -31,6 +31,7 @@ public class Accommodation {
     private String description;
     @Column(name = "base_price") private BigDecimal basePrice;
     @Convert(converter = AccommodationStatusConverter.class) private AccommodationStatus status;
+    @Column(name="moderation_blocked",nullable=false) private boolean moderationBlocked;
     @Column(name="location_id") private UUID locationId;
     private String timezone;
     @Column(name="cleaning_fee_cents") private Long cleaningFeeCents;

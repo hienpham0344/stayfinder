@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -99,6 +100,21 @@ class PartnerAccommodationServiceTest {
 
         assertEquals(ErrorCode.ACCOMMODATION_NOT_FOUND, error.getErrorCode());
         verifyNoInteractions(types, locations, features, images, links);
+    }
+
+    @Test
+    void partnerCannotRepublishAnAdministrativelyBlockedProperty() {
+        Accommodation blocked = new Accommodation();
+        blocked.setId(stayId);
+        blocked.setPartnerId(owner);
+        blocked.setStatus(AccommodationStatus.INACTIVE);
+        blocked.setModerationBlocked(true);
+        allowSave();
+        when(accommodations.lockOwned(stayId, owner)).thenReturn(Optional.of(blocked));
+        when(accommodations.save(blocked)).thenReturn(blocked);
+        var result = service.update(owner, stayId, request("Asia/Ho_Chi_Minh"));
+        assertEquals(AccommodationStatus.INACTIVE, result.detail().accommodation().status());
+        assertTrue(blocked.isModerationBlocked());
     }
 
     @Test
