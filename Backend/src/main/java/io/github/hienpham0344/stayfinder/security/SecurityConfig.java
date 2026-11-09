@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,"/actuator/health","/api/catalog/filters","/api/locations/suggestions",
                     "/api/accommodations","/api/accommodations/**","/api/payment-methods","/api/media/*/content").permitAll()
                 .requestMatchers("/api/admin/**","/api/demo/**").hasRole("ADMIN")
+                .requestMatchers("/api/partner/**").hasRole("PARTNER")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(resource->resource.authenticationEntryPoint(entry).accessDeniedHandler(denied)
                 .jwt(config->config.decoder(jwt.decoder()).jwtAuthenticationConverter(converter)));

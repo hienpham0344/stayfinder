@@ -52,6 +52,20 @@ API mặc định tại `http://localhost:8080`. Nếu dùng Maven đã cài, th
 
 Nếu test báo `class file version 65.0` nhưng runtime chỉ hỗ trợ `61.0`, Maven đang dùng Java 17. Kiểm tra `mvn -version` (hoặc `.\mvnw.cmd -version`) và sửa `JAVA_HOME` tới JDK 21 trở lên; `java -version` trên `PATH` có thể trỏ sang JDK khác với Maven.
 
+### API quản lý dành cho Partner
+
+Dùng Bearer token của tài khoản có role `PARTNER`. API chỉ cho phép xem và sửa cơ sở/phòng thuộc tài khoản đó. Luồng tự đăng ký tạo tài khoản khách hàng.
+
+| Luồng | API |
+| --- | --- |
+| Xem, tạo và sửa cơ sở | `GET/POST /api/partner/accommodations`, `GET/PUT /api/partner/accommodations/{id}` |
+| Xem, tạo và sửa phòng | `GET/POST /api/partner/accommodations/{id}/rooms`, `PUT /api/partner/accommodations/{id}/rooms/{roomId}` |
+| Cập nhật giá và trạng thái nhận đặt | `PUT /api/partner/accommodations/{id}/rooms/{roomId}/offer` |
+
+Lấy mã loại cơ sở, địa điểm và tiện nghi từ `GET /api/catalog/filters`. Khi tạo cơ sở, gửi `published: true` để đưa cơ sở vào catalog ngay khi có phòng `AVAILABLE` và tồn kho phù hợp. Cơ sở đang `PENDING` giữ nguyên trạng thái khi chỉnh sửa. Khi tạo phòng, body gồm `details` và `offer`. Giá và phí dùng đơn vị USD cents, ví dụ `{"nightlyPriceCents":12000,"status":"AVAILABLE"}` cho giá 120 USD/đêm. Các trạng thái phòng khác là `MAINTENANCE` và `UNAVAILABLE`.
+
+Để kiểm tra thủ công trên môi trường thử nghiệm, tạo cơ sở và phòng bằng tài khoản Partner, sau đó tìm cơ sở và tạo báo giá bằng tài khoản Customer. Cập nhật giá hoặc chuyển phòng sang bảo trì rồi kiểm tra báo giá cũ bị từ chối khi xác nhận. Dùng một tài khoản Partner khác gọi API sửa cùng phòng để kiểm tra phản hồi `404`.
+
 ## Backend: test và build
 
 Chạy test không dùng PostgreSQL (các test gắn tag postgres được loại mặc định):

@@ -17,6 +17,8 @@ public enum ErrorCode {
     RATE_LIMITED("RATE_LIMITED", "Too many attempts", HttpStatus.TOO_MANY_REQUESTS),
     USER_NOT_FOUND("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND),
     ACCOMMODATION_NOT_FOUND("ACCOMMODATION_NOT_FOUND", "Accommodation not found", HttpStatus.NOT_FOUND),
+    ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Room not found", HttpStatus.NOT_FOUND),
+    ROOM_CAPACITY_RESERVED("ROOM_CAPACITY_RESERVED", "Room capacity is reserved by existing bookings", HttpStatus.CONFLICT),
     ROOM_NOT_AVAILABLE("ROOM_NOT_AVAILABLE", "Room is not available", HttpStatus.CONFLICT),
     QUOTE_NOT_FOUND("QUOTE_NOT_FOUND", "Quote not found", HttpStatus.NOT_FOUND),
     QUOTE_EXPIRED("QUOTE_EXPIRED", "Quote has expired; request a new quote", HttpStatus.CONFLICT),
