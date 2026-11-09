@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { Heart, Star } from 'lucide-react-native';
+import { Heart, Star } from '../../constants/icons';
 import { Stay } from '../../types/stay';
 import { router } from 'expo-router';
 import { COLORS } from '../../constants/tokens';
@@ -24,7 +24,7 @@ export const StayCard: React.FC<StayCardProps> = ({ stay }) => {
     <TouchableOpacity
       activeOpacity={0.95}
       onPress={() => router.push(`/room/${stay.id}` as any)}
-      className="mb-6 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+      className="mb-6 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100" accessibilityRole="button"
     >
       {/* Image Carousel */}
       <View className="relative h-64 w-full bg-gray-100">
@@ -55,7 +55,7 @@ export const StayCard: React.FC<StayCardProps> = ({ stay }) => {
         {/* Favorite Button */}
         <TouchableOpacity
           onPress={() => setIsLiked(!isLiked)}
-          className="absolute top-3 right-3 p-2 bg-white/80 rounded-full"
+          className="absolute top-3 right-3 p-2 bg-white/80 rounded-full" accessibilityRole="button"
         >
           <Heart size={20} color={isLiked ? COLORS.primary : COLORS.dark} fill={isLiked ? COLORS.primary : 'transparent'} />
         </TouchableOpacity>
@@ -87,7 +87,7 @@ export const StayCard: React.FC<StayCardProps> = ({ stay }) => {
             {stay.location.city}, {stay.location.province}
           </Text>
           <View className="flex-row items-center">
-            <Star size={15} color="#FFB800" fill="#FFB800" />
+            <Star size={15} color={COLORS.starGold} fill={COLORS.starGold} />
             <Text className="text-sm font-bold text-gray-900 ml-1">{stay.rating}</Text>
           </View>
         </View>

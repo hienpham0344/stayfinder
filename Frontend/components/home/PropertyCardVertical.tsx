@@ -1,9 +1,12 @@
+import { StayImage } from '../ui/StayImage';
+import { HeartButton } from '../ui/HeartButton';
+import { formatMoney } from '../../utils/frontendState';
 import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, ImageSourcePropType, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Heart, Star, ImageOff } from 'lucide-react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ImageSourcePropType, TouchableOpacity } from 'react-native';
+import { Star } from '../../constants/icons';
 import { Stay } from '../../types/stay';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 
 interface PropertyCardVerticalProps {
   stay: Stay;
@@ -16,8 +19,6 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
   onPress,
   imageSource,
 }) => {
-  const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const heartMotionWidth = useRef(15);
   const { width } = useUserWindowDimensions();
   const isCompact = width <= 340;
   const cardImage = imageSource ?? { uri: stay.images[0] };
@@ -26,14 +27,7 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
     onPress?.();
   };
 
-  const toggleWishlist = (e: any) => {
-    e.stopPropagation?.();
-    // The Figma prototype updates a width variable to 15; it does not expose
-    // a filled-heart state in this frame.
-    heartMotionWidth.current = 15;
-  };
-
-  const formattedPrice = `$${Math.round(stay.pricePerNight / 10000)}`;
+  const formattedPrice = formatMoney(stay.pricePerNight);
   const locationLabel = stay.cityArea?.match(/\(([^)]+)\)/)?.[1]
     ?? stay.cityArea
     ?? `${stay.location.city}, ${stay.location.province}`;
@@ -41,6 +35,7 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
   return (
     <View style={styles.card}>
     <TouchableOpacity
+      dataSet={{ interactive: 'card' }}
       activeOpacity={0.88}
       onPress={handleCardPress}
       accessibilityRole="button"
@@ -49,27 +44,7 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
     >
       {/* Thumbnail Left */}
       <View style={styles.imageContainer}>
-        <Image
-          source={cardImage}
-          style={styles.image}
-          resizeMode="cover"
-          accessibilityLabel={stay.title}
-          onLoad={() => setImageState('loaded')}
-          onError={() => setImageState('error')}
-        />
-        {imageState !== 'loaded' ? (
-          <View
-            accessibilityRole="image"
-            accessibilityLabel={imageState === 'error' ? 'Không thể tải ảnh chỗ ở' : 'Đang tải ảnh chỗ ở'}
-            style={styles.imageFallback}
-          >
-            {imageState === 'error' ? (
-              <ImageOff size={20} color={COLORS.textMuted} />
-            ) : (
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            )}
-          </View>
-        ) : null}
+        <StayImage source={cardImage} style={styles.image} accessibilityLabel={stay.title} />
       </View>
 
       {/* Info Right */}
@@ -81,7 +56,7 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
 
         </View>
 
-        <View style={styles.locationRow}>
+        <View style={[styles.locationRow, isCompact && styles.locationRowCompact]}>
           <Text style={styles.locationText} numberOfLines={1}>
             {locationLabel}
           </Text>
@@ -93,21 +68,13 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
           <Text style={styles.reviewText} numberOfLines={1}>({stay.reviewCount} reviews)</Text>
         </View>
 
-        <View style={styles.priceRow}>
+        <View style={[styles.priceRow, isCompact && styles.priceRowCompact]}>
           <Text style={[styles.priceText, isCompact && styles.priceTextCompact]}>{formattedPrice}</Text>
           <Text style={[styles.perNightText, isCompact && styles.perNightTextCompact]}>/night</Text>
         </View>
       </View>
     </TouchableOpacity>
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={toggleWishlist}
-      style={styles.wishlistBtn}
-      accessibilityRole="button"
-      accessibilityLabel="Save to wishlist"
-    >
-      <Heart size={15} color={COLORS.textMuted} fill="transparent" />
-    </TouchableOpacity>
+    <HeartButton stayId={stay.id} style={styles.wishlistBtn} size={20} />
     </View>
   );
 };
@@ -115,21 +82,18 @@ export const PropertyCardVertical: React.FC<PropertyCardVerticalProps> = ({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    height: 128,
-    padding: 16,
+    height: 124,
+    padding: 12,
     borderRadius: RADII.promo,
-    backgroundColor: COLORS.bgWhite,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    marginBottom: 12,
+    backgroundColor: COLORS.bgSurface,
+    marginBottom: 10,
     alignItems: 'center',
-    ...SHADOWS.cardSoft,
   },
   cardTap: { flex: 1, width: '100%', flexDirection: 'row', alignItems: 'center' },
   imageContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: RADII.xl,
+    width: 100,
+    height: 100,
+    borderRadius: RADII.md,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: COLORS.bgSecondary,
@@ -151,9 +115,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 16,
+    marginLeft: 14,
     justifyContent: 'flex-start',
-    height: 96,
+    height: 100,
     paddingTop: 4,
     position: 'relative',
   },
@@ -189,6 +153,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  locationRowCompact: {
+    right: 0,
+    bottom: 26,
+  },
   locationText: {
     fontFamily: TYPOGRAPHY.families.regular,
     fontSize: TYPOGRAPHY.sizes.xs,
@@ -221,6 +189,9 @@ const styles = StyleSheet.create({
     bottom: 12,
     flexDirection: 'row',
     alignItems: 'baseline',
+  },
+  priceRowCompact: {
+    bottom: 0,
   },
   priceText: {
     fontFamily: TYPOGRAPHY.families.bold,

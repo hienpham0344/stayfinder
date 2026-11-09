@@ -50,9 +50,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bgWhite,
+    backgroundColor: COLORS.bgSurface,
     borderWidth: 1,
-    borderColor: COLORS.borderSage,
+    borderColor: COLORS.borderControl,
     borderRadius: RADII.xs,
     paddingHorizontal: 14,
     height: 50,

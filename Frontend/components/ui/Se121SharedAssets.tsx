@@ -1,11 +1,7 @@
 import React from 'react';
-import { Image, Platform } from 'react-native';
 
-// Exact local Figma vectors. Keep their exported root dimensions.
+// Theme-aware vectors share the same colors and rendering on web and native.
 export function Se121SharedAsset({ source, width, height = width, nativeFallback }: { source: number; width: number; height?: number; nativeFallback: React.ReactElement }) {
-  if (Platform.OS === 'web') return <Image source={source} style={{ width, height }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />;
-  // Native keeps the existing vector stack until its device visual gate is run.
-  // This avoids introducing asynchronous SVG/file-URI loading into navigation.
   return nativeFallback;
 }
 

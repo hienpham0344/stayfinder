@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Search, SlidersHorizontal, Sparkles } from 'lucide-react-native';
+import { Search, SlidersHorizontal, Sparkles } from '../../constants/icons';
 import { router } from 'expo-router';
 import { COLORS } from '../../constants/tokens';
 
@@ -20,18 +20,18 @@ export const Header: React.FC = () => {
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/search')}
           activeOpacity={0.9}
-          className="flex-1 flex-row items-center px-4 py-2.5 bg-gray-100 rounded-2xl mr-2"
+          className="flex-1 flex-row items-center px-4 py-2.5 bg-gray-100 rounded-2xl mr-2" accessibilityRole="button"
         >
-          <Search size={18} color="#717171" />
+          <Search size={18} color={COLORS.textSecondary} />
           <Text className="text-xs text-gray-500 font-medium ml-2">Bạn muốn ở đâu?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/search')}
           activeOpacity={0.8}
-          className="p-3 bg-neutral-900 rounded-2xl shadow-sm"
+          className="p-3 bg-neutral-900 rounded-2xl shadow-sm" accessibilityRole="button"
         >
-          <SlidersHorizontal size={18} color="#FFFFFF" />
+          <SlidersHorizontal size={18} color={COLORS.photoText} />
         </TouchableOpacity>
       </View>
     </View>

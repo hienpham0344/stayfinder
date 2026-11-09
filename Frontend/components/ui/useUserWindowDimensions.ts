@@ -15,5 +15,5 @@ export function useUserWindowDimensions() {
     }
   }, [dimensions]);
 
-  return Platform.OS === 'web' ? webDimensions : dimensions;
+  return Platform.OS === 'web' ? { ...webDimensions, width: Math.min(520, webDimensions.width) } : dimensions;
 }

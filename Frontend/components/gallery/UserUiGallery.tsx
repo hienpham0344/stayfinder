@@ -2,7 +2,7 @@ import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, ImageSourcePropType, ImageStyle, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, CalendarCheck, Check, ChevronRight, Heart, Home, MapPin, Search, Star, User, Wifi } from 'lucide-react-native';
+import { ArrowLeft, CalendarCheck, Check, ChevronRight, Heart, Home, MapPin, Search, Star, User, Wifi } from '../../constants/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../ui/Button';
 import { TopAppBar } from '../ui/TopAppBar';

@@ -1,3 +1,4 @@
+import { formatMoney } from '../../utils/frontendState';
 import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -15,24 +16,21 @@ interface PriceFooterProps {
 export const PriceFooter: React.FC<PriceFooterProps> = ({ stayId, pricePerNight, priceLabel, onBookNow }) => {
   const insets = useSafeAreaInsets();
   const compact = useUserWindowDimensions().width <= 340;
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price);
-  };
 
   return (
     <View style={[styles.container, { height: 104 + insets.bottom, paddingBottom: 16 + insets.bottom }]}>
       <View style={styles.priceBlock}>
-        <Text style={styles.eyebrow}>TOTAL PRICE</Text>
+        <Text style={styles.eyebrow}>FROM / NIGHT</Text>
         <View style={styles.priceRow}>
           <Text style={[styles.price, compact && styles.compactPrice]}>
-            {priceLabel ?? `${formatPrice(pricePerNight)} đ`}
+            {priceLabel ?? formatMoney(pricePerNight)}
           </Text>
           <Text style={[styles.night, compact && styles.compactNight]}>/night</Text>
         </View>
       </View>
 
       <Pressable
-        onPress={onBookNow ?? (() => router.push(`/booking/checkout?id=${stayId}` as any))}
+        onPress={onBookNow ?? (() => router.push(`/room/select?id=${stayId}` as never))}
         style={({ pressed }) => [styles.button, compact && styles.compactButton, pressed && styles.pressed]}
         accessibilityRole="button"
         accessibilityLabel="Book Now"
@@ -54,7 +52,7 @@ const styles = StyleSheet.create({
   compactNight: { fontSize: 11 },
   button: { width: 133.69, height: SIZES.button, paddingHorizontal: 16, borderRadius: RADII.full, backgroundColor: COLORS.primaryActive, alignItems: 'center', justifyContent: 'center' },
   compactButton: { width: 128 },
-  buttonText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
+  buttonText: { color: COLORS.onPrimary, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
   compactButtonText: { fontSize: 12 },
   pressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
 });

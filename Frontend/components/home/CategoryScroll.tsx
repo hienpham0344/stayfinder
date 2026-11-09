@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
-import { Building2, Home, Trees, Castle, Flame } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Building2, Home, Trees, Castle, Flame } from '../../constants/icons';
 import { COLORS, RADII, TYPOGRAPHY, SPACING } from '../../constants/tokens';
 import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
@@ -12,6 +12,7 @@ export interface CategoryItem {
 
 // Categories extracted directly from Figma Node 13:1066 (Hotels, Homestays, Villas, Resorts, Cabins)
 const CATEGORIES_DATA: CategoryItem[] = [
+  { id: 'all', name: 'All stays', iconName: 'Flame' },
   { id: 'Hotel', name: 'Hotel', iconName: 'Building2' },
   { id: 'Homestay', name: 'Homestay', iconName: 'Home' },
   { id: 'Resort', name: 'Resort', iconName: 'Trees' },
@@ -35,7 +36,7 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
   onSelectCategory,
 }) => {
   const renderIcon = (iconName: string, isSelected: boolean) => {
-    const iconColor = isSelected ? COLORS.bgWhite : COLORS.primaryActive;
+    const iconColor = isSelected ? COLORS.onPrimary : COLORS.primaryActive;
     const iconSize = 18;
 
     switch (iconName) {
@@ -73,7 +74,6 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
               style={[
                 styles.categoryChip,
                 isSelected ? styles.chipSelected : styles.chipUnselected,
-                item.id === 'Hotel' && styles.hotelChip,
               ]}
             >
               {CATEGORY_ASSETS[item.iconName] ? <Se121SharedAsset source={isSelected ? CATEGORY_ASSETS[item.iconName].selected : CATEGORY_ASSETS[item.iconName].unselected} width={CATEGORY_ASSETS[item.iconName].width} height={CATEGORY_ASSETS[item.iconName].height} nativeFallback={renderIcon(item.iconName, isSelected)} /> : renderIcon(item.iconName, isSelected)}
@@ -95,18 +95,18 @@ export const CategoryScroll: React.FC<CategoryScrollProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 54,
-    marginBottom: SPACING.section,
+    height: 44,
+    marginBottom: 26,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    gap: SPACING.lg,
+    gap: SPACING.sm,
   },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    height: 46,
+    paddingHorizontal: SPACING.lg,
+    height: 44,
     borderRadius: RADII.full,
     gap: SPACING.sm,
     borderWidth: 1,
@@ -117,20 +117,16 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primaryActive,
   },
   chipUnselected: {
-    backgroundColor: COLORS.bgWhite,
+    backgroundColor: COLORS.bgSurface,
     borderColor: COLORS.borderDefault,
   },
-  hotelChip: {
-    borderWidth: 0,
-    ...Platform.select({ web: { boxShadow: '0px 4px 6px rgba(0,0,0,0.04)' }, default: { shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 } }),
-  },
   categoryText: {
-    fontFamily: TYPOGRAPHY.families.regular,
-    fontSize: TYPOGRAPHY.sizes.md,
-    lineHeight: 24,
+    fontFamily: TYPOGRAPHY.families.medium,
+    fontSize: 13,
+    lineHeight: 20,
   },
   textSelected: {
-    color: COLORS.bgWhite,
+    color: COLORS.onPrimary,
   },
   textUnselected: {
     color: COLORS.primaryActive,

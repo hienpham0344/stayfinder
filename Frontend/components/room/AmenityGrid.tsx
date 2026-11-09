@@ -16,7 +16,7 @@ import {
   Building,
   Tv,
   CheckCircle2,
-} from 'lucide-react-native';
+} from '../../constants/icons';
 import { COLORS, RADII, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
@@ -76,5 +76,5 @@ const styles = StyleSheet.create({
   items: { flexDirection: 'row', gap: 16 },
   item: { flex: 1, minWidth: 0, alignItems: 'center', gap: 8 },
   iconCircle: { width: 48, height: 48, borderRadius: RADII.full, backgroundColor: COLORS.bgSecondary, alignItems: 'center', justifyContent: 'center' },
-  name: { color: '#3E4946', fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  name: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, textAlign: 'center' },
 });
