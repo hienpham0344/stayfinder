@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="stayfinder.auth.mode",havingValue="spring",matchIfMissing=true)
 public class AuthServiceImpl implements AuthService {
     private static final Pattern EMAIL=Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern REFRESH=Pattern.compile("[A-Za-z0-9_-]{43}");

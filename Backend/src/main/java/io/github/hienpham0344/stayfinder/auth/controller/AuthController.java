@@ -25,7 +25,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthSessionResponse>> register(@Valid @RequestBody RegisterRequest body,
             HttpServletRequest request,HttpServletResponse response) {
         transport.platform(request);limiter.registration(request.getRemoteAddr());
-        return ResponseEntity.status(201).body(ApiResponse.success(transport.writeSession(request,response,auth.register(body))));
+        var session=auth.register(body);
+        // Supabase may require email confirmation before it issues a session.
+        if(session==null){transport.clearCookie(request,response);return ResponseEntity.status(202).body(ApiResponse.success(null));}
+        return ResponseEntity.status(201).body(ApiResponse.success(transport.writeSession(request,response,session)));
     }
 
     @PostMapping("/login")
