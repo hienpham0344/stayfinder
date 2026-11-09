@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { Star, MapPin } from 'lucide-react-native';
+import { Star, MapPin } from '../../constants/icons';
 import { Stay } from '../../types/stay';
 import { router } from 'expo-router';
 
@@ -22,7 +22,7 @@ export const PopularSection: React.FC<PopularSectionProps> = ({ stays }) => {
           key={stay.id}
           onPress={() => router.push(`/room/${stay.id}` as any)}
           activeOpacity={0.9}
-          className="bg-white rounded-2xl p-3 mb-3 border border-gray-100 shadow-sm flex-row items-center"
+          className="bg-white rounded-2xl p-3 mb-3 border border-gray-100 shadow-sm flex-row items-center" accessibilityRole="button"
         >
           <Image
             source={{ uri: stay.images[0] }}

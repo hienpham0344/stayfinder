@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, View } from 'react-native';
 import { CATEGORIES } from '../../constants/mockStays';
-import { Compass, Flame, Umbrella, TreePine, Mountain, Crown, Waves } from 'lucide-react-native';
+import { Compass, Flame, Umbrella, TreePine, Mountain, Crown, Waves } from '../../constants/icons';
 import { COLORS } from '../../constants/colors';
 
 interface CategoryFilterProps {
@@ -42,7 +42,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
               activeOpacity={0.7}
               className={`items-center mr-6 pb-1 ${
                 isSelected ? 'border-b-2 border-primary' : ''
-              }`}
+              }`} accessibilityRole="button"
             >
               <IconComponent size={22} color={iconColor} />
               <Text

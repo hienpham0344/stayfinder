@@ -1,67 +1,35 @@
+import { MotionScreen } from '../ui/MotionScreen';
+import { StayImage } from '../ui/StayImage';
 import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, ArrowRight, BedDouble, CircleCheck, Flame, ImageOff, Ruler, Users } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, BedDouble, CircleCheck, Flame, Ruler, Users } from '../../constants/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_STAYS } from '../../constants/mockStays';
+import { findStay, stayImage } from '../../constants/stayCatalog';
+import { useBookingDraft } from '../../state/AppState';
+import { availableRoom, formatMoney, quoteBooking, roomCanHost, travelNights, validTravelDates } from '../../utils/frontendState';
+import { MissingStay } from '../ui/MissingStay';
 import { COLORS, RADII, SHADOWS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
-type RoomFixture = {
-  id: 'deluxe' | 'suite';
-  name: string;
-  price: string;
-  guests: string;
-  size: string;
-  bed: string;
-  amenities: string[];
-  badge: 'High Demand' | 'Available';
-  availability: string;
-  image: number;
-};
-
-// Node 13:782 provides a local presentation fixture. Its selection index still
-// maps to the route's existing room-tier id before Continue is pressed.
-const FIGMA_ROOMS: RoomFixture[] = [
-  {
-    id: 'deluxe',
-    name: 'Deluxe Ocean View',
-    price: '$299',
-    guests: '2-3 Guests',
-    size: '450 sqft',
-    bed: '1 King',
-    amenities: ['Free Wi-Fi', 'Balcony', 'Mini Bar'],
-    badge: 'High Demand',
-    availability: '3 rooms left',
-    image: require('../../assets/figma/se121-parity/room-selection/deluxe-ocean-view.jpeg'),
-  },
-  {
-    id: 'suite',
-    name: 'Premium Suite',
-    price: '$450',
-    guests: '2-4 Guests',
-    size: '800 sqft',
-    bed: '1 King, 1 Sofa',
-    amenities: ['Lounge Access', 'Kitchenette', 'Free Wi-Fi'],
-    badge: 'Available',
-    availability: 'Instant Confirmation',
-    image: require('../../assets/figma/se121-parity/room-selection/premium-suite.jpeg'),
-  },
-];
-
 export function RoomSelectionExperience() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const stay = MOCK_STAYS.find((item) => item.id === id) || MOCK_STAYS[0];
+  const { draft, beginBooking } = useBookingDraft();
+  const stay = findStay(id || draft.stayId);
   const insets = useSafeAreaInsets();
   const compact = useUserWindowDimensions().width <= 340;
-  const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
-  const [failedRoomId, setFailedRoomId] = useState<RoomFixture['id'] | null>(null);
-  const selectedTierId = stay.roomTiers?.[selectedRoomIndex]?.id || stay.roomTiers?.[0]?.id || 'rt-std';
+  const [selectedRoomIndex, setSelectedRoomIndex] = useState(() => stay?.roomTiers?.findIndex((room) => room.id === availableRoom(stay, draft, draft.stayId === stay.id ? draft.tierId : undefined)?.id) ?? -1);
+  const selectedTierId = stay?.roomTiers?.[selectedRoomIndex]?.id ?? '';
+  const selectedRoom = stay?.roomTiers?.[selectedRoomIndex];
+  const canContinue = !!selectedRoom && roomCanHost(selectedRoom, draft) && validTravelDates(draft.checkIn, draft.checkOut);
+  const nights = travelNights(draft.checkIn, draft.checkOut);
+  const rooms = stay?.roomTiers?.map((tier) => ({ id: tier.id, name: tier.name, price: formatMoney(tier.pricePerNight), guests: `Up to ${tier.maxGuests} guests`, size: `${tier.sizeSqm} m²`, bed: tier.bedType, amenities: [tier.includesBreakfast ? 'Breakfast included' : 'Room only', 'Wi-Fi'], badge: tier.availableCount <= 3 ? 'High Demand' : 'Available', availability: roomCanHost(tier, draft) ? `${tier.availableCount} rooms available` : 'Not available for this party', image: stayImage(stay, tier.id) })) ?? [];
+  if (!stay) return <MissingStay />;
 
-  return <View style={[styles.screen, { paddingTop: insets.top }]}>
+  return <MotionScreen style={[styles.screen, { paddingTop: insets.top }]}>
     <View style={styles.header}>
-      <Pressable style={styles.back} onPress={() => router.back()} accessibilityLabel="Back">
+      <Pressable style={styles.back} onPress={() => router.back()} accessibilityLabel="Back" accessibilityRole="button">
         <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/back.svg')} width={16} nativeFallback={<ArrowLeft size={16} color={COLORS.inkSoft} />} />
       </Pressable>
       <Text style={styles.headerTitle}>StayFinder</Text>
@@ -69,27 +37,26 @@ export function RoomSelectionExperience() {
     </View>
     <View style={styles.stepIndicator} accessibilityLabel="Step 1 of 4">{[0, 1, 2, 3].map((segment) => <View key={segment} style={[styles.stepSegment, segment === 0 && styles.stepSegmentActive]} />)}</View>
     <ScrollView contentContainerStyle={[styles.list, { paddingBottom: SIZES.stickyCta + insets.bottom + 32 }]} showsVerticalScrollIndicator={false}>
-      {FIGMA_ROOMS.map((room, index) => {
+      {rooms.map((room, index) => {
         const selected = index === selectedRoomIndex;
-        const isSuite = room.id === 'suite';
+        const isSuite = index > 0;
 
         return <Pressable
           key={room.id}
           style={({ pressed }) => [styles.card, isSuite && styles.suiteCard, selected && styles.selectedCard, compact && styles.compactCard, pressed && styles.cardPressed]}
+          disabled={!roomCanHost(stay.roomTiers![index], draft)}
           onPress={() => setSelectedRoomIndex(index)}
           accessibilityRole="radio"
-          accessibilityState={{ checked: selected }}
+          accessibilityState={{ checked: selected, disabled: !roomCanHost(stay.roomTiers![index], draft) }}
           accessibilityLabel={room.name + ', ' + room.price + ' per night'}
-          aria-checked={selected}
+          aria-checked={selected} aria-disabled={!roomCanHost(stay.roomTiers![index], draft)}
         >
           <View style={styles.imageWrap}>
-            {failedRoomId === room.id
-              ? <ImageOff size={24} color={COLORS.textMuted} />
-              : <Image source={room.image} style={styles.image} resizeMode="cover" onError={() => setFailedRoomId(room.id)} />}
+            <StayImage source={room.image} style={styles.image} accessibilityLabel={room.name} />
             <View style={[styles.badge, room.badge === 'High Demand' ? styles.limitedBadge : styles.availableBadge]}>
               {room.badge === 'High Demand'
-                ? <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/high-demand.svg')} width={9.3333} height={11.0833} nativeFallback={<Flame size={11} color={COLORS.bgWhite} />} />
-                : <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/available.svg')} width={11.6667} height={11.6667} nativeFallback={<CircleCheck size={12} color={COLORS.bgWhite} />} />}
+                ? <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/high-demand.svg')} width={9.3333} height={11.0833} nativeFallback={<Flame size={11} color={COLORS.onPrimary} />} />
+                : <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/available.svg')} width={11.6667} height={11.6667} nativeFallback={<CircleCheck size={12} color={COLORS.onPrimary} />} />}
               <Text style={styles.badgeText}>{room.badge}</Text>
             </View>
           </View>
@@ -118,13 +85,13 @@ export function RoomSelectionExperience() {
       })}
     </ScrollView>
     <View style={[styles.footer, { height: 84 + Math.max(0, insets.bottom - 16), paddingBottom: Math.max(16, insets.bottom) }]}>
-      <View style={styles.footerPriceWrap}><Text style={styles.footerLabel}>Total for 3 nights</Text><Text style={styles.footerPrice}>$897.00</Text></View>
-      <Pressable style={styles.continueButton} onPress={() => router.push('/booking/guest-info?id=' + stay.id + '&tierId=' + selectedTierId as never)} accessibilityLabel="Continue to guest information">
+      <View style={styles.footerPriceWrap}><Text style={styles.footerLabel}>Total for {nights} nights · {draft.rooms} room{draft.rooms > 1 ? 's' : ''}</Text><Text style={styles.footerPrice}>{canContinue ? formatMoney(quoteBooking(stay, { ...draft, tierId: selectedTierId }, 0).roomTotal, true) : 'Unavailable'}</Text></View>
+      <Pressable disabled={!canContinue} accessibilityState={{ disabled: !canContinue }} style={[styles.continueButton, !canContinue && { opacity: 0.45 }]} onPress={() => { beginBooking(stay.id, selectedTierId); router.push('/booking/guest-info' as never); }} accessibilityLabel="Continue to guest information" accessibilityRole="button" aria-disabled={!canContinue}>
         <Text style={styles.continueText}>Continue</Text>
-        <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/continue.svg')} width={12.4999} nativeFallback={<ArrowRight size={18} color={COLORS.bgWhite} />} />
+        <Se121SharedAsset source={require('../../assets/figma/se121-parity/room-selection/continue.svg')} width={12.4999} nativeFallback={<ArrowRight size={18} color={COLORS.onPrimary} />} />
       </Pressable>
     </View>
-  </View>;
+  </MotionScreen>;
 }
 
 const styles = StyleSheet.create({
@@ -136,8 +103,8 @@ const styles = StyleSheet.create({
   stepSegment: { flex: 1, height: 4, borderRadius: RADII.full, backgroundColor: COLORS.borderMuted },
   stepSegmentActive: { backgroundColor: COLORS.primary },
   list: { paddingHorizontal: SPACING.xl, paddingTop: 30, gap: 16 },
-  card: { height: 400, borderRadius: RADII.xl, overflow: 'hidden', borderWidth: 2, borderColor: COLORS.actionTeal, backgroundColor: COLORS.bgWhite, ...SHADOWS.cardSoft },
-  suiteCard: { height: 398, borderColor: '#E0E8F0', backgroundColor: 'rgba(11, 122, 109, 0.05)' },
+  card: { height: 400, borderRadius: RADII.xl, overflow: 'hidden', borderWidth: 2, borderColor: COLORS.borderLight, backgroundColor: COLORS.bgSurface, ...SHADOWS.cardSoft },
+  suiteCard: { height: 398, borderColor: COLORS.borderLight, backgroundColor: COLORS.primaryContainer },
   selectedCard: { borderColor: COLORS.actionTeal },
   compactCard: { height: undefined, minHeight: 400 },
   cardPressed: { opacity: 0.92 },
@@ -146,7 +113,7 @@ const styles = StyleSheet.create({
   badge: { position: 'absolute', top: 16, left: 16, height: 24, paddingHorizontal: 12, borderRadius: RADII.full, flexDirection: 'row', alignItems: 'center', gap: 4, ...SHADOWS.cardSubtle },
   limitedBadge: { backgroundColor: COLORS.accentOrange },
   availableBadge: { backgroundColor: COLORS.primaryActive },
-  badgeText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
+  badgeText: { color: COLORS.onPrimary, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
   cardBody: { height: 204, padding: 16, justifyContent: 'space-between' },
   suiteCardBody: { height: 202 },
   compactCardBody: { height: undefined, minHeight: 204 },
@@ -166,14 +133,14 @@ const styles = StyleSheet.create({
   availability: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
   roomsLeft: { color: COLORS.errorDark, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
   instantConfirmation: { color: COLORS.primary },
-  selectButton: { height: 36, minWidth: 92, paddingHorizontal: 24, borderWidth: 1, borderColor: COLORS.primaryActive, borderRadius: RADII.full, backgroundColor: '#F1F4F2', alignItems: 'center', justifyContent: 'center' },
+  selectButton: { height: 36, minWidth: 92, paddingHorizontal: 24, borderWidth: 1, borderColor: COLORS.primaryActive, borderRadius: RADII.full, backgroundColor: COLORS.bgSurface, alignItems: 'center', justifyContent: 'center' },
   selectButtonActive: { minWidth: 112, height: 38, paddingHorizontal: 25, backgroundColor: COLORS.primaryActive },
   selectText: { color: COLORS.primary, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
-  selectTextActive: { color: COLORS.bgWhite },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 84, paddingTop: 17, paddingHorizontal: SPACING.xl, backgroundColor: COLORS.bgWhite, borderTopWidth: 1, borderTopColor: COLORS.borderLight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, ...SHADOWS.stickyFooter },
+  selectTextActive: { color: COLORS.onPrimary },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 84, paddingTop: 17, paddingHorizontal: SPACING.xl, backgroundColor: COLORS.bgSurface, borderTopWidth: 1, borderTopColor: COLORS.borderLight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, ...SHADOWS.stickyFooter },
   footerPriceWrap: { flexShrink: 1 },
   footerLabel: { color: COLORS.textMuted, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
   footerPrice: { color: COLORS.primary, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, lineHeight: 24 },
   continueButton: { height: 52, minWidth: 143.5, paddingHorizontal: 24, borderRadius: RADII.full, backgroundColor: COLORS.primaryActive, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  continueText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
+  continueText: { color: COLORS.onPrimary, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
 });

@@ -1,8 +1,11 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, ImageSourcePropType, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Heart, Star, MapPin, ImageOff } from 'lucide-react-native';
+import { StayImage } from '../ui/StayImage';
+import { HeartButton } from '../ui/HeartButton';
+import { formatMoney } from '../../utils/frontendState';
+import React from 'react';
+import { View, Text, StyleSheet, ImageSourcePropType, TouchableOpacity } from 'react-native';
+import { Star, MapPin } from '../../constants/icons';
 import { Stay } from '../../types/stay';
-import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../../constants/tokens';
+import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
 import { Se121SharedAsset } from '../ui/Se121SharedAssets';
 
 interface PropertyCardHorizontalProps {
@@ -20,26 +23,18 @@ export const PropertyCardHorizontal: React.FC<PropertyCardHorizontalProps> = ({
   priceLabel,
   imageCrop,
 }) => {
-  const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const heartMotionWidth = useRef(15);
   const cardImage = imageSource ?? { uri: stay.images[0] };
 
   const handleCardPress = () => {
     onPress?.();
   };
 
-  const toggleWishlist = (e: any) => {
-    e.stopPropagation?.();
-    // Figma action 13:1094 sets motion/heart/13-1094/width to 15. Its filled
-    // vector is hidden and no motion track is present for this Home frame.
-    heartMotionWidth.current = 15;
-  };
-
-  const formattedPrice = priceLabel ?? `$${Math.round(stay.pricePerNight / 10000)}`;
+  const formattedPrice = priceLabel ?? formatMoney(stay.pricePerNight);
 
   return (
     <View style={styles.card}>
     <TouchableOpacity
+      dataSet={{ interactive: 'card' }}
       activeOpacity={0.88}
       onPress={handleCardPress}
       accessibilityRole="button"
@@ -48,34 +43,14 @@ export const PropertyCardHorizontal: React.FC<PropertyCardHorizontalProps> = ({
     >
       {/* Image Banner */}
       <View style={styles.imageContainer}>
-        <Image
-          source={cardImage}
-          style={[styles.image, imageCrop === 'figma-desert' && styles.figmaDesertImage]}
-          resizeMode="cover"
-          accessibilityLabel={stay.title}
-          onLoad={() => setImageState('loaded')}
-          onError={() => setImageState('error')}
-        />
-        {imageState !== 'loaded' ? (
-          <View
-            accessibilityRole="image"
-            accessibilityLabel={imageState === 'error' ? 'Không thể tải ảnh chỗ ở' : 'Đang tải ảnh chỗ ở'}
-            style={styles.imageFallback}
-          >
-            {imageState === 'error' ? (
-              <ImageOff size={24} color={COLORS.textMuted} />
-            ) : (
-              <ActivityIndicator color={COLORS.primary} />
-            )}
-          </View>
-        ) : null}
+        <StayImage source={cardImage} style={[styles.image, imageCrop === 'figma-desert' && styles.figmaDesertImage]} accessibilityLabel={stay.title} />
 
       </View>
 
       {/* Card Info */}
       <View style={styles.content}>
         <View style={styles.contentHeader}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={1}>
             {stay.title}
           </Text>
           <View style={styles.ratingBadge}>
@@ -99,36 +74,26 @@ export const PropertyCardHorizontal: React.FC<PropertyCardHorizontalProps> = ({
         </View>
       </View>
     </TouchableOpacity>
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={toggleWishlist}
-      accessibilityRole="button"
-      accessibilityLabel="Save to wishlist"
-      style={styles.wishlistBtn}
-    >
-      <Se121SharedAsset source={require('../../assets/figma/se121-parity/home/heart-outline.svg')} width={15} height={13.7625} nativeFallback={<Heart size={15} color={COLORS.textMuted} fill="none" />} />
-    </TouchableOpacity>
+    <HeartButton stayId={stay.id} style={styles.wishlistBtn} size={20} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    width: 260,
-    height: 345,
-    padding: 16,
+    width: 188,
+    height: 250,
+    padding: 0,
     borderRadius: RADII.xl,
-    backgroundColor: COLORS.bgWhite,
-    borderWidth: 1,
-    borderColor: '#E2ECE8',
-    ...SHADOWS.cardSoft,
+    backgroundColor: COLORS.bgSurface,
+    overflow: 'hidden',
   },
   cardTap: { flex: 1 },
   imageContainer: {
     width: '100%',
-    height: 171,
-    marginBottom: 16,
-    borderRadius: RADII.xl,
+    height: 132,
+    marginBottom: 0,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: COLORS.bgSecondary,
     position: 'relative',
@@ -155,7 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   contentHeader: {
-    minHeight: 56,
+    minHeight: 22,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
@@ -164,46 +129,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.bgSecondary,
+    backgroundColor: 'transparent',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: RADII.lg,
   },
   ratingText: {
     fontFamily: TYPOGRAPHY.families.regular,
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 12,
     lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.dark,
   },
   wishlistBtn: {
     position: 'absolute',
-    top: 28,
-    right: 28,
+    top: 12,
+    right: 12,
     width: 44,
     height: 44,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.bgWhite,
+    backgroundColor: COLORS.bgSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
     flex: 1,
+    padding: 12,
   },
   title: {
     flex: 1,
     paddingRight: 8,
-    fontFamily: TYPOGRAPHY.families.semibold,
-    fontSize: TYPOGRAPHY.sizes.lg,
-    lineHeight: TYPOGRAPHY.lineHeights.lg,
+    fontFamily: TYPOGRAPHY.families.medium,
+    fontSize: 15,
+    lineHeight: 22,
     color: COLORS.dark,
-    marginBottom: 4,
+    marginBottom: 0,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     height: 20,
-    marginTop: 8,
+    marginTop: 5,
   },
   locationText: {
     fontFamily: TYPOGRAPHY.families.regular,
@@ -215,7 +181,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 7,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -223,13 +189,13 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontFamily: TYPOGRAPHY.families.bold,
-    fontSize: TYPOGRAPHY.sizes.lg,
+    fontSize: 16,
     lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.dark,
   },
   perNightText: {
     fontFamily: TYPOGRAPHY.families.regular,
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 12,
     lineHeight: TYPOGRAPHY.lineHeights.md,
     color: COLORS.textMuted,
   },

@@ -31,7 +31,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "preview": "expo export --platform web --max-workers 1 && node scripts/preview-server.mjs dist 8082",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-default-type=module --test --test-reporter=spec utils/*.test.mjs"
   },
   "private": true
 }

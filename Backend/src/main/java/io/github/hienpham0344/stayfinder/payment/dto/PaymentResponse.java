@@ -7,5 +7,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record PaymentResponse(UUID id, UUID bookingId, UUID paymentMethodId, BigDecimal amount,
-                              String transactionId, PaymentStatus status, Instant createdAt) {
+                              String transactionId, PaymentStatus status, Instant createdAt, String paymentCode,
+                              String receivingAccountNumber) {
 }

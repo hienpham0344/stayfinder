@@ -1,94 +1,48 @@
-import React, { useLayoutEffect, useRef } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, View, Text, StyleSheet, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Platform, View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, TYPOGRAPHY } from '../../constants/tokens';
+import { OVERLAY_MOTION, useOverlayMotion } from './useOverlayMotion';
+import { useUserWindowDimensions } from './useUserWindowDimensions';
 
 interface BottomSheetWrapperProps {
-  visible: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
+  visible: boolean; onClose: () => void; title?: string; children: React.ReactNode;
   variant?: 'searchCriteria' | 'searchFilters' | 'searchDestination' | 'searchDates' | 'searchGuests';
 }
-
-export const BottomSheetWrapper: React.FC<BottomSheetWrapperProps> = ({
-  visible,
-  onClose,
-  title,
-  children,
-  variant,
-}) => {
+export function BottomSheetWrapper({ visible, onClose, title, children, variant }: BottomSheetWrapperProps) {
   const insets = useSafeAreaInsets();
-  // Keep Search's presentation during dismissal, even when its content is cleared.
-  const lastVariant = useRef(variant);
-  if (visible) lastVariant.current = variant;
-  const activeVariant = visible ? variant : lastVariant.current;
-  const isCriteria = activeVariant === 'searchCriteria';
-  const isFilters = activeVariant === 'searchFilters';
-  const isPicker = activeVariant === 'searchDestination' || activeVariant === 'searchDates' || activeVariant === 'searchGuests';
-  const pickerHeight = activeVariant === 'searchDestination' ? 566 : activeVariant === 'searchDates' ? 640 : 470;
-  const pickerReveal = useRef(new Animated.Value(0)).current;
-  const criteriaReveal = useRef(new Animated.Value(1)).current;
-  const filtersReveal = useRef(new Animated.Value(0)).current;
-  useLayoutEffect(() => {
-    if (!visible || !isPicker) return;
-    pickerReveal.setValue(0);
-    const animation = Animated.timing(pickerReveal, { toValue: 1, duration: 200, easing: Easing.bezier(0, 0, 0.58, 1), useNativeDriver: true });
-    animation.start();
-    return () => animation.stop();
-  }, [visible, isPicker, activeVariant, pickerReveal]);
-  useLayoutEffect(() => {
-    if (!visible || !isCriteria) return;
-    criteriaReveal.setValue(0);
-    // 475:1033 starts with the card below the 844px frame (top 844), then
-    // smart-animates to 226:892 with its top at 364 in 250ms.
-    const animation = Animated.timing(criteriaReveal, { toValue: 1, duration: 250, easing: Easing.out(Easing.cubic), useNativeDriver: true });
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
-      if (cancelled) return;
-      if (reduced) criteriaReveal.setValue(1);
-      else timer = setTimeout(() => animation.start(), 30);
-    }).catch(() => { if (!cancelled) criteriaReveal.setValue(1); });
-    return () => { cancelled = true; if (timer) clearTimeout(timer); animation.stop(); };
-  }, [visible, isCriteria, criteriaReveal]);
-  useLayoutEffect(() => {
-    if (!visible || !isFilters) return;
-    filtersReveal.setValue(0);
-    const animation = Animated.timing(filtersReveal, { toValue: 1, duration: 220, useNativeDriver: true });
-    animation.start();
-    return () => animation.stop();
-  }, [visible, isFilters, filtersReveal]);
-  const bottomPadding = isFilters ? insets.bottom : (isCriteria || isPicker) ? Math.max(24, insets.bottom) : Math.max(32, insets.bottom + 16);
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType={isCriteria || isFilters || isPicker ? 'none' : 'slide'}
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={[styles.backdrop, (isCriteria || isFilters || isPicker) && styles.searchBackdrop, (isCriteria || isFilters) && styles.searchOverlayBackdrop, isPicker && styles.pickerBackdrop]} />
-      </TouchableWithoutFeedback>
-
-      <Animated.View style={[styles.sheetContainer, isCriteria && styles.criteriaSheet, isFilters && styles.filtersSheet, isPicker && styles.pickerSheet, activeVariant === 'searchDestination' && styles.destinationSheet, activeVariant === 'searchDates' && styles.datesSheet, activeVariant === 'searchGuests' && styles.guestsSheet, { paddingBottom: bottomPadding }, isPicker && { transform: [{ translateY: pickerReveal.interpolate({ inputRange: [0, 1], outputRange: [pickerHeight, 0] }) }] }, isFilters && { transform: [{ translateY: filtersReveal.interpolate({ inputRange: [0, 1], outputRange: [619, 0] }) }] }, isCriteria && { transform: [{ translateY: criteriaReveal.interpolate({ inputRange: [0, 1], outputRange: [480, 0] }) }] }]}>
-        {!isCriteria && !isPicker && <View style={[styles.dragHandle, isFilters && styles.filtersHandle]} />}
-
-        {title && (
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.dark} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View style={styles.content}>{children}</View>
+  const { height } = useUserWindowDimensions();
+  const [activeVariant, setActiveVariant] = useState(variant);
+  const [overlayVisible, setOverlayVisible] = useState(visible);
+  const lastContent = useRef(children);
+  const lastTitle = useRef(title);
+  if (visible && activeVariant === variant) { lastContent.current = children; lastTitle.current = title; }
+  const targetHeight = activeVariant === 'searchDates' ? 640 : activeVariant === 'searchDestination' ? 566 : activeVariant === 'searchFilters' ? 650 : 480;
+  const sheetHeight = Math.min(targetHeight + insets.bottom, height - insets.top - 24);
+  const motion = useOverlayMotion(overlayVisible, { distance: sheetHeight });
+  useEffect(() => {
+    if (!visible) { setOverlayVisible(false); return; }
+    if (activeVariant === variant || !motion.presented) {
+      setActiveVariant(variant); setOverlayVisible(true); return;
+    }
+    setOverlayVisible(false);
+    const timer = setTimeout(() => {
+      setActiveVariant(variant); setOverlayVisible(true);
+    }, motion.reduced ? 0 : OVERLAY_MOTION.exit);
+    return () => clearTimeout(timer);
+  }, [visible, variant, activeVariant, motion.presented, motion.reduced]);
+  return <Modal visible={motion.presented} transparent animationType="none" onRequestClose={onClose}>
+    <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+      <Animated.View style={[StyleSheet.absoluteFill, motion.backdropStyle]}><Pressable accessibilityRole="button" accessibilityLabel="Close sheet" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} /></Animated.View>
+      <Animated.View key={activeVariant} testID="bottom-sheet-panel" accessibilityViewIsModal style={[styles.sheetContainer, { height: sheetHeight, maxHeight: sheetHeight, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 0 }, motion.panelStyle]}>
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close sheet" style={{ height: 24, alignItems: 'center', justifyContent: 'flex-start' }}><View style={styles.dragHandle} /></Pressable>
+        {lastTitle.current && <View style={styles.header}><Text accessibilityRole="header" style={styles.title}>{lastTitle.current}</Text><Pressable hitSlop={10} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close sheet"><Ionicons name="close" size={24} color={COLORS.dark} /></Pressable></View>}
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(24, insets.bottom), flexGrow: 1 }}>{lastContent.current}</ScrollView>
       </Animated.View>
-    </Modal>
-  );
-};
+    </View>
+  </Modal>;
+}
 
 const styles = StyleSheet.create({
   backdrop: {
@@ -110,7 +64,10 @@ const styles = StyleSheet.create({
     left: 0,
   },
   sheetContainer: {
-    backgroundColor: COLORS.bgWhite,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 520 : undefined,
+    alignSelf: 'center',
+    backgroundColor: COLORS.bgSurface,
     borderTopLeftRadius: RADII.xl,
     borderTopRightRadius: RADII.xl,
     paddingTop: 8,
@@ -124,7 +81,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    ...Platform.select({ web: { boxShadow: '0px -7px 26px rgba(5,41,33,0.08)' }, default: { shadowColor: '#052921', shadowOffset: { width: 0, height: -7 }, shadowOpacity: 0.08, shadowRadius: 13, elevation: 8 } }),
+    ...Platform.select({ web: { boxShadow: '0px -7px 26px rgba(5,41,33,0.08)' }, default: { shadowColor: COLORS.textSecondary, shadowOffset: { width: 0, height: -7 }, shadowOpacity: 0.08, shadowRadius: 13, elevation: 8 } }),
   },
   filtersSheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -143,7 +100,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     ...Platform.select({
       web: { boxShadow: '0px -7px 26px 0px rgba(5,31,26,0.1)' },
-      default: { shadowColor: '#051F1A', shadowOffset: { width: 0, height: -7 }, shadowOpacity: 0.1, shadowRadius: 13, elevation: 8 },
+      default: { shadowColor: COLORS.textSecondary, shadowOffset: { width: 0, height: -7 }, shadowOpacity: 0.1, shadowRadius: 13, elevation: 8 },
     }),
   },
   destinationSheet: { height: 566 },

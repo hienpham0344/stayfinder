@@ -1,54 +1,48 @@
-// Design tokens extracted 100% directly from Figma Node 34:2 (SE121)
-
+// StayFinder: neutral dark surfaces, warm ivory accents and explicit contrast roles.
 export const COLORS = {
-  // Primary Teal Palette
-  primary: '#005F55',
-  primaryHover: '#007A6D',
-  primaryActive: '#0B7A6D',
-  primaryLight: '#98F3E3',
-  primarySoft: '#AAFFEF',
-  primaryContainer: '#00201C',
-  primaryMuted: '#7CD6C7',
-
-  // Neutral Palette
-  dark: '#181D1B',
-  textPrimary: '#181D1B',
-  textSecondary: '#3E4946',
-  textMuted: '#6E7976',
-  textPlaceholder: '#6B7280',
-
-  // Background Palette
-  bgMain: '#F6FAF8',
-  bgSecondary: '#EBEFEC',
-  bgCard: '#F1F4F2',
-  bgSurface: '#FAFAFA',
+  primary: '#EEE4D4',
+  primaryHover: '#E4D5BE',
+  primaryActive: '#EEE4D4',
+  primaryLight: '#EEE4D4',
+  primarySoft: '#302B26',
+  primaryContainer: '#2F2922',
+  primaryMuted: '#CBB89B',
+  onPrimary: '#24211E',
+  photoText: '#FFFFFF',
+  dark: '#F3EEE7',
+  textPrimary: '#F3EEE7',
+  textSecondary: '#C7C0B7',
+  textMuted: '#A7A19A',
+  textPlaceholder: '#938D86',
+  bgMain: '#1A1A1A',
+  bgSecondary: '#2B2927',
+  bgCard: '#252423',
+  bgSurface: '#252423',
   bgWhite: '#FFFFFF',
-
-  // Borders
-  borderLight: '#DFE3E1',
-  borderDark: '#BDC9C5',
-  borderDefault: '#E5E7EB',
-  borderMuted: '#E5E9E7',
-
-  // Feedback Colors
-  error: '#BA1A1A',
-  errorDark: '#AC3323',
-  errorBg: '#FFDAD6',
-  warning: '#F59E0B',
-  accentRed: '#EF6466',
-  accentOrange: '#FD6E58',
-  inkNavy: '#1F2936',
-  inkSoft: '#45544F',
-  inkSubtle: '#61736E',
-  borderTealSoft: '#DFEBE5',
-  surfaceMint: '#F3FAF8',
-  surfacePale: '#F4FAF8',
-  surfaceSage: '#F5FAF7',
-  borderSage: '#BDC9C4',
-  actionTeal: '#007D70',
-  validation: '#CC2933',
-  starSurface: '#FFFBED',
-  starGold: '#EDC954',
+  canvas: '#242220',
+  borderLight: '#393633',
+  borderDark: '#635B53',
+  borderDefault: '#393633',
+  borderControl: '#81796F',
+  borderMuted: '#332F2C',
+  error: '#FFADB2',
+  errorDark: '#FFB3AB',
+  errorBg: '#46282D',
+  warning: '#E9C985',
+  accentRed: '#F29191',
+  accentOrange: '#E7B989',
+  inkNavy: '#F3EEE7',
+  inkSoft: '#C7C0B7',
+  inkSubtle: '#A7A19A',
+  borderTealSoft: '#393633',
+  surfaceMint: '#302B26',
+  surfacePale: '#252423',
+  surfaceSage: '#2B2927',
+  borderSage: '#635B53',
+  actionTeal: '#EEE4D4',
+  validation: '#FFADB2',
+  starSurface: '#3B3328',
+  starGold: '#E9C985',
   overlayBlack: '#000000',
 } as const;
 
@@ -91,17 +85,19 @@ export const TYPOGRAPHY = {
   },
 } as const;
 
-export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, section: 32 } as const;
+export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, section: 30 } as const;
 export const SIZES = { button: 52, appBar: 56, bottomNav: 72, stickyCta: 84, icon: 24, iconButton: 48 } as const;
 
+export const MOTION = { screen: 560, reveal: 680, overlayEnter: 480, overlayExit: 320, press: 240 } as const;
+
 export const RADII = {
-  xs: 2,
-  sm: 5,
-  md: 6,
+  xs: 4,
+  sm: 8,
+  md: 12,
   lg: 16,
-  promo: 24,
-  xl: 32,
-  xxl: 48,
+  promo: 18,
+  xl: 18,
+  xxl: 24,
   full: 9999,
 } as const;
 

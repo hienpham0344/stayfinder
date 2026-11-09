@@ -11,5 +11,9 @@ import org.mapstruct.Mapper;
 public interface BookingMapper {
     @Mapping(target = "details", ignore = true)
     BookingResponse toResponse(Booking entity);
+    @Mapping(target = "accommodationId", ignore = true)
+    @Mapping(target = "accommodationName", ignore = true)
+    @Mapping(target = "roomId", ignore = true)
+    @Mapping(target = "roomName", ignore = true)
     BookingDetailResponse toDetailResponse(BookingDetail entity);
 }

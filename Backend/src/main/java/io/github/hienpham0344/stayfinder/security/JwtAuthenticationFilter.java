@@ -1,6 +1,7 @@
 package io.github.hienpham0344.stayfinder.security;
 
-import io.github.hienpham0344.stayfinder.common.enums.UserRole;
+import io.github.hienpham0344.stayfinder.user.entity.User;
+import io.github.hienpham0344.stayfinder.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +19,13 @@ import java.util.UUID;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final UserRepository userRepository;
     private final AuthenticationEntryPoint authenticationEntryPoint;
 
-    public JwtAuthenticationFilter(JwtService jwtService, AuthenticationEntryPoint authenticationEntryPoint) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository,
+                                   AuthenticationEntryPoint authenticationEntryPoint) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
         this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
@@ -34,19 +38,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        UUID userId;
         try {
             Jwt jwt = jwtService.parseToken(header.substring(7));
-            CurrentUser currentUser = new CurrentUser(
-                    UUID.fromString(jwt.getSubject()),
-                    jwt.getClaimAsString("username"),
-                    UserRole.fromValue(jwt.getClaimAsString("role")));
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    currentUser, null, java.util.List.of(() -> "ROLE_" + currentUser.role().name()));
-            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
-            filterChain.doFilter(request, response);
+            userId = UUID.fromString(jwt.getSubject());
         } catch (JwtException | IllegalArgumentException exception) {
             authenticationEntryPoint.commence(request, response,
                     new BadCredentialsException("Invalid bearer token"));
+            return;
         }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.getRole() == null) {
+            authenticationEntryPoint.commence(request, response,
+                    new BadCredentialsException("Invalid bearer token"));
+            return;
+        }
+        CurrentUser currentUser = new CurrentUser(user.getId(), user.getEmail(), user.getRole());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                currentUser, null, java.util.List.of(() -> "ROLE_" + currentUser.role().name()));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
+        filterChain.doFilter(request, response);
     }
 }

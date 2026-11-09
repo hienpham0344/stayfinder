@@ -1,7 +1,13 @@
+import { MotionScreen } from '../ui/MotionScreen';
+import { StayImage } from '../ui/StayImage';
+import { useReservations } from '../../state/AppState';
+import { findStay, stayImage } from '../../constants/stayCatalog';
+import { formatMoney, parseTravelDate } from '../../utils/frontendState';
+import { MissingStay } from '../ui/MissingStay';
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CalendarDays, Check, Home, MapPin } from 'lucide-react-native';
+import { CalendarDays, Check, Home, MapPin } from '../../constants/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, SHADOWS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 import { Se121SharedAsset } from '../ui/Se121SharedAssets';
@@ -17,7 +23,11 @@ const REVEAL_PARTICLES = [
 ];
 
 export function BookingConfirmationExperience() {
-  const { reveal } = useLocalSearchParams<{ reveal?: 'start' | 'end' }>();
+  const { reveal, bookingId } = useLocalSearchParams<{ reveal?: 'start' | 'end'; bookingId?: string }>();
+  const { bookings } = useReservations();
+  const booking = bookings.find((item) => item.id === bookingId);
+  const stay = findStay(booking?.stayId);
+  const tier = stay?.roomTiers?.find((item) => item.id === booking?.tierId);
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<'start' | 'end' | 'confirmation'>('start');
   const scale = useRef(new Animated.Value(52 / 144)).current;
@@ -57,10 +67,8 @@ export function BookingConfirmationExperience() {
     if (phase !== 'confirmation') return;
     let cancelled = false;
     let animation: Animated.CompositeAnimation | undefined;
-    let repeatTimer: ReturnType<typeof setTimeout> | undefined;
     const applyMotionPreference = (reduceMotion: boolean) => {
       if (cancelled) return;
-      if (repeatTimer) clearTimeout(repeatTimer);
       animation?.stop();
       confirmedIconOpacity.setValue(reduceMotion ? 1 : 0);
       confirmedIconScale.setValue(reduceMotion ? 1 : 0.92);
@@ -78,31 +86,34 @@ export function BookingConfirmationExperience() {
           Animated.sequence([Animated.delay(80), Animated.timing(confirmedHeading, { toValue: 1, duration: 300, easing: easeOut, useNativeDriver: true })]),
         ]);
         animation.start(({ finished }) => {
-          if (finished && !cancelled) repeatTimer = setTimeout(runCycle, 1620);
+          if (finished && !cancelled) confirmedHeading.setValue(1);
         });
       };
       runCycle();
     };
     const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', applyMotionPreference);
     AccessibilityInfo.isReduceMotionEnabled().then(applyMotionPreference).catch(() => applyMotionPreference(true));
-    return () => { cancelled = true; subscription.remove(); if (repeatTimer) clearTimeout(repeatTimer); animation?.stop(); };
+    return () => { cancelled = true; subscription.remove(); animation?.stop(); };
   }, [phase, confirmedHeading, confirmedIconOpacity, confirmedIconScale]);
 
-  if (phase !== 'confirmation') return <Pressable style={styles.reveal} onPress={phase === 'end' ? () => setPhase('confirmation') : undefined} accessibilityRole={phase === 'end' ? 'button' : undefined} accessibilityLabel={phase === 'end' ? 'Continue to booking confirmation' : undefined}><View style={styles.revealContent}><View style={styles.revealVisual}><Animated.View style={[styles.revealCircle, { transform: [{ scale }] }]}><Animated.View style={[styles.revealRing, { transform: [{ rotate: rotation.interpolate({ inputRange: [0, 1], outputRange: ['0rad', '6.283rad'] }) }] }]}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/reveal-ring.svg')} width={32} nativeFallback={<View />} /></Animated.View><Animated.View style={{ opacity: endIconOpacity }}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/reveal-check.svg')} width={64} nativeFallback={<View style={styles.revealCheck}><Check size={55} strokeWidth={5} color={COLORS.bgWhite} /></View>} /></Animated.View></Animated.View><Animated.View pointerEvents="none" style={[styles.startRevealIcon, { opacity: startIconOpacity }]}><Image source={require("../../assets/figma/se121-parity/reveal/start-check-426-858.png")} style={styles.startCheckImage} /></Animated.View><Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>{REVEAL_PARTICLES.map((particle, index) => <View key={index} style={{ position: 'absolute', left: particle.left, top: particle.top }}><Se121SharedAsset source={particle.asset} width={particle.size} nativeFallback={<View style={{ width: particle.size, height: particle.size, borderRadius: particle.size / 2, backgroundColor: COLORS.primary }} />} /></View>)}</Animated.View></View><Animated.Text style={[styles.revealTitle, { opacity }]}>Booking confirmed!</Animated.Text><Animated.Text style={[styles.revealText, { opacity }]}>Your stay is secured. Opening your confirmation…</Animated.Text><Animated.Text style={[styles.revealHint, { opacity }]}>Booking secured ✓</Animated.Text></View></Pressable>;
+  if (!booking && !reveal) return <MissingStay message="No booking has been confirmed yet." />;
+  if (phase !== 'confirmation') return <Pressable style={styles.reveal} onPress={phase === 'end' ? () => setPhase('confirmation') : undefined} accessibilityRole={phase === 'end' ? 'button' : undefined} accessibilityLabel={phase === 'end' ? 'Continue to booking confirmation' : undefined}><View style={styles.revealContent}><View style={styles.revealVisual}><Animated.View style={[styles.revealCircle, { transform: [{ scale }] }]}><Animated.View style={[styles.revealRing, { transform: [{ rotate: rotation.interpolate({ inputRange: [0, 1], outputRange: ['0rad', '6.283rad'] }) }] }]}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/reveal-ring.svg')} width={32} nativeFallback={<View />} /></Animated.View><Animated.View style={{ opacity: endIconOpacity }}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/reveal-check.svg')} width={64} nativeFallback={<View style={styles.revealCheck}><Check size={55} strokeWidth={5} color={COLORS.onPrimary} /></View>} /></Animated.View></Animated.View><Animated.View pointerEvents="none" style={[styles.startRevealIcon, { opacity: startIconOpacity }]}><Image source={require("../../assets/figma/se121-parity/reveal/start-check-426-858.png")} style={styles.startCheckImage} /></Animated.View><Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>{REVEAL_PARTICLES.map((particle, index) => <View key={index} style={{ position: 'absolute', left: particle.left, top: particle.top }}><Se121SharedAsset source={particle.asset} width={particle.size} nativeFallback={<View style={{ width: particle.size, height: particle.size, borderRadius: particle.size / 2, backgroundColor: COLORS.primary }} />} /></View>)}</Animated.View></View><Animated.Text style={[styles.revealTitle, { opacity }]}>Booking confirmed!</Animated.Text><Animated.Text style={[styles.revealText, { opacity }]}>Your stay is secured. Opening your confirmation…</Animated.Text><Animated.Text style={[styles.revealHint, { opacity }]}>Booking secured ✓</Animated.Text></View></Pressable>;
 
-  return <View style={[styles.screen, { paddingTop: insets.top }]}>
+  if (!booking || !stay || !tier) return <MissingStay />;
+  const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return <MotionScreen style={[styles.screen, { paddingTop: insets.top }]}>
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-      <Animated.View style={[styles.successCircle, { opacity: confirmedIconOpacity, transform: [{ scale: confirmedIconScale }] }]} ><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-check.svg')} width={40} nativeFallback={<View style={styles.successCheck}><Check size={32} strokeWidth={4} color={COLORS.bgWhite} /></View>} /></Animated.View>
+      <Animated.View style={[styles.successCircle, { opacity: confirmedIconOpacity, transform: [{ scale: confirmedIconScale }] }]} ><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-check.svg')} width={40} nativeFallback={<View style={styles.successCheck}><Check size={32} strokeWidth={4} color={COLORS.onPrimary} /></View>} /></Animated.View>
       <Animated.View style={{ alignSelf: 'stretch', alignItems: 'center', opacity: confirmedHeading, transform: [{ translateY: confirmedHeading.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}><Text style={styles.title}>Booking Confirmed!</Text>
-      <Text style={styles.subtitle}>You're all set. A confirmation email has been sent to your inbox. Pack your bags!</Text></Animated.View>
+      <Text style={styles.subtitle}>Your demo booking is saved for this session. No real payment or email was sent.</Text></Animated.View>
       <View style={styles.card}>
-        <View style={styles.heroImage}><Image source={require('../../assets/figma/se121-parity/bookings/confirmation-photo-250-980.png')} style={styles.heroPhoto} resizeMode="cover" /><View style={styles.heroShade} /><View style={styles.heroCopy}><Text style={styles.roomBadge}>Deluxe Ocean View</Text><Text style={styles.heroTitle} numberOfLines={1}>Villa Azure Retreat</Text><View style={styles.heroLocation}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-location.svg')} width={10.6667} height={13.3333} nativeFallback={<MapPin size={15} color={COLORS.bgWhite} />} /><Text style={styles.heroLocationText}>Bali, Indonesia</Text></View></View></View>
-        <View style={styles.cardDetails}><View style={styles.datesRow}><View style={styles.dateCell}><Text style={styles.detailLabel}>Check-in</Text><Text style={[styles.dateText, styles.dateCellDateText]}>Oct 12, 2026</Text><Text style={styles.detailMeta}>3:00 PM</Text></View><View style={styles.dateCell}><Text style={styles.detailLabel}>Check-out</Text><Text style={[styles.dateText, styles.dateCellDateText]}>Oct 15, 2026</Text><Text style={styles.detailMeta}>11:00 AM</Text></View></View><View style={styles.separator} /><View style={styles.infoRow}><View><Text style={styles.detailLabel}>Confirmation Code</Text><Text style={styles.demoCode}>SF-9A4B2</Text></View><View style={styles.guests}><Text style={styles.detailLabel}>Guests</Text><Text style={styles.dateText}>2 adults</Text></View></View><View style={styles.separator} /><View style={styles.totalRow}><Text style={styles.totalTitle}>Total Paid</Text><Text style={styles.total}>$1,032.00</Text></View></View>
+        <View style={styles.heroImage}><StayImage source={stayImage(stay, booking.tierId)} style={styles.heroPhoto} resizeMode="cover" /><View style={styles.heroShade} /><View style={styles.heroCopy}><Text style={styles.roomBadge}>{tier.name}</Text><Text style={styles.heroTitle} numberOfLines={2}>{stay.title}</Text><View style={styles.heroLocation}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-location.svg')} width={10.6667} height={13.3333} nativeFallback={<MapPin size={15} color={COLORS.photoText} />} /><Text style={styles.heroLocationText}>{stay.location.city}, {stay.location.province}</Text></View></View></View>
+        <View style={styles.cardDetails}><View style={styles.datesRow}><View style={styles.dateCell}><Text style={styles.detailLabel}>Check-in</Text><Text style={[styles.dateText, styles.dateCellDateText]}>{dateFormat.format(parseTravelDate(booking.checkIn)!)}</Text><Text style={styles.detailMeta}>3:00 PM</Text></View><View style={styles.dateCell}><Text style={styles.detailLabel}>Check-out</Text><Text style={[styles.dateText, styles.dateCellDateText]}>{dateFormat.format(parseTravelDate(booking.checkOut)!)}</Text><Text style={styles.detailMeta}>11:00 AM</Text></View></View><View style={styles.separator} /><View style={styles.infoRow}><View><Text style={styles.detailLabel}>Confirmation Code</Text><Text style={styles.demoCode}>{booking.id}</Text></View><View style={styles.guests}><Text style={styles.detailLabel}>Guests</Text><Text style={styles.dateText}>{booking.adults + booking.children} guests · {booking.rooms} room{booking.rooms > 1 ? 's' : ''}</Text></View></View><View style={styles.separator} /><View style={styles.totalRow}><Text style={styles.totalTitle}>{booking.paymentMethod === 'PayAtProperty' ? 'Due at Property' : 'Demo Total'}</Text><Text style={styles.total}>{formatMoney(booking.quote.total, true)}</Text></View></View>
       </View>
-      <Pressable style={styles.primaryButton} onPress={() => router.replace('/(tabs)/bookings')}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-bookings.svg')} width={18} height={20} nativeFallback={<CalendarDays size={20} color={COLORS.bgWhite} />} /><Text style={styles.primaryText}>View My Bookings</Text></Pressable>
-      <Pressable style={styles.secondaryButton} onPress={() => router.replace('/')}><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-home.svg')} width={16} height={18} nativeFallback={<Home size={19} color={COLORS.primary} />} /><Text style={styles.secondaryText}>Back to Home</Text></Pressable>
+      <Pressable style={styles.primaryButton} onPress={() => router.dismissTo('/(tabs)/bookings')} accessibilityRole="button"><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-bookings.svg')} width={18} height={20} nativeFallback={<CalendarDays size={20} color={COLORS.onPrimary} />} /><Text style={styles.primaryText}>View My Bookings</Text></Pressable>
+      <Pressable style={styles.secondaryButton} onPress={() => router.dismissTo('/')} accessibilityRole="button"><Se121SharedAsset source={require('../../assets/figma/exhaust-account-completion/confirmation-home.svg')} width={16} height={18} nativeFallback={<Home size={19} color={COLORS.primary} />} /><Text style={styles.secondaryText}>Back to Home</Text></Pressable>
     </ScrollView>
-  </View>;
+  </MotionScreen>;
 }
 
 const styles = StyleSheet.create({
@@ -117,19 +128,19 @@ const styles = StyleSheet.create({
   startCheckImage: { width: 24, height: 24 },
   revealCheck: { width: 64, height: 64, borderRadius: RADII.full, backgroundColor: COLORS.actionTeal, alignItems: 'center', justifyContent: 'center' },
   revealTitle: { width: '100%', maxWidth: 294, color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 22, lineHeight: 30, textAlign: 'center' },
-  revealText: { width: '100%', maxWidth: 280, minHeight: 44, color: '#4A5754', fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22, textAlign: 'center' },
-  revealHint: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, color: '#006159', backgroundColor: '#F2FAF7', fontFamily: TYPOGRAPHY.families.regular, fontSize: 12, lineHeight: 18, textAlign: 'center' },
-  successCircle: { width: 96, height: 96, borderRadius: RADII.full, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', ...Platform.select({ web: { boxShadow: '0px 10px 15px -3px rgba(152,243,227,0.2), 0px 4px 6px -4px rgba(152,243,227,0.2)' }, default: { shadowColor: '#98F3E3', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 7.5, elevation: 3 } }) },
+  revealText: { width: '100%', maxWidth: 280, minHeight: 44, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22, textAlign: 'center' },
+  revealHint: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, color: COLORS.primary, backgroundColor: COLORS.bgSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  successCircle: { width: 96, height: 96, borderRadius: RADII.full, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', ...Platform.select({ web: { boxShadow: '0px 10px 15px -3px rgba(152,243,227,0.2), 0px 4px 6px -4px rgba(152,243,227,0.2)' }, default: { shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 7.5, elevation: 3 } }) },
   successCheck: { width: 40, height: 40, borderRadius: RADII.full, backgroundColor: COLORS.actionTeal, alignItems: 'center', justifyContent: 'center' },
   title: { marginTop: 24, color: COLORS.dark, fontFamily: TYPOGRAPHY.families.bold, fontSize: 32, lineHeight: 40, letterSpacing: -0.64, textAlign: 'center' },
   subtitle: { maxWidth: 326, marginTop: 8, marginBottom: 40, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.regular, fontSize: 16, lineHeight: 24, textAlign: 'center' },
-  card: { alignSelf: 'stretch', borderWidth: 1, borderColor: COLORS.bgCard, backgroundColor: COLORS.bgWhite, overflow: 'hidden', ...SHADOWS.cardSoft },
+  card: { borderRadius: 24, alignSelf: 'stretch', borderWidth: 1, borderColor: COLORS.bgCard, backgroundColor: COLORS.bgSurface, overflow: 'hidden', ...SHADOWS.cardSoft },
   heroImage: { width: '100%', height: 192, justifyContent: 'flex-end', overflow: 'hidden' },
   heroPhoto: { position: 'absolute', top: 0, left: 0, width: '100%', height: 192 },
   heroShade: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, ...Platform.select({ web: { backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)' } as ViewStyle, default: { backgroundColor: COLORS.overlayBlack, opacity: 0.35 } }) },
   heroCopy: { padding: 16 },
-  roomBadge: { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 5, borderRadius: RADII.full, borderWidth: 1, borderColor: 'rgba(152,243,227,0.3)', overflow: 'hidden', color: COLORS.primaryLight, backgroundColor: 'rgba(0,0,0,0.3)', fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(2px)' } as ViewStyle : {}) },
-  heroTitle: { marginTop: 7, color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
+  roomBadge: { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 5, borderRadius: RADII.full, borderWidth: 1, borderColor: COLORS.borderDark, overflow: 'hidden', color: COLORS.primaryLight, backgroundColor: 'rgba(0,0,0,0.3)', fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(2px)' } as ViewStyle : {}) },
+  heroTitle: { marginTop: 7, color: COLORS.photoText, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
   heroLocation: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   heroLocationText: { color: 'rgba(255,255,255,0.9)', fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 20 },
   cardDetails: { padding: 16 },
@@ -147,7 +158,7 @@ const styles = StyleSheet.create({
   totalTitle: { color: COLORS.dark, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
   total: { color: COLORS.primaryActive, fontFamily: TYPOGRAPHY.families.bold, fontSize: 20, lineHeight: 24 },
   primaryButton: { alignSelf: 'stretch', minHeight: SIZES.button, marginTop: 40, borderRadius: RADII.full, backgroundColor: COLORS.primaryActive, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  primaryText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
+  primaryText: { color: COLORS.onPrimary, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
   secondaryButton: { alignSelf: 'stretch', minHeight: SIZES.button, marginTop: 16, borderRadius: RADII.full, borderWidth: 2, borderColor: COLORS.primaryActive, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   secondaryText: { color: COLORS.primaryActive, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
 });

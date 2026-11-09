@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { Star, MapPin, Heart } from 'lucide-react-native';
+import { Star, MapPin, Heart } from '../../constants/icons';
 import { Stay } from '../../types/stay';
 import { router } from 'expo-router';
 
@@ -17,7 +17,7 @@ export const RecommendedSection: React.FC<RecommendedSectionProps> = ({ stays })
     <View className="my-3">
       <View className="flex-row items-center justify-between px-4 mb-3">
         <Text className="text-base font-extrabold text-gray-900">Gợi ý dành cho bạn</Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/search')} accessibilityRole="button">
           <Text className="text-xs font-bold text-primary">Xem tất cả</Text>
         </TouchableOpacity>
       </View>
@@ -32,7 +32,7 @@ export const RecommendedSection: React.FC<RecommendedSectionProps> = ({ stays })
             key={stay.id}
             onPress={() => router.push(`/room/${stay.id}` as any)}
             activeOpacity={0.9}
-            className="w-64 mr-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+            className="w-64 mr-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" accessibilityRole="button"
           >
             <View className="relative h-36 w-full bg-gray-100">
               <Image source={{ uri: stay.images[0] }} className="w-full h-full" resizeMode="cover" />

@@ -24,9 +24,23 @@ public class BookingPaymentOperationsImpl implements BookingPaymentOperations {
     }
 
     @Override
+    @Transactional
+    public Optional<BookingPaymentView> findForUpdate(UUID bookingId) {
+        return bookingRepository.findForPaymentUpdate(bookingId).map(item -> new BookingPaymentView(
+                item.getId(), item.getUserId(), item.getTotalPrice(), item.getStatus()));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<BookingPaymentView> findOwned(UUID bookingId, UUID userId) {
         return bookingRepository.findByIdAndUserId(bookingId, userId).map(item -> new BookingPaymentView(
+                item.getId(), item.getUserId(), item.getTotalPrice(), item.getStatus()));
+    }
+
+    @Override
+    @Transactional
+    public Optional<BookingPaymentView> findOwnedForUpdate(UUID bookingId, UUID userId) {
+        return bookingRepository.findOwnedForPaymentUpdate(bookingId, userId).map(item -> new BookingPaymentView(
                 item.getId(), item.getUserId(), item.getTotalPrice(), item.getStatus()));
     }
 

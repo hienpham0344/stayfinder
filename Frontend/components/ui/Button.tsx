@@ -1,6 +1,10 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { COLORS, RADII, SIZES, TYPOGRAPHY } from '../../constants/tokens';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReducedMotion } from './useReducedMotion';
+import { Animated, Platform, Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { COLORS, MOTION, RADII, SIZES, TYPOGRAPHY } from '../../constants/tokens';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const ButtonSurface = Platform.OS === 'web' ? Pressable : AnimatedPressable;
 
 interface ButtonProps {
   title: string;
@@ -27,6 +31,11 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const reduced = useReducedMotion();
+  const [pressed, setPressed] = useState(false);
+  useEffect(() => () => scale.stopAnimation(), [scale]);
+  const pressScale = (value: number) => { if (Platform.OS === 'web') return; scale.stopAnimation(); if (reduced) scale.setValue(1); else Animated.spring(scale, { toValue: value, speed: 22, bounciness: 2, useNativeDriver: true }).start(); };
   const getVariantStyle = () => {
     switch (variant) {
       case 'secondary':
@@ -68,14 +77,17 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <Pressable
+    <ButtonSurface
+      onPressIn={() => { setPressed(true); pressScale(0.985); }}
+      onPressOut={() => { setPressed(false); pressScale(1); }}
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: disabled || loading }} aria-disabled={disabled || loading} aria-busy={loading}
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
+      style={[
         styles.base,
+        Platform.OS === 'web' ? { transform: [{ scale: reduced ? 1 : pressed ? 0.985 : 1 }], transitionProperty: 'transform, opacity', transitionDuration: reduced ? '0ms' : pressed ? '140ms' : `${MOTION.press}ms`, transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' } as ViewStyle : { transform: [{ scale }] },
         getVariantStyle(),
         getSizeStyle(),
         fullWidth && styles.fullWidth,
@@ -85,14 +97,14 @@ export const Button: React.FC<ButtonProps> = ({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? COLORS.bgWhite : COLORS.primary} />
+        <ActivityIndicator color={variant === 'primary' ? COLORS.onPrimary : COLORS.primary} />
       ) : (
         <>
           <Text style={[styles.textBase, getTextStyle(), textStyle]}>{title}</Text>
           {icon}
         </>
       )}
-    </Pressable>
+    </ButtonSurface>
   );
 };
 
@@ -101,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADII.xl, // 32px matching Figma buttons
+    borderRadius: RADII.lg,
     gap: 8,
   },
   fullWidth: {
@@ -110,7 +122,7 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
-  primaryPressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
+  primaryPressed: { opacity: 0.94 },
   pressed: { opacity: 0.8 },
 
   // Sizes
@@ -140,7 +152,7 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: COLORS.borderDark,
+    borderColor: COLORS.borderControl,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -153,7 +165,7 @@ const styles = StyleSheet.create({
     lineHeight: TYPOGRAPHY.lineHeights.base,
   },
   textPrimary: {
-    color: COLORS.bgWhite,
+    color: COLORS.onPrimary,
   },
   textSecondary: {
     color: COLORS.dark,

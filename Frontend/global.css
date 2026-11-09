@@ -1,3 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html, body, #root {
+  background-color: #242220;
+  color-scheme: dark;
+}
+
+@keyframes stay-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes stay-scale {
+  from { opacity: 0; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes stay-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes stay-screen {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes stay-drift {
+  from { transform: scale(1.025) translate3d(0, 0, 0); }
+  to { transform: scale(1.09) translate3d(-1%, -.8%, 0); }
+}
+@keyframes stay-skeleton { 0%, 100% { opacity: .45; } 50% { opacity: .85; } }
+
+[data-reveal="pending"] { opacity: 0; }
+[data-reveal="visible"] {
+  animation-name: stay-rise;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  will-change: transform, opacity;
+}
+[data-reveal="visible"][data-motion="fade"] { animation-name: stay-fade; }
+[data-reveal="visible"][data-motion="scale"] { animation-name: stay-scale; }
+[data-screen-motion="enter"] { animation: stay-screen 560ms cubic-bezier(.22, 1, .36, 1) both; }
+[data-ambient="hero"] { animation: stay-drift 12s ease-in-out infinite alternate; animation-play-state: paused; }
+[data-ambient-state="playing"] { animation-play-state: running; }
+[data-skeleton="true"] { animation: stay-skeleton 1s ease-in-out infinite; }
+[data-interactive] { transition: transform 240ms cubic-bezier(.22, 1, .36, 1), opacity 200ms ease; }
+[data-interactive]:active { transform: scale(.975); }
+[data-hero-arrow] { transition: transform 240ms cubic-bezier(.22, 1, .36, 1); }
+:where([role="button"], [role="tab"], [role="radio"], [role="checkbox"], [role="switch"], input, textarea):focus-visible {
+  outline: 2px solid #EEE4D4 !important;
+  outline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-interactive="card"]:hover { transform: translate3d(0, -4px, 0); }
+  [data-interactive="hero"]:hover [data-hero-arrow] { transform: translate3d(4px, -2px, 0) rotate(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal], [data-screen-motion], [data-ambient], [data-skeleton] {
+    animation: none !important; opacity: 1 !important; transform: none !important;
+  }
+  [data-interactive], [data-hero-arrow] { transition: none !important; }
+}

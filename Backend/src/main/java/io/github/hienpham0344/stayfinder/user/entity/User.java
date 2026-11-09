@@ -24,6 +24,7 @@ public class User {
     private UUID id;
     @Column(name = "full_name") private String fullName;
     private String email;
+    @Column(name = "password_hash") private String passwordHash;
     private String phone;
     @Convert(converter = UserRoleConverter.class) private UserRole role;
     @Column(name = "avatar_url") private String avatarUrl;

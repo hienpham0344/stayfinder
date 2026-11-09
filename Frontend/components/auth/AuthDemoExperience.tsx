@@ -1,3 +1,4 @@
+import { MotionScreen } from '../ui/MotionScreen';
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -29,10 +30,7 @@ export function AuthDemoExperience() {
       animation?.stop();
       signedOutReveal.setValue(reduceMotion ? 1 : 0);
       if (reduceMotion) return;
-      animation = Animated.loop(Animated.sequence([
-        Animated.timing(signedOutReveal, { toValue: 1, duration: 200, easing: Easing.bezier(0, 0, 0.58, 1), useNativeDriver: true }),
-        Animated.delay(1800),
-      ]));
+      animation = Animated.timing(signedOutReveal, { toValue: 1, duration: 200, easing: Easing.bezier(0, 0, 0.58, 1), useNativeDriver: true });
       animation.start();
     };
     const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', applyMotionPreference);
@@ -47,9 +45,9 @@ export function AuthDemoExperience() {
     setError(''); setPassword(''); setNotice(mode === 'login' ? 'You are signed in for this demo session.' : 'Your demo account is ready.');
   };
 
-  if (mode === 'signed-out') return <View style={styles.signedOutScreen}><View style={styles.centerWrap}><Animated.View style={[styles.signedOutCard, { opacity: signedOutReveal, transform: [{ scale: signedOutReveal.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }] }]} ><Text style={styles.signedOutTitle}>You’re signed out</Text><Text style={styles.signedOutText}>Sign in to manage your bookings, rewards and saved stays.</Text><Pressable style={styles.primaryButton} onPress={() => goMode('login')} accessibilityRole="button" accessibilityLabel="Sign in"><Text style={styles.primaryText}>Sign in</Text></Pressable><Pressable style={styles.ghostButton} onPress={() => router.replace('/(tabs)/profile')} accessibilityRole="button" accessibilityLabel="Continue as guest"><Text style={styles.ghostText}>Continue as guest</Text></Pressable></Animated.View></View></View>;
+  if (mode === 'signed-out') return <View style={styles.signedOutScreen}><View style={styles.centerWrap}><Animated.View style={[styles.signedOutCard, { opacity: signedOutReveal, transform: [{ scale: signedOutReveal.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }] }]} ><Text style={styles.signedOutTitle}>You’re signed out</Text><Text style={styles.signedOutText}>Sign in to manage your bookings, rewards and saved stays.</Text><Pressable style={styles.primaryButton} onPress={() => goMode('login')} accessibilityRole="button" accessibilityLabel="Sign in"><Text style={styles.primaryText}>Sign in</Text></Pressable><Pressable style={styles.ghostButton} onPress={() => router.dismissTo('/(tabs)/profile')} accessibilityRole="button" accessibilityLabel="Continue as guest"><Text style={styles.ghostText}>Continue as guest</Text></Pressable></Animated.View></View></View>;
 
-  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 24, 48), paddingBottom: insets.bottom + 40 }]} keyboardShouldPersistTaps="handled">
+  return <MotionScreen style={{ flex: 1 }}><KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 24, 48), paddingBottom: insets.bottom + 40 }]} keyboardShouldPersistTaps="handled">
     <View style={styles.brandSlot}><Text style={styles.brand}>StayFinder</Text></View>
     <View style={styles.titleSlot}><Text style={styles.title}>{mode === 'login' ? 'Welcome back' : 'Create an account'}</Text></View>
     <View style={styles.subtitleSlot}><Text style={styles.subtitle}>{mode === 'login' ? 'Sign in to continue planning your next stay.' : 'Save stays and manage every trip in one place.'}</Text></View>
@@ -59,20 +57,20 @@ export function AuthDemoExperience() {
     <View style={styles.feedbackSlot}>{!!error && <Text style={styles.error}>{error}</Text>}{!!notice && <Text style={styles.notice}>{notice}</Text>}</View>
     <Pressable style={[styles.primaryButton, styles.formSubmitButton]} onPress={submit} accessibilityRole="button" accessibilityLabel={mode === 'login' ? 'Log in' : 'Create account'}><Text style={styles.primaryText}>{mode === 'login' ? 'Log in' : 'Create account'}</Text></Pressable>
     <View style={styles.separatorSlot}><Text style={styles.separatorText}>or continue with</Text></View>
-    <View style={styles.socialRow}><Pressable style={styles.socialButton} onPress={() => { setError(''); setNotice(''); }} accessibilityRole="button" accessibilityLabel="Continue with Google"><Text style={styles.socialText}>G  Google</Text></Pressable><Pressable style={styles.socialButton} onPress={() => { setError(''); setNotice(''); }} accessibilityRole="button" accessibilityLabel="Continue with Facebook"><Text style={styles.socialText}>f  Facebook</Text></Pressable></View>
+    <View style={styles.socialRow}><Pressable style={styles.socialButton} onPress={() => { setError(''); setNotice('Social sign-in is not connected in this demo.'); }} accessibilityRole="button" accessibilityLabel="Continue with Google"><Text style={styles.socialText}>G  Google</Text></Pressable><Pressable style={styles.socialButton} onPress={() => { setError(''); setNotice('Social sign-in is not connected in this demo.'); }} accessibilityRole="button" accessibilityLabel="Continue with Facebook"><Text style={styles.socialText}>f  Facebook</Text></Pressable></View>
     <Pressable style={styles.switchMode} onPress={() => goMode(mode === 'login' ? 'create' : 'login')} accessibilityRole="button" accessibilityLabel={mode === 'login' ? 'Create account' : 'Log in'}><Text style={styles.switchText}>{mode === 'login' ? 'New to StayFinder? Create account' : 'Already have an account? Log in'}</Text></Pressable>
-  </ScrollView></KeyboardAvoidingView>;
+  </ScrollView></KeyboardAvoidingView></MotionScreen>;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bgWhite },
-  signedOutScreen: { flex: 1, backgroundColor: '#F6F9F8' },
+  screen: { flex: 1, backgroundColor: COLORS.bgSurface },
+  signedOutScreen: { flex: 1, backgroundColor: COLORS.bgSurface },
   centerWrap: { flex: 1, justifyContent: 'flex-start', paddingHorizontal: SPACING.xl, paddingTop: 220 },
-  signedOutCard: { minHeight: 288, padding: 24, borderRadius: RADII.promo, backgroundColor: COLORS.bgWhite },
+  signedOutCard: { minHeight: 288, padding: 24, borderRadius: RADII.promo, backgroundColor: COLORS.bgSurface },
   signedOutTitle: { minHeight: 50, color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 20, lineHeight: 28 },
   signedOutText: { minHeight: 50, marginTop: 16, color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.regular, fontSize: 14, lineHeight: 22 },
   primaryButton: { height: 48, marginTop: 16, borderRadius: RADII.full, backgroundColor: COLORS.primaryActive, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: COLORS.bgWhite, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
+  primaryText: { color: COLORS.onPrimary, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
   ghostButton: { height: 44, marginTop: 16, alignItems: 'center', justifyContent: 'center' },
   ghostText: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14 },
   content: { flexGrow: 1, paddingHorizontal: 24 },
@@ -82,7 +80,7 @@ const styles = StyleSheet.create({
   title: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 28, lineHeight: 32, letterSpacing: -0.24 },
   subtitleSlot: { minHeight: 22, marginTop: 9, justifyContent: 'center' },
   subtitle: { color: COLORS.textMuted, fontFamily: TYPOGRAPHY.families.medium, fontSize: 14, lineHeight: 16 },
-  field: { height: 64, marginTop: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6, gap: 4, borderWidth: 1, borderColor: '#DEE8E5', borderRadius: SPACING.md, backgroundColor: COLORS.surfaceSage },
+  field: { height: 64, marginTop: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6, gap: 4, borderWidth: 1, borderColor: COLORS.borderLight, borderRadius: SPACING.md, backgroundColor: COLORS.surfaceSage },
   firstField: { marginTop: 35 },
   labelSlot: { height: 22, justifyContent: 'center' },
   label: { color: COLORS.textMuted, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16 },
@@ -94,7 +92,7 @@ const styles = StyleSheet.create({
   separatorSlot: { minHeight: 22, marginTop: 20, justifyContent: 'center' },
   separatorText: { color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.families.medium, fontSize: 12, lineHeight: 16, textAlign: 'center' },
   socialRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  socialButton: { flex: 1, height: 48, borderWidth: 1, borderColor: '#D4E0DE', borderRadius: SPACING.md, alignItems: 'center', justifyContent: 'center' },
+  socialButton: { flex: 1, height: 48, borderWidth: 1, borderColor: COLORS.borderLight, borderRadius: SPACING.md, alignItems: 'center', justifyContent: 'center' },
   socialText: { color: COLORS.inkNavy, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20 },
   switchMode: { height: 48, marginTop: 14, alignItems: 'center', justifyContent: 'center' },
   switchText: { color: COLORS.primaryActive, fontFamily: TYPOGRAPHY.families.semibold, fontSize: 14, lineHeight: 20, textAlign: 'center' },

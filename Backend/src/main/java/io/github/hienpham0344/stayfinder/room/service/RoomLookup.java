@@ -5,4 +5,5 @@ import java.util.UUID;
 
 public interface RoomLookup {
     Optional<RoomBookingView> findBookingView(UUID roomId);
+    Optional<RoomBookingView> findBookingViewForUpdate(UUID roomId);
 }

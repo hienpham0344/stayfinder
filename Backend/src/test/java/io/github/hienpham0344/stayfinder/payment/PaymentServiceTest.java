@@ -4,13 +4,15 @@ import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentOperation
 import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentView;
 import io.github.hienpham0344.stayfinder.common.enums.BookingStatus;
 import io.github.hienpham0344.stayfinder.common.enums.PaymentStatus;
-import io.github.hienpham0344.stayfinder.payment.dto.SepayWebhookRequest;
+import io.github.hienpham0344.stayfinder.common.enums.UserRole;
+import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
 import io.github.hienpham0344.stayfinder.payment.entity.Payment;
 import io.github.hienpham0344.stayfinder.payment.mapper.PaymentMapper;
 import io.github.hienpham0344.stayfinder.payment.repository.PaymentMethodRepository;
 import io.github.hienpham0344.stayfinder.payment.repository.PaymentRepository;
-import io.github.hienpham0344.stayfinder.payment.service.PaymentProvider;
+import io.github.hienpham0344.stayfinder.payment.service.PaymentCode;
 import io.github.hienpham0344.stayfinder.payment.service.PaymentServiceImpl;
+import io.github.hienpham0344.stayfinder.security.CurrentUser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -23,16 +25,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class PaymentServiceTest {
-    private final PaymentRepository paymentRepository = mock(PaymentRepository.class);
-    private final PaymentMethodRepository paymentMethodRepository = mock(PaymentMethodRepository.class);
-    private final BookingPaymentOperations bookingPaymentOperations = mock(BookingPaymentOperations.class);
-    private final PaymentProvider provider = mock(PaymentProvider.class);
-    private final PaymentServiceImpl service = new PaymentServiceImpl(paymentRepository, paymentMethodRepository,
-            bookingPaymentOperations, provider, Mappers.getMapper(PaymentMapper.class));
+    private final PaymentRepository payments = mock(PaymentRepository.class);
+    private final PaymentMethodRepository methods = mock(PaymentMethodRepository.class);
+    private final BookingPaymentOperations bookings = mock(BookingPaymentOperations.class);
+    private final PaymentServiceImpl service = new PaymentServiceImpl(
+            payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "123456789");
 
     @AfterEach
     void clearSecurityContext() {
@@ -40,48 +41,57 @@ class PaymentServiceTest {
     }
 
     @Test
-    void duplicateVerifiedWebhookReturnsExistingPaymentWithoutRepeatingSideEffects() {
+    void refusesPaymentForCancelledBooking() {
         UUID bookingId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        Payment payment = new Payment();
-        payment.setId(UUID.randomUUID());
-        payment.setBookingId(bookingId);
-        payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setTransactionId("tx-1");
-        payment.setAmount(BigDecimal.TEN);
-        SepayWebhookRequest request = new SepayWebhookRequest(bookingId, "tx-1", BigDecimal.TEN,
-                PaymentStatus.SUCCESS, "verified");
-        when(paymentRepository.findByTransactionId("tx-1")).thenReturn(Optional.of(payment));
-        when(provider.verifyWebhook(request)).thenReturn(true);
+        UUID userId = authenticate();
+        when(bookings.findOwnedForUpdate(bookingId, userId)).thenReturn(Optional.of(
+                new BookingPaymentView(bookingId, userId, BigDecimal.TEN, BookingStatus.CANCELLED)));
 
-        assertEquals(payment.getId(), service.handleWebhook(request).id());
-        verify(paymentRepository, never()).save(any());
+        assertThrows(BusinessException.class, () -> service.create(bookingId, null));
+        verify(payments, never()).save(any());
     }
 
     @Test
-    void verifiedSuccessWebhookConfirmsPendingBookingOnce() {
+    void refusesToIssueTransferInstructionsWithoutReceivingAccount() {
         UUID bookingId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        BookingPaymentView booking = new BookingPaymentView(bookingId, userId, BigDecimal.TEN, BookingStatus.PENDING);
-        SepayWebhookRequest request = new SepayWebhookRequest(bookingId, "tx-2", BigDecimal.TEN,
-                PaymentStatus.SUCCESS, "verified");
-        when(provider.verifyWebhook(request)).thenReturn(true);
-        when(paymentRepository.findByTransactionId("tx-2")).thenReturn(Optional.empty());
-        when(bookingPaymentOperations.find(bookingId)).thenReturn(Optional.of(booking));
-        when(paymentRepository.findByBookingId(bookingId)).thenReturn(List.of());
-        Payment saved = new Payment();
-        saved.setId(UUID.randomUUID());
-        when(paymentRepository.save(any(Payment.class))).thenReturn(saved);
+        UUID userId = authenticate();
+        when(bookings.findOwnedForUpdate(bookingId, userId)).thenReturn(Optional.of(
+                new BookingPaymentView(bookingId, userId, BigDecimal.TEN, BookingStatus.PENDING)));
+        PaymentServiceImpl unconfigured = new PaymentServiceImpl(
+                payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "");
 
-        service.handleWebhook(request);
-
-        verify(paymentRepository).save(any(Payment.class));
-        verify(bookingPaymentOperations).confirm(bookingId);
+        assertThrows(IllegalStateException.class, () -> unconfigured.create(bookingId, null));
+        verify(payments, never()).save(any());
     }
 
-    private void authenticate(UUID userId) {
+    @Test
+    void newPaymentAfterFailedAttemptKeepsOldHistoryAndReturnsCode() {
+        UUID bookingId = UUID.randomUUID();
+        UUID userId = authenticate();
+        when(bookings.findOwnedForUpdate(bookingId, userId)).thenReturn(Optional.of(
+                new BookingPaymentView(bookingId, userId, new BigDecimal("500000"), BookingStatus.PENDING)));
+        Payment failed = new Payment();
+        failed.setId(UUID.randomUUID());
+        failed.setStatus(PaymentStatus.FAILED);
+        when(payments.findByBookingId(bookingId)).thenReturn(List.of(failed));
+        when(payments.save(any(Payment.class))).thenAnswer(invocation -> {
+            Payment payment = invocation.getArgument(0);
+            payment.setId(UUID.randomUUID());
+            return payment;
+        });
+
+        var created = service.create(bookingId, null);
+
+        assertEquals(PaymentStatus.FAILED, failed.getStatus());
+        assertEquals(PaymentStatus.PENDING, created.status());
+        assertEquals(PaymentCode.fromId(created.id()), created.paymentCode());
+        assertEquals("123456789", created.receivingAccountNumber());
+    }
+
+    private UUID authenticate() {
+        UUID userId = UUID.randomUUID();
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                new io.github.hienpham0344.stayfinder.security.CurrentUser(userId, "user@example.com",
-                        io.github.hienpham0344.stayfinder.common.enums.UserRole.CUSTOMER), null, List.of()));
+                new CurrentUser(userId, "user@example.com", UserRole.CUSTOMER), null, List.of()));
+        return userId;
     }
 }

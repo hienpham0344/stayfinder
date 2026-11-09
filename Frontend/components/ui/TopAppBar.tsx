@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Se121SharedAsset } from './Se121SharedAssets';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SIZES, SPACING, TYPOGRAPHY } from '../../constants/tokens';
 
 interface TopAppBarProps {

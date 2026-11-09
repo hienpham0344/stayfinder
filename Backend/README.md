@@ -1,0 +1,14 @@
+# Backend setup and API verification
+
+## Backend audit
+
+The API follows Controller → Service → Repository → PostgreSQL. Controllers use request/response DTOs and `ApiResponse`, services own transactions and business rules, repositories own persistence, and Spring Security enforces JWT authentication. Implemented endpoints cover local account registration/login/profile, active accommodation listing/detail and room availability, favorites, one-room booking/cancellation, SePay payment creation/status/webhook, and reviews for completed bookings. Booking and payment reads are scoped to the authenticated owner.
+
+The `public` schema still lacks guest capacity and room inventory; only one room may be booked, and a positive guest count is accepted without capacity verification. Pending bookings have no expiry. There is no automatic `CONFIRMED` → `COMPLETED` transition or refund workflow; confirmed bookings cannot be cancelled through the API. These lifecycle rules and the database-backed integration checks remain open.
+
+The API targets the `public` PostgreSQL schema with whole-number prices in VND. Before starting it against the restored database, review duplicate email, payment transaction, favorite, and review rows; then apply `db/migrations/001_public_local_auth_integrity.sql`. The script is not applied automatically. Existing `public.users` rows have no local password hash and cannot log in until credentials are enrolled separately; new accounts can use `/api/auth/register` after the migration.
+
+Set the variables in `.env.example` with local values. In SePay Test mode, create a JSON webhook using HMAC-SHA256, the receiving account in `SEPAY_BANK_ACCOUNT_NUMBER`, and payment-code recognition with prefix `SF`, an alphanumeric suffix of exactly 26 characters. Send the `paymentCode` returned by `POST /api/bookings/{bookingId}/payments` as the transfer content. SePay's webhook must send `X-SePay-Signature` and `X-SePay-Timestamp`; the endpoint returns `{"success":true}` after a matching incoming transfer. Configure the SePay webhook secret as `SEPAY_WEBHOOK_SECRET`.
+The payment response also returns `receivingAccountNumber` for the frontend transfer instructions; payment creation fails until the receiving account is configured.
+
+When the database is available, verify with Postman in this order: register and log in, list active accommodations and rooms, create a one-unit booking, create a payment and note its `paymentCode`, then send a signed SePay test transaction with the exact VND amount and receiving account. Check that the booking becomes `CONFIRMED`, the payment becomes `SUCCESS`, and replaying the same transaction has no extra effect. Also test a wrong signature, account, amount, payment code, and a cancelled booking. Booking quantities above one are rejected until an inventory capacity model is chosen.
