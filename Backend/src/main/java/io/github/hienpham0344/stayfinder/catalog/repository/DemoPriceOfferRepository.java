@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 @Repository
-public class DemoPriceOfferRepository {
+public class DemoPriceOfferRepository implements io.github.hienpham0344.stayfinder.catalog.service.PriceOfferSource {
     private final NamedParameterJdbcTemplate jdbc;
     public DemoPriceOfferRepository(NamedParameterJdbcTemplate jdbc){this.jdbc=jdbc;}
     public List<RawDemoOffer> find(UUID accommodation,UUID room) {

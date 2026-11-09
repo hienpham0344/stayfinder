@@ -54,4 +54,17 @@ class PriceComparisonServiceTest {
         assertThrows(BusinessException.class,()->service.compare(id,selection));
         assertThrows(BusinessException.class,()->service.compare(UUID.randomUUID(),selection));
     }
+    @Test void heterogeneousSourcesUseOneTripAndComparableBestPrice() {
+        var multi=new PriceComparisonService(accommodations,rooms,List.of(offers,
+            new io.github.hienpham0344.stayfinder.catalog.service.MockDecimalPriceSource(true,clock),
+            new io.github.hienpham0344.stayfinder.catalog.service.MockMinorUnitPriceSource(true,clock)),clock);
+        var result=multi.compare(id,selection);
+        assertEquals(3,result.offers().size());
+        var decimal=result.offers().stream().filter(o->o.providerName().equals("Mock Decimal Stay")).findFirst().orElseThrow();
+        var minor=result.offers().stream().filter(o->o.providerName().equals("Mock Minor Stay")).findFirst().orElseThrow();
+        assertEquals(41500,decimal.total().amountCents());
+        assertEquals(36000,minor.total().amountCents());
+        assertTrue(decimal.isBestValue());
+        assertFalse(minor.isBestValue());
+    }
 }

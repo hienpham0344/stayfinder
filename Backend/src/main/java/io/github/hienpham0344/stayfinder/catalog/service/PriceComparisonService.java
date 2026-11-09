@@ -18,10 +18,14 @@ import java.util.*;
 public class PriceComparisonService {
     private final AccommodationRepository accommodations;
     private final RoomService rooms;
-    private final DemoPriceOfferRepository offers;
+    private final List<PriceOfferSource> sources;
     private final Clock clock;
     public PriceComparisonService(AccommodationRepository accommodations,RoomService rooms,DemoPriceOfferRepository offers,Clock clock) {
-        this.accommodations=accommodations;this.rooms=rooms;this.offers=offers;this.clock=clock;
+        this(accommodations, rooms, List.of(offers), clock);
+    }
+    @org.springframework.beans.factory.annotation.Autowired
+    public PriceComparisonService(AccommodationRepository accommodations,RoomService rooms,List<PriceOfferSource> sources,Clock clock) {
+        this.accommodations=accommodations;this.rooms=rooms;this.sources=List.copyOf(sources);this.clock=clock;
     }
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
     public ComparisonResult compare(UUID id,QuoteSelection selection) {
@@ -44,7 +48,7 @@ public class PriceComparisonService {
         candidates.add(new Candidate(new PriceComparisonOffer("StayFinder",
             TripPriceCalculator.total(tier.nightlyPrice().amountCents(),nights,selection.quantity(),accommodation.getCleaningFeeCents(),accommodation.getServiceFeeCents()),
             tier.nightlyPrice(),true,freeDescription,clock.instant(),true,false),true));
-        for(var raw:offers.find(id,selection.roomId())) {
+        for(var raw:sources.stream().flatMap(source -> source.find(id,selection.roomId()).stream()).toList()) {
             if(!id.equals(raw.accommodationId())||!selection.roomId().equals(raw.roomId())||!"USD".equals(raw.currency())
                     ||raw.providerName()==null||raw.providerName().isBlank()||raw.observedAt()==null||raw.nightlyPriceCents()==null)continue;
             if(raw.includesFees()&&(raw.cleaningFeeCents()==null||raw.serviceFeeCents()==null))continue;
