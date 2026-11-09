@@ -10,6 +10,7 @@ import io.github.hienpham0344.stayfinder.accommodation.entity.Feature;
 import io.github.hienpham0344.stayfinder.accommodation.mapper.AccommodationMapper;
 import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationFeatureRepository;
 import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationRepository;
+import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationSnapshotRepository;
 import io.github.hienpham0344.stayfinder.accommodation.repository.FeatureRepository;
 import io.github.hienpham0344.stayfinder.accommodation.repository.ImageRepository;
 import io.github.hienpham0344.stayfinder.common.enums.AccommodationStatus;
@@ -30,17 +31,20 @@ public class AccommodationServiceImpl implements AccommodationService, Accommoda
     private final ImageRepository imageRepository;
     private final AccommodationFeatureRepository accommodationFeatureRepository;
     private final FeatureRepository featureRepository;
+    private final AccommodationSnapshotRepository accommodationSnapshotRepository;
     private final AccommodationMapper mapper;
 
     public AccommodationServiceImpl(AccommodationRepository accommodationRepository,
                                      ImageRepository imageRepository,
                                      AccommodationFeatureRepository accommodationFeatureRepository,
                                      FeatureRepository featureRepository,
+                                     AccommodationSnapshotRepository accommodationSnapshotRepository,
                                      AccommodationMapper mapper) {
         this.accommodationRepository = accommodationRepository;
         this.imageRepository = imageRepository;
         this.accommodationFeatureRepository = accommodationFeatureRepository;
         this.featureRepository = featureRepository;
+        this.accommodationSnapshotRepository = accommodationSnapshotRepository;
         this.mapper = mapper;
     }
 
@@ -54,7 +58,14 @@ public class AccommodationServiceImpl implements AccommodationService, Accommoda
     @Transactional(readOnly = true)
     public Optional<AccommodationBookingView> findBookingView(UUID accommodationId) {
         return accommodationRepository.findById(accommodationId)
-                .map(item -> new AccommodationBookingView(item.getId(), item.getBasePrice()));
+                .filter(item -> item.getStatus() == AccommodationStatus.ACTIVE)
+                .map(item -> new AccommodationBookingView(item.getId(), item.getBasePrice(), item.getName(), item.getAddress()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean snapshotBelongsToAccommodation(UUID snapshotId, UUID accommodationId) {
+        return accommodationSnapshotRepository.existsByIdAndAccommodationId(snapshotId, accommodationId);
     }
 
     @Override

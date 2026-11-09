@@ -68,8 +68,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewResponse update(UUID reviewId, UpdateReviewRequest request) {
         Review review = ownedReview(reviewId);
-        review.setRating(request.rating());
-        review.setComment(request.comment());
+        if (request.rating() == null && request.comment() == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        }
+        if (request.rating() != null) review.setRating(request.rating());
+        if (request.comment() != null) review.setComment(request.comment());
         return mapper.toResponse(reviewRepository.save(review));
     }
 

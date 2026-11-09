@@ -2,6 +2,7 @@ package io.github.hienpham0344.stayfinder.security;
 
 import io.github.hienpham0344.stayfinder.common.exception.ErrorCode;
 import io.github.hienpham0344.stayfinder.common.exception.ErrorResponse;
+import io.github.hienpham0344.stayfinder.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.json.JsonMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -50,8 +52,9 @@ public class SecurityConfig {
 
     @Bean
     JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService,
+                                                     UserRepository userRepository,
                                                      AuthenticationEntryPoint authenticationEntryPoint) {
-        return new JwtAuthenticationFilter(jwtService, authenticationEntryPoint);
+        return new JwtAuthenticationFilter(jwtService, userRepository, authenticationEntryPoint);
     }
 
     @Bean
@@ -59,7 +62,8 @@ public class SecurityConfig {
                                              JwtAuthenticationFilter jwtAuthenticationFilter,
                                              AuthenticationEntryPoint authenticationEntryPoint,
                                              AccessDeniedHandler accessDeniedHandler) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
