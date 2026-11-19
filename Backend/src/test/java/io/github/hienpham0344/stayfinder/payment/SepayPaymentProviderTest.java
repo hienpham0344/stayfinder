@@ -17,16 +17,17 @@ class SepayPaymentProviderTest {
     void verifiesOfficialTimestampAndRawBodySignature() throws Exception {
         String secret = "test-secret";
         byte[] body = "{\"id\":123,\"transferAmount\":100000}".getBytes(StandardCharsets.UTF_8);
-        String timestamp = Long.toString(Instant.now().getEpochSecond());
+        Instant now=Instant.parse("2030-06-01T00:00:00Z");
+        String timestamp = Long.toString(now.getEpochSecond());
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         String signature = "sha256=" + HexFormat.of().formatHex(
                 mac.doFinal((timestamp + "." + new String(body, StandardCharsets.UTF_8))
                         .getBytes(StandardCharsets.UTF_8)));
-        SepayPaymentProvider provider = new SepayPaymentProvider(secret);
+        SepayPaymentProvider provider = new SepayPaymentProvider(secret,java.time.Clock.fixed(now,java.time.ZoneOffset.UTC));
 
         assertTrue(provider.verifySignedWebhook(body, timestamp, signature));
         assertFalse(provider.verifySignedWebhook("{}".getBytes(StandardCharsets.UTF_8), timestamp, signature));
-        assertFalse(provider.verifySignedWebhook(body, Long.toString(Instant.now().minusSeconds(301).getEpochSecond()), signature));
+        assertFalse(provider.verifySignedWebhook(body, Long.toString(now.minusSeconds(301).getEpochSecond()), signature));
     }
 }

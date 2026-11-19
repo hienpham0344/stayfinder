@@ -17,6 +17,11 @@ public enum ErrorCode {
     BOOKING_SNAPSHOT_REQUIRED("BOOKING_SNAPSHOT_REQUIRED", "Booking snapshot schema is required", HttpStatus.CONFLICT),
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Payment not found", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("DUPLICATE_RESOURCE", "Resource already exists", HttpStatus.CONFLICT),
+    CONCURRENT_UPDATE("CONCURRENT_UPDATE", "Resource changed; reload and retry", HttpStatus.CONFLICT),
+    TOO_MANY_REQUESTS("TOO_MANY_REQUESTS", "Too many attempts; try again later", HttpStatus.TOO_MANY_REQUESTS),
+    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "Resource not found", HttpStatus.NOT_FOUND),
+    METHOD_NOT_ALLOWED("METHOD_NOT_ALLOWED", "Method not allowed", HttpStatus.METHOD_NOT_ALLOWED),
+    UNSUPPORTED_MEDIA_TYPE("UNSUPPORTED_MEDIA_TYPE", "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;

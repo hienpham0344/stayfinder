@@ -17,6 +17,8 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+    private static final String DUMMY_PASSWORD_HASH = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+            .encode("stayfinder-dummy-login-not-an-account");
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -54,10 +56,13 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(String email, String password) {
         String normalizedEmail = normalizeEmail(email);
-        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
-        if (user.getPasswordHash() == null || password == null
-                || !passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (password == null || password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail).orElse(null);
+        boolean eligible = user != null && user.isEnabled() && user.getRole() != null && user.getPasswordHash() != null;
+        boolean matches = passwordEncoder.matches(password, eligible ? user.getPasswordHash() : DUMMY_PASSWORD_HASH);
+        if (!eligible || !matches) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
         return toResponse(user);
@@ -65,7 +70,7 @@ public class AuthService {
 
     private AuthResponse toResponse(User user) {
         UserRole role = user.getRole() == null ? UserRole.CUSTOMER : user.getRole();
-        return new AuthResponse(jwtService.generateToken(user.getId(), user.getEmail(), role),
+        return new AuthResponse(jwtService.generateToken(user.getId(), user.getEmail(), role, user.getAuthVersion()),
                 userMapper.toResponse(user));
     }
 

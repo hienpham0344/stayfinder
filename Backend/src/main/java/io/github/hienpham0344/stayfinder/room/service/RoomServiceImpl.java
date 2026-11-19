@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.ZoneId;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,29 +27,40 @@ public class RoomServiceImpl implements RoomService, RoomLookup {
     private final AccommodationLookup accommodationLookup;
     private final RoomBookingAvailability roomBookingAvailability;
     private final RoomMapper mapper;
+    private final Clock clock;
 
     public RoomServiceImpl(RoomRepository roomRepository, AccommodationLookup accommodationLookup,
                            RoomBookingAvailability roomBookingAvailability, RoomMapper mapper) {
+        this(roomRepository, accommodationLookup, roomBookingAvailability, mapper, Clock.systemUTC());
+    }
+
+    @Autowired
+    public RoomServiceImpl(RoomRepository roomRepository, AccommodationLookup accommodationLookup,
+                           RoomBookingAvailability roomBookingAvailability, RoomMapper mapper, Clock clock) {
         this.roomRepository = roomRepository;
         this.accommodationLookup = accommodationLookup;
         this.roomBookingAvailability = roomBookingAvailability;
         this.mapper = mapper;
+        this.clock = clock;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RoomResponse> listAvailable(UUID accommodationId, LocalDate checkIn, LocalDate checkOut, int guests) {
-        if (checkIn == null || checkOut == null || !checkIn.isBefore(checkOut) || guests < 1) {
+        if (checkIn == null || checkOut == null || !checkIn.isBefore(checkOut) || guests < 1 || guests > 100
+                || checkIn.isBefore(LocalDate.now(clock.withZone(ZoneId.of("Asia/Ho_Chi_Minh"))))
+                || checkOut.isAfter(checkIn.plusDays(365))) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR);
         }
         if (accommodationLookup.findBookingView(accommodationId).isEmpty()) {
             throw new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
-        List<Room> rooms = roomRepository.findByAccommodationIdAndStatus(accommodationId, RoomStatus.AVAILABLE);
+        List<Room> rooms = roomRepository.findByAccommodationIdAndStatusAndCapacityGreaterThanEqual(accommodationId, RoomStatus.AVAILABLE, guests);
         if (rooms.isEmpty()) return List.of();
         Set<UUID> occupiedIds = roomBookingAvailability.overlappingRoomIds(
                 rooms.stream().map(Room::getId).toList(), checkIn, checkOut);
         return rooms.stream()
+                .filter(room -> room.getCapacity() != null && room.getCapacity() >= guests)
                 .filter(room -> !occupiedIds.contains(room.getId()))
                 .map(mapper::toResponse).toList();
     }
@@ -66,6 +80,6 @@ public class RoomServiceImpl implements RoomService, RoomLookup {
 
     private RoomBookingView toBookingView(Room item) {
         return new RoomBookingView(item.getId(), item.getAccommodationId(), item.getPrice(), item.getStatus(),
-                item.getName(), item.getDescription());
+                item.getName(), item.getDescription(), item.getCapacity());
     }
 }

@@ -1,14 +1,17 @@
-# Backend setup and API verification
+# StayFinder backend
 
-## Backend audit
+Java 21 / Spring Boot / PostgreSQL API for CUSTOMER, PARTNER and ADMIN. Public response envelopes remain `ApiResponse<T>`; money is whole VND, payment is SePay sandbox.
 
-The API follows Controller → Service → Repository → PostgreSQL. Controllers use request/response DTOs and `ApiResponse`, services own transactions and business rules, repositories own persistence, and Spring Security enforces JWT authentication. Implemented endpoints cover local account registration/login/profile, active accommodation listing/detail and room availability, favorites, one-room booking/cancellation, SePay payment creation/status/webhook, and reviews for completed bookings. Booking and payment reads are scoped to the authenticated owner.
+- CUSTOMER: local authentication/profile/password/logout, filtered catalog, availability, wishlist, one-room booking/cancellation, signed payment, reviews, reward vouchers and heuristic recommendations.
+- PARTNER: application approval, owned properties/rooms/prices/amenities/images, moderation resubmission, owned booking/payment views and statistics.
+- ADMIN: account roles/locking with last-admin protection, partner/property/review moderation, booking/payment/reconciliation views, reward catalog, statistics and audit logs.
 
-The `public` schema still lacks guest capacity and room inventory; only one room may be booked, and a positive guest count is accepted without capacity verification. Pending bookings have no expiry. There is no automatic `CONFIRMED` → `COMPLETED` transition or refund workflow; confirmed bookings cannot be cancelled through the API. These lifecycle rules and the database-backed integration checks remain open.
+For configuration, migration precautions, test commands, concurrency rules and benchmark reproduction, see [operation guide](docs/OPERATIONS.md).
 
-The API targets the `public` PostgreSQL schema with whole-number prices in VND. Before starting it against the restored database, review duplicate email, payment transaction, favorite, and review rows; then apply `db/migrations/001_public_local_auth_integrity.sql`. The script is not applied automatically. Existing `public.users` rows have no local password hash and cannot log in until credentials are enrolled separately; new accounts can use `/api/auth/register` after the migration.
+- [OpenAPI contract](docs/openapi.yaml)
+- [Audit and verification report](BACKEND_AUDIT.md)
+- [Synthetic benchmark fixture](db/fixtures/benchmark.sql)
 
-Set the variables in `.env.example` with local values. In SePay Test mode, create a JSON webhook using HMAC-SHA256, the receiving account in `SEPAY_BANK_ACCOUNT_NUMBER`, and payment-code recognition with prefix `SF`, an alphanumeric suffix of exactly 26 characters. Send the `paymentCode` returned by `POST /api/bookings/{bookingId}/payments` as the transfer content. SePay's webhook must send `X-SePay-Signature` and `X-SePay-Timestamp`; the endpoint returns `{"success":true}` after a matching incoming transfer. Configure the SePay webhook secret as `SEPAY_WEBHOOK_SECRET`.
-The payment response also returns `receivingAccountNumber` for the frontend transfer instructions; payment creation fails until the receiving account is configured.
+From `Backend/`, use `bash ./mvnw test` for unit/HTTP tests; `bash scripts/test-database.sh` provisions migrations only into an empty disposable local test schema and runs PostgreSQL integration verification. Normal application startup still requires locally configured database/JWT/SePay variables and does not migrate schema automatically.
 
-When the database is available, verify with Postman in this order: register and log in, list active accommodations and rooms, create a one-unit booking, create a payment and note its `paymentCode`, then send a signed SePay test transaction with the exact VND amount and receiving account. Check that the booking becomes `CONFIRMED`, the payment becomes `SUCCESS`, and replaying the same transaction has no extra effect. Also test a wrong signature, account, amount, payment code, and a cancelled booking. Booking quantities above one are rejected until an inventory capacity model is chosen.
+No OAuth, email/reset-password service, real refunds, multi-room orders, admin/partner UI, shared Redis cache or external AI recommendation service is included.

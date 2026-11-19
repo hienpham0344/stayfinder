@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { apiRequest, ApiError } from '../services/api.ts';
+import { apiRequest, ApiError, pageQuery } from '../services/api.ts';
 
 let sent;
 const transport = async (url, init) => {
@@ -24,3 +24,11 @@ await assert.rejects(apiRequest('/api/bookings', {}, 'http://localhost:8080', as
   throw new Error('socket closed');
 }), (error) => error instanceof ApiError && error.status === 0);
 await assert.rejects(apiRequest('/api/bookings', {}, '', transport), /EXPO_PUBLIC_API_BASE_URL/);
+
+const filters = new URLSearchParams(pageQuery(2, { q: 'Hà Nội & biển', guests: 4, minPrice: 0, featureIds: ['pool', 'wifi'] }));
+assert.equal(filters.get('page'), '2');
+assert.equal(filters.get('size'), '20');
+assert.equal(filters.get('q'), 'Hà Nội & biển');
+assert.equal(filters.get('minPrice'), '0');
+assert.equal(filters.get('featureIds'), 'pool,wifi');
+assert.equal(filters.get('guests'), '4');

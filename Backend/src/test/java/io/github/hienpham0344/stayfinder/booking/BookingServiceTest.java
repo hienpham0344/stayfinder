@@ -48,7 +48,10 @@ class BookingServiceTest {
     private final RoomBookingAvailability roomBookingAvailability = mock(RoomBookingAvailability.class);
     private final BookingServiceImpl service = new BookingServiceImpl(bookingRepository, bookingDetailRepository,
             accommodationSnapshotRepository, roomSnapshotRepository,
-            accommodationLookup, roomLookup, roomBookingAvailability, Mappers.getMapper(BookingMapper.class));
+            accommodationLookup, roomLookup, roomBookingAvailability, Mappers.getMapper(BookingMapper.class),
+            mock(io.github.hienpham0344.stayfinder.rewards.service.BookingRewards.class),
+            new io.github.hienpham0344.stayfinder.booking.service.BookingPolicy(java.time.Clock.systemUTC(),15,"Asia/Ho_Chi_Minh","12:00"),
+            mock(io.github.hienpham0344.stayfinder.booking.service.BookingLifecycleService.class));
 
     @AfterEach
     void clearSecurityContext() {
@@ -79,7 +82,7 @@ class BookingServiceTest {
     void refusesZeroPriceRoomBeforeWritingSnapshots() {
         UUID accommodationId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
-        when(accommodationLookup.findBookingView(accommodationId))
+        when(accommodationLookup.findBookingViewForUpdate(accommodationId))
                 .thenReturn(Optional.of(new AccommodationBookingView(accommodationId, null)));
         when(roomLookup.findBookingViewForUpdate(roomId)).thenReturn(Optional.of(new RoomBookingView(
                 roomId, accommodationId, BigDecimal.ZERO, RoomStatus.AVAILABLE)));
@@ -96,7 +99,7 @@ class BookingServiceTest {
     void refusesFractionalVndPriceThatSepayCannotTransferExactly() {
         UUID accommodationId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
-        when(accommodationLookup.findBookingView(accommodationId))
+        when(accommodationLookup.findBookingViewForUpdate(accommodationId))
                 .thenReturn(Optional.of(new AccommodationBookingView(accommodationId, null)));
         when(roomLookup.findBookingViewForUpdate(roomId)).thenReturn(Optional.of(new RoomBookingView(
                 roomId, accommodationId, new BigDecimal("100.50"), RoomStatus.AVAILABLE)));
@@ -195,10 +198,10 @@ class BookingServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 new io.github.hienpham0344.stayfinder.security.CurrentUser(userId, "user@example.com",
                         io.github.hienpham0344.stayfinder.common.enums.UserRole.CUSTOMER), null, List.of()));
-        when(accommodationLookup.findBookingView(accommodationId))
+        when(accommodationLookup.findBookingViewForUpdate(accommodationId))
                 .thenReturn(Optional.of(new AccommodationBookingView(accommodationId, null)));
         when(roomLookup.findBookingViewForUpdate(roomId)).thenReturn(Optional.of(new RoomBookingView(
-                roomId, accommodationId, BigDecimal.valueOf(100), RoomStatus.AVAILABLE)));
+                roomId, accommodationId, BigDecimal.valueOf(100), RoomStatus.AVAILABLE, null, null, 2)));
         when(roomBookingAvailability.hasOverlap(any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
             Booking booking = invocation.getArgument(0);

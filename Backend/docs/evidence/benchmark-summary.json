@@ -1,0 +1,306 @@
+{
+  "scope": "Local synthetic six-workload comparison; latency percentiles stay separate per round",
+  "clients": 20,
+  "warmup_seconds_per_round": 30,
+  "measured_seconds_per_round": 300,
+  "rounds_per_mode": 3,
+  "modes": {
+    "cache-on": {
+      "started_at_utc": "2026-11-17T13:29:16.813835+00:00",
+      "completed_at_utc": "2026-11-17T13:46:11.803249+00:00",
+      "requests": 782007,
+      "rps_by_round": [
+        1043.55,
+        999.57,
+        563.57
+      ],
+      "error_count": 0,
+      "warmup_error_count": 0,
+      "pool_observed_max": {
+        "hikaricp.connections.active": 10.0,
+        "hikaricp.connections.pending": 6.0
+      },
+      "workloads": {
+        "availability": {
+          "requests": 130336,
+          "p50_ms_by_round": [
+            13.96,
+            14.49,
+            24.36
+          ],
+          "p95_ms_by_round": [
+            27.72,
+            29.64,
+            60.03
+          ],
+          "p99_ms_by_round": [
+            37.68,
+            41.69,
+            91.42
+          ],
+          "worst_round_p95_ms": 60.03,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "bookings": {
+          "requests": 130330,
+          "p50_ms_by_round": [
+            19.51,
+            20.21,
+            33.74
+          ],
+          "p95_ms_by_round": [
+            35.6,
+            38.35,
+            76.96
+          ],
+          "p99_ms_by_round": [
+            46.21,
+            51.57,
+            112.51
+          ],
+          "worst_round_p95_ms": 76.96,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "catalog": {
+          "requests": 130368,
+          "p50_ms_by_round": [
+            36.95,
+            38.28,
+            64.29
+          ],
+          "p95_ms_by_round": [
+            57.0,
+            61.73,
+            115.88
+          ],
+          "p99_ms_by_round": [
+            70.28,
+            79.07,
+            153.01
+          ],
+          "worst_round_p95_ms": 115.88,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "detail-hot": {
+          "requests": 130345,
+          "p50_ms_by_round": [
+            11.46,
+            11.85,
+            20.67
+          ],
+          "p95_ms_by_round": [
+            24.49,
+            26.34,
+            54.53
+          ],
+          "p99_ms_by_round": [
+            33.45,
+            37.16,
+            82.98
+          ],
+          "worst_round_p95_ms": 54.53,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "detail-varied": {
+          "requests": 130312,
+          "p50_ms_by_round": [
+            11.62,
+            11.99,
+            21.03
+          ],
+          "p95_ms_by_round": [
+            24.85,
+            26.55,
+            53.84
+          ],
+          "p99_ms_by_round": [
+            34.07,
+            37.77,
+            83.08
+          ],
+          "worst_round_p95_ms": 53.84,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "favorite-write": {
+          "requests": 130316,
+          "p50_ms_by_round": [
+            11.7,
+            11.72,
+            20.26
+          ],
+          "p95_ms_by_round": [
+            25.95,
+            26.82,
+            55.66
+          ],
+          "p99_ms_by_round": [
+            36.02,
+            38.52,
+            84.51
+          ],
+          "worst_round_p95_ms": 55.66,
+          "p95_budget_ms": 700,
+          "latency_budget_met": true
+        }
+      },
+      "passed": true
+    },
+    "cache-off": {
+      "started_at_utc": "2026-11-17T13:46:13.105547+00:00",
+      "completed_at_utc": "2026-11-17T14:03:25.206745+00:00",
+      "requests": 760183,
+      "rps_by_round": [
+        834.22,
+        905.32,
+        794.4
+      ],
+      "error_count": 0,
+      "warmup_error_count": 0,
+      "pool_observed_max": {
+        "hikaricp.connections.active": 10.0,
+        "hikaricp.connections.pending": 8.0
+      },
+      "workloads": {
+        "availability": {
+          "requests": 126699,
+          "p50_ms_by_round": [
+            15.38,
+            15.18,
+            16.78
+          ],
+          "p95_ms_by_round": [
+            42.69,
+            33.66,
+            41.02
+          ],
+          "p99_ms_by_round": [
+            76.06,
+            50.13,
+            62.57
+          ],
+          "worst_round_p95_ms": 42.69,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "bookings": {
+          "requests": 126696,
+          "p50_ms_by_round": [
+            21.54,
+            21.37,
+            23.42
+          ],
+          "p95_ms_by_round": [
+            54.65,
+            43.32,
+            54.22
+          ],
+          "p99_ms_by_round": [
+            94.89,
+            61.86,
+            80.81
+          ],
+          "worst_round_p95_ms": 54.65,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "catalog": {
+          "requests": 126726,
+          "p50_ms_by_round": [
+            40.74,
+            40.78,
+            44.61
+          ],
+          "p95_ms_by_round": [
+            87.79,
+            69.46,
+            85.48
+          ],
+          "p99_ms_by_round": [
+            140.63,
+            92.18,
+            115.25
+          ],
+          "worst_round_p95_ms": 87.79,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "detail-hot": {
+          "requests": 126709,
+          "p50_ms_by_round": [
+            14.15,
+            13.97,
+            15.46
+          ],
+          "p95_ms_by_round": [
+            39.74,
+            31.38,
+            38.97
+          ],
+          "p99_ms_by_round": [
+            74.15,
+            46.74,
+            59.23
+          ],
+          "worst_round_p95_ms": 39.74,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "detail-varied": {
+          "requests": 126672,
+          "p50_ms_by_round": [
+            14.2,
+            14.02,
+            15.5
+          ],
+          "p95_ms_by_round": [
+            39.51,
+            31.6,
+            38.94
+          ],
+          "p99_ms_by_round": [
+            70.08,
+            45.88,
+            59.36
+          ],
+          "worst_round_p95_ms": 39.51,
+          "p95_budget_ms": 300,
+          "latency_budget_met": true
+        },
+        "favorite-write": {
+          "requests": 126681,
+          "p50_ms_by_round": [
+            12.45,
+            12.32,
+            13.64
+          ],
+          "p95_ms_by_round": [
+            37.28,
+            30.4,
+            37.22
+          ],
+          "p99_ms_by_round": [
+            67.73,
+            46.47,
+            59.71
+          ],
+          "worst_round_p95_ms": 37.28,
+          "p95_budget_ms": 700,
+          "latency_budget_met": true
+        }
+      },
+      "passed": true
+    }
+  },
+  "limitations": [
+    "Only wishlist PUT represents writes in this workload; no latency SLA for every write API",
+    "No external SePay, WAN/mobile traffic, hosted CI or production dataset",
+    "Single application instance and PostgreSQL on the same local host",
+    "Percentiles are per round, not pooled percentiles across rounds"
+  ],
+  "passed": true
+}

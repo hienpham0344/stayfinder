@@ -37,8 +37,20 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<ReviewResponse> list(UUID accommodationId) {
-        return reviewRepository.findByAccommodationIdOrderByCreatedAtDesc(accommodationId).stream()
+        requirePublicAccommodation(accommodationId);
+        return reviewRepository.findByAccommodationIdAndHiddenFalseOrderByCreatedAtDescIdDesc(accommodationId).stream()
                 .map(mapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<ReviewResponse> page(UUID accommodationId, org.springframework.data.domain.Pageable page) {
+        requirePublicAccommodation(accommodationId);
+        return reviewRepository.findByAccommodationIdAndHiddenFalse(accommodationId, page).map(mapper::toResponse);
+    }
+
+    private void requirePublicAccommodation(UUID id) {
+        if (accommodationLookup.findBookingView(id).isEmpty()) throw new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND);
     }
 
     @Override

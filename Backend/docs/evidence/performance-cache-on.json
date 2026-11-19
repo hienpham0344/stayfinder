@@ -1,0 +1,1036 @@
+{
+  "label": "cache-on",
+  "clients": 20,
+  "warmup_seconds": 30,
+  "measured_seconds_per_round": 300,
+  "cpu_count": 16,
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "started_at_utc": "2026-11-17T13:29:16.813835+00:00",
+  "updated_at_utc": "2026-11-17T13:46:11.803249+00:00",
+  "rounds": [
+    {
+      "round": 1,
+      "requests": 313066,
+      "rps": 1043.55,
+      "errors": [],
+      "error_count": 0,
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "catalog": {
+          "count": 52189,
+          "p50": 36.95,
+          "p95": 57.0,
+          "p99": 70.28
+        },
+        "detail-hot": {
+          "count": 52179,
+          "p50": 11.46,
+          "p95": 24.49,
+          "p99": 33.45
+        },
+        "availability": {
+          "count": 52178,
+          "p50": 13.96,
+          "p95": 27.72,
+          "p99": 37.68
+        },
+        "bookings": {
+          "count": 52178,
+          "p50": 19.51,
+          "p95": 35.6,
+          "p99": 46.21
+        },
+        "favorite-write": {
+          "count": 52172,
+          "p50": 11.7,
+          "p95": 25.95,
+          "p99": 36.02
+        },
+        "detail-varied": {
+          "count": 52170,
+          "p50": 11.62,
+          "p95": 24.85,
+          "p99": 34.07
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 1.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 4820.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 6491.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 8134.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 9784.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 11441.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 6.0,
+          "cache.gets": 13205.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 15086.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 16829.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 3.0,
+          "cache.gets": 18407.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 1.0,
+          "cache.gets": 19978.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 21645.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 2.0,
+          "cache.gets": 23364.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 25195.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 27088.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 5.0,
+          "cache.gets": 28944.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 30772.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 32617.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 34500.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 36385.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 38281.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 40113.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 42038.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 43924.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 45790.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 47685.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 49560.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 51454.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 53294.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 55172.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 57071.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 58919.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 60802.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 62722.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 64576.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 66412.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 68279.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 70218.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 72098.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 73918.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 75593.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 77112.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 78939.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 80843.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 82471.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 84028.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 85580.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 87354.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 89149.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 2.0,
+          "cache.gets": 90839.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 92572.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 94107.0
+        },
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 95777.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 97583.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 99351.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 101080.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 102840.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 104627.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 106246.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 107832.0
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "requests": 299870,
+      "rps": 999.57,
+      "errors": [],
+      "error_count": 0,
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "catalog": {
+          "count": 49990,
+          "p50": 38.28,
+          "p95": 61.73,
+          "p99": 79.07
+        },
+        "detail-hot": {
+          "count": 49983,
+          "p50": 11.85,
+          "p95": 26.34,
+          "p99": 37.16
+        },
+        "availability": {
+          "count": 49979,
+          "p50": 14.49,
+          "p95": 29.64,
+          "p99": 41.69
+        },
+        "bookings": {
+          "count": 49975,
+          "p50": 20.21,
+          "p95": 38.35,
+          "p99": 51.57
+        },
+        "favorite-write": {
+          "count": 49972,
+          "p50": 11.72,
+          "p95": 26.82,
+          "p99": 38.52
+        },
+        "detail-varied": {
+          "count": 49971,
+          "p50": 11.99,
+          "p95": 26.55,
+          "p99": 37.77
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 0.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 118705.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 120427.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 122134.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 123842.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 125636.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 1.0,
+          "cache.gets": 127434.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 128993.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 130573.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 132196.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 133760.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 135258.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 136982.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 138787.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 140513.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 142087.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 143851.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 145566.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 1.0,
+          "cache.gets": 147260.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 148985.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 150673.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 4.0,
+          "cache.gets": 152246.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 153909.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 2.0,
+          "cache.gets": 155649.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 157343.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 3.0,
+          "cache.gets": 159023.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 160745.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 6.0,
+          "cache.gets": 162491.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 164242.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 165977.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 167685.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 169462.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 171245.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 172967.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 174721.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 176437.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 178017.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 179521.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 181422.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 183311.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 185260.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 187215.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 189135.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 190943.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 192941.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 194981.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 196984.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 199012.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 201033.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 202989.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 2.0,
+          "cache.gets": 204763.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 206475.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 207801.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 209051.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 210270.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 211608.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 212848.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 214346.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 215913.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 217464.0
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "requests": 169071,
+      "rps": 563.57,
+      "errors": [],
+      "error_count": 0,
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "catalog": {
+          "count": 28189,
+          "p50": 64.29,
+          "p95": 115.88,
+          "p99": 153.01
+        },
+        "detail-hot": {
+          "count": 28183,
+          "p50": 20.67,
+          "p95": 54.53,
+          "p99": 82.98
+        },
+        "availability": {
+          "count": 28179,
+          "p50": 24.36,
+          "p95": 60.03,
+          "p99": 91.42
+        },
+        "bookings": {
+          "count": 28177,
+          "p50": 33.74,
+          "p95": 76.96,
+          "p99": 112.51
+        },
+        "favorite-write": {
+          "count": 28172,
+          "p50": 20.26,
+          "p95": 55.66,
+          "p99": 84.51
+        },
+        "detail-varied": {
+          "count": 28171,
+          "p50": 21.03,
+          "p95": 53.84,
+          "p99": 83.08
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 1.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 226565.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 228126.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 229503.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 230476.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 231283.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 232202.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 1.0,
+          "cache.gets": 232976.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 233687.0
+        },
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 234432.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 235338.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 236438.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 237493.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 238499.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 239378.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 240333.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 241338.0
+        },
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 242433.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 243652.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 244832.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 245902.0
+        },
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 246936.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 247922.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 248986.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 250098.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 251090.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 252174.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 253159.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 254041.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 4.0,
+          "cache.gets": 255184.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 256267.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 257452.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 258611.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 259608.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 260424.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 261175.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 261823.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 262487.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 4.0,
+          "cache.gets": 263181.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 263871.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 264578.0
+        },
+        {
+          "hikaricp.connections.active": 5.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 265471.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 266294.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 266986.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 267714.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 268518.0
+        },
+        {
+          "hikaricp.connections.active": 6.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 269478.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 270393.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 271425.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 272584.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 273520.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 274517.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 275645.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 276639.0
+        },
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 277816.0
+        },
+        {
+          "hikaricp.connections.active": 7.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 278857.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 279868.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 280888.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 0.0,
+          "cache.gets": 282064.0
+        }
+      ]
+    }
+  ]
+}

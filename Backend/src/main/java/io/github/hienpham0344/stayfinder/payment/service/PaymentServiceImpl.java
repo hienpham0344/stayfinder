@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.time.Instant;
+import java.time.Clock;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.UUID;
 
 @Service
@@ -28,10 +30,13 @@ public class PaymentServiceImpl implements PaymentService {
     private final BookingPaymentOperations bookingPaymentOperations;
     private final PaymentMapper mapper;
     private final String receivingAccountNumber;
+    private final Clock clock;
 
+    @Autowired
     public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentMethodRepository paymentMethodRepository,
                               BookingPaymentOperations bookingPaymentOperations, PaymentMapper mapper,
-                              @Value("${SEPAY_BANK_ACCOUNT_NUMBER:}") String receivingAccountNumber) {
+                              @Value("${SEPAY_BANK_ACCOUNT_NUMBER:}") String receivingAccountNumber, Clock clock) {
+        this.clock = clock;
         this.paymentRepository = paymentRepository;
         this.paymentMethodRepository = paymentMethodRepository;
         this.bookingPaymentOperations = bookingPaymentOperations;
@@ -44,7 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponse create(UUID bookingId, CreatePaymentRequest request) {
         BookingPaymentView booking = bookingPaymentOperations.findOwnedForUpdate(bookingId, CurrentUser.require().id())
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
-        if (booking.status() != BookingStatus.PENDING) {
+        if (booking.status() != BookingStatus.PENDING || booking.expiredAt(clock.instant())) {
             throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
         }
         if (booking.totalPrice() == null || booking.totalPrice().signum() <= 0) {
@@ -65,7 +70,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentMethodId(request == null ? null : request.paymentMethodId());
         payment.setAmount(booking.totalPrice());
         payment.setStatus(PaymentStatus.PENDING);
-        payment.setCreatedAt(Instant.now());
+        payment.setCreatedAt(clock.instant());
         return toResponse(paymentRepository.save(payment));
     }
 

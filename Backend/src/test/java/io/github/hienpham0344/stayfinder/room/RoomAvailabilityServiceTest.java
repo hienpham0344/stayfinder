@@ -31,12 +31,12 @@ class RoomAvailabilityServiceTest {
     private final AccommodationLookup accommodationLookup = mock(AccommodationLookup.class);
     private final RoomBookingAvailability roomBookingAvailability = mock(RoomBookingAvailability.class);
     private final RoomServiceImpl service = new RoomServiceImpl(roomRepository, accommodationLookup, roomBookingAvailability,
-            Mappers.getMapper(RoomMapper.class));
+            Mappers.getMapper(RoomMapper.class), java.time.Clock.fixed(java.time.Instant.parse("2026-09-01T00:00:00Z"), java.time.ZoneOffset.UTC));
 
     @Test
     void inactiveAccommodationDoesNotExposeItsRooms() {
         UUID accommodationId = UUID.randomUUID();
-        when(roomRepository.findByAccommodationIdAndStatus(accommodationId, RoomStatus.AVAILABLE))
+when(roomRepository.findByAccommodationIdAndStatusAndCapacityGreaterThanEqual(accommodationId, RoomStatus.AVAILABLE, 1))
                 .thenReturn(List.of(room(UUID.randomUUID(), accommodationId, "Hidden")));
 
         assertThrows(BusinessException.class, () -> service.listAvailable(accommodationId,
@@ -56,7 +56,7 @@ class RoomAvailabilityServiceTest {
         Room occupied = room(UUID.randomUUID(), accommodationId, "Occupied");
         when(accommodationLookup.findBookingView(accommodationId))
                 .thenReturn(Optional.of(new AccommodationBookingView(accommodationId, null)));
-        when(roomRepository.findByAccommodationIdAndStatus(accommodationId, RoomStatus.AVAILABLE))
+when(roomRepository.findByAccommodationIdAndStatusAndCapacityGreaterThanEqual(accommodationId, RoomStatus.AVAILABLE, 2))
                 .thenReturn(List.of(free, occupied));
         when(roomBookingAvailability.overlappingRoomIds(eq(List.of(free.getId(), occupied.getId())), any(), any()))
                 .thenReturn(Set.of(occupied.getId()));
@@ -75,6 +75,7 @@ class RoomAvailabilityServiceTest {
         room.setAccommodationId(accommodationId);
         room.setName(name);
         room.setStatus(RoomStatus.AVAILABLE);
+        room.setCapacity(2);
         return room;
     }
 }

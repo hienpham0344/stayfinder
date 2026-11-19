@@ -20,7 +20,8 @@ class BookingDomainQueryServiceTest {
     private final BookingRepository bookings = mock(BookingRepository.class);
     private final BookingDetailRepository details = mock(BookingDetailRepository.class);
     private final AccommodationLookup accommodations = mock(AccommodationLookup.class);
-    private final BookingDomainQueryService service = new BookingDomainQueryService(bookings, details, accommodations);
+    private final BookingDomainQueryService service = new BookingDomainQueryService(bookings, details, accommodations,
+            new io.github.hienpham0344.stayfinder.booking.service.BookingPolicy(java.time.Clock.systemUTC(),15,"Asia/Ho_Chi_Minh","12:00"));
 
     @Test
     void completedBookingMatchesAccommodationThroughItsSnapshot() {

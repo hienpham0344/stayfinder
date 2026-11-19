@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Table(name = "accommodations")
 @Getter @Setter @NoArgsConstructor
 public class Accommodation {
+    @Version private long version;
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "partner_id") private UUID partnerId;
     @Column(name = "type_id") private UUID typeId;
@@ -32,4 +34,5 @@ public class Accommodation {
     @Column(name = "base_price") private BigDecimal basePrice;
     @Convert(converter = AccommodationStatusConverter.class) private AccommodationStatus status;
     @Column(name = "created_at") private Instant createdAt;
+    @Column(name = "updated_at") private Instant updatedAt;
 }

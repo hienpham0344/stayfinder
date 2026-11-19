@@ -37,6 +37,7 @@ class JwtServiceTest {
         assertEquals(userId.toString(), jwt.getSubject());
         assertEquals("hien@example.com", jwt.getClaimAsString("username"));
         assertEquals("customer", jwt.getClaimAsString("role"));
+        assertEquals(0L, ((Number) jwt.getClaims().get("auth_version")).longValue());
         assertTrue(service.isValid(token));
     }
 
@@ -61,5 +62,13 @@ class JwtServiceTest {
         String shortSecret = Base64.getEncoder().encodeToString("too-short".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalArgumentException.class, () -> new JwtService(shortSecret, 60));
+    }
+
+    @Test
+    void carriesAuthenticationVersionAndRejectsInvalidExpirationConfiguration() {
+        JwtService service = new JwtService(SECRET, 60);
+        Jwt jwt = service.parseToken(service.generateToken(UUID.randomUUID(), "test@example.com", UserRole.CUSTOMER, 7));
+        assertEquals(7L, ((Number) jwt.getClaims().get("auth_version")).longValue());
+        assertThrows(IllegalArgumentException.class, () -> new JwtService(SECRET, 0));
     }
 }

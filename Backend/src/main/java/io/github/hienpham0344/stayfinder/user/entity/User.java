@@ -7,6 +7,7 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,4 +32,7 @@ public class User {
     @Column(name = "loyalty_points") private Integer loyaltyPoints;
     @Column(name = "loyalty_tier") private Integer loyaltyTier;
     @Column(name = "created_at") private Instant createdAt;
+    @Column(nullable = false) private boolean enabled = true;
+    @Column(name = "auth_version", nullable = false) private long authVersion;
+    @Version private long version;
 }

@@ -6,6 +6,7 @@ import io.github.hienpham0344.stayfinder.booking.repository.BookingDetailReposit
 import io.github.hienpham0344.stayfinder.booking.repository.BookingRepository;
 import io.github.hienpham0344.stayfinder.common.enums.BookingStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -19,10 +20,12 @@ public class BookingDomainQueryService implements RoomBookingAvailability, Booki
     private final BookingRepository bookingRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final AccommodationLookup accommodationLookup;
+    private final BookingPolicy policy;
 
-    public BookingDomainQueryService(BookingRepository bookingRepository,
-                                     BookingDetailRepository bookingDetailRepository,
-                                     AccommodationLookup accommodationLookup) {
+    @Autowired
+    public BookingDomainQueryService(BookingRepository bookingRepository, BookingDetailRepository bookingDetailRepository,
+                                     AccommodationLookup accommodationLookup, BookingPolicy policy) {
+        this.policy = policy;
         this.bookingRepository = bookingRepository;
         this.bookingDetailRepository = bookingDetailRepository;
         this.accommodationLookup = accommodationLookup;
@@ -31,16 +34,16 @@ public class BookingDomainQueryService implements RoomBookingAvailability, Booki
     @Override
     @Transactional(readOnly = true)
     public boolean hasOverlap(UUID roomId, LocalDate checkIn, LocalDate checkOut) {
-        return !bookingDetailRepository.findOverlappingRoomBookings(
-                roomId, checkIn, checkOut, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)).isEmpty();
+        return bookingDetailRepository.hasActiveOverlap(roomId, checkIn, checkOut,
+                BookingStatus.CONFIRMED, BookingStatus.PENDING, policy.now(), policy.legacyActiveSince());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Set<UUID> overlappingRoomIds(Collection<UUID> roomIds, LocalDate checkIn, LocalDate checkOut) {
         if (roomIds.isEmpty()) return Set.of();
-        return Set.copyOf(bookingDetailRepository.findOverlappingRoomIds(
-                roomIds, checkIn, checkOut, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)));
+        return Set.copyOf(bookingDetailRepository.findActiveOverlappingRoomIds(
+                roomIds, checkIn, checkOut, BookingStatus.CONFIRMED, BookingStatus.PENDING, policy.now(), policy.legacyActiveSince()));
     }
 
     @Override

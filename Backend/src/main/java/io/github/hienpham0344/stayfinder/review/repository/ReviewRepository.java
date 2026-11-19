@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
+    List<Review> findByAccommodationIdAndHiddenFalseOrderByCreatedAtDescIdDesc(UUID accommodationId);
+    org.springframework.data.domain.Page<Review> findByAccommodationIdAndHiddenFalse(UUID accommodationId, org.springframework.data.domain.Pageable page);
     List<Review> findByAccommodationIdOrderByCreatedAtDesc(UUID accommodationId);
     Optional<Review> findByBookingIdAndUserId(UUID bookingId, UUID userId);
 }

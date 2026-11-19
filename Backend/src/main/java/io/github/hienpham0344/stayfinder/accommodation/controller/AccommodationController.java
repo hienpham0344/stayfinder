@@ -2,6 +2,8 @@ package io.github.hienpham0344.stayfinder.accommodation.controller;
 
 import io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationDetailResponse;
 import io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationResponse;
+import io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationSearch;
+import io.github.hienpham0344.stayfinder.accommodation.service.CatalogSearchService;
 import io.github.hienpham0344.stayfinder.accommodation.service.AccommodationService;
 import io.github.hienpham0344.stayfinder.common.response.ApiResponse;
 import io.github.hienpham0344.stayfinder.room.dto.RoomResponse;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,10 +29,13 @@ import java.util.UUID;
 public class AccommodationController {
     private final AccommodationService accommodationService;
     private final RoomService roomService;
+    private final CatalogSearchService searchService;
 
-    public AccommodationController(AccommodationService accommodationService, RoomService roomService) {
+    public AccommodationController(AccommodationService accommodationService, RoomService roomService,
+                                   CatalogSearchService searchService) {
         this.accommodationService = accommodationService;
         this.roomService = roomService;
+        this.searchService = searchService;
     }
 
     @GetMapping
@@ -36,7 +43,15 @@ public class AccommodationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sort,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) UUID typeId,
+            @RequestParam(required = false) List<UUID> featureIds,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
+            @RequestParam(defaultValue = "1") int guests) {
         int boundedSize = Math.min(Math.max(size, 1), 100);
         String sortProperty = switch (sort) {
             case "name" -> "name";
@@ -45,8 +60,10 @@ public class AccommodationController {
             default -> "createdAt";
         };
         Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), boundedSize, Sort.by(sortDirection, sortProperty));
-        return ResponseEntity.ok(ApiResponse.success(accommodationService.list(pageable)));
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), boundedSize,
+                Sort.by(sortDirection, sortProperty).and(Sort.by(Sort.Direction.DESC, "id")));
+        return ResponseEntity.ok(ApiResponse.success(searchService.search(new AccommodationSearch(q, typeId,
+                featureIds, minPrice, maxPrice, checkIn, checkOut, guests), pageable)));
     }
 
     @GetMapping("/{id}")

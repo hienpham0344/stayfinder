@@ -41,10 +41,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}, 
 }
 
 export type ApiPage<T> = { content: T[]; totalPages: number; number: number };
+export type AccommodationQuery = { q?: string; typeId?: string; featureIds?: string[]; minPrice?: number; maxPrice?: number; checkIn?: string; checkOut?: string; guests?: number };
+
+export function pageQuery(page = 0, filters: AccommodationQuery = {}): string {
+  const params = new URLSearchParams({ page: String(Math.max(0, page)), size: '20' });
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== '') params.set(key, Array.isArray(value) ? value.join(',') : String(value));
+  }
+  return params.toString();
+}
 export type ApiAccommodation = {
   id: string; name: string; address: string | null; description: string | null;
   basePrice: number | null; latitude: number | null; longitude: number | null;
   status: string; typeId: string | null;
+  matchedRoomId?: string | null; matchedPrice?: number | null;
 };
 export type ApiAccommodationDetail = {
   accommodation: ApiAccommodation; images: { id: string; url: string }[];
@@ -53,6 +63,7 @@ export type ApiAccommodationDetail = {
 export type ApiRoom = {
   id: string; accommodationId: string; name: string; description: string | null;
   price: number | null; status: string; roomTypeId: string | null;
+  capacity?: number;
 };
 export type ApiBookingDetail = {
   id: string; roomSnapshotId: string; checkInDate: string; checkOutDate: string;
@@ -74,35 +85,30 @@ export type ApiUser = {
 export type ApiAuth = { token: string; user: ApiUser };
 export type ApiFavorite = { id: string; accommodationId: string };
 export type ApiReview = { id: string; userId: string; bookingId: string; accommodationId: string; rating: number; comment: string; createdAt: string };
+export type ApiRewardAccount = { points: number; currency: string; earnVndPerPoint: number };
+export type ApiRewardCatalog = { id: string; name: string; pointsCost: number; discountAmount: number; minSpend: number; validityDays: number };
+export type ApiRewardVoucher = { id: string; catalogId: string; discountAmount: number; status: string; expiresAt: string };
 
 export const stayApi = {
+  accommodationsPage: (page = 0, filters: AccommodationQuery = {}) => apiRequest<ApiPage<ApiAccommodation>>(`/api/accommodations?${pageQuery(page, filters)}`),
+  bookingsPage: (token: string, page = 0) => apiRequest<ApiPage<ApiBooking>>(`/api/bookings?${pageQuery(page)}`, { token }),
+  wishlistPage: (token: string, page = 0) => apiRequest<ApiPage<ApiAccommodation>>(`/api/favorites/accommodations?${pageQuery(page)}`, { token }),
+  logout: (token: string) => apiRequest<null>('/api/auth/logout', { method: 'POST', token }),
+  rewardAccount: (token: string) => apiRequest<ApiRewardAccount>('/api/rewards/account', { token }),
+  rewardCatalog: (token: string, page = 0) => apiRequest<ApiPage<ApiRewardCatalog>>(`/api/rewards/catalog?${pageQuery(page)}`, { token }),
+  rewardVouchers: (token: string, page = 0) => apiRequest<ApiPage<ApiRewardVoucher>>(`/api/rewards/vouchers?${pageQuery(page)}`, { token }),
+  redeemReward: (catalogId: string, idempotencyKey: string, token: string) => apiRequest<ApiRewardVoucher>('/api/rewards/redeem', { method: 'POST', token, body: { catalogId, idempotencyKey } }),
   login: (email: string, password: string) => apiRequest<ApiAuth>('/api/auth/login', { method: 'POST', body: { email, password } }),
   register: (fullName: string, email: string, password: string) => apiRequest<ApiAuth>('/api/auth/register', { method: 'POST', body: { fullName, email, password } }),
   me: (token: string) => apiRequest<ApiUser>('/api/users/me', { token }),
-  accommodations: async () => {
-    const all: ApiAccommodation[] = [];
-    for (let page = 0; ; page += 1) {
-      const result = await apiRequest<ApiPage<ApiAccommodation>>(`/api/accommodations?page=${page}&size=100`);
-      all.push(...result.content);
-      if (page + 1 >= result.totalPages || result.content.length === 0) return all;
-    }
-  },
   accommodation: (id: string) => apiRequest<ApiAccommodationDetail>(`/api/accommodations/${encodeURIComponent(id)}`),
   rooms: (id: string, checkIn: string, checkOut: string, guests: number) =>
     apiRequest<ApiRoom[]>(`/api/accommodations/${encodeURIComponent(id)}/rooms?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&guests=${guests}`),
   favorites: (token: string) => apiRequest<ApiFavorite[]>('/api/favorites', { token }),
   addFavorite: (id: string, token: string) => apiRequest<ApiFavorite>(`/api/favorites/${encodeURIComponent(id)}`, { method: 'PUT', token }),
   removeFavorite: (id: string, token: string) => apiRequest<null>(`/api/favorites/${encodeURIComponent(id)}`, { method: 'DELETE', token }),
-  bookings: async (token: string) => {
-    const all: ApiBooking[] = [];
-    for (let page = 0; ; page += 1) {
-      const result = await apiRequest<ApiPage<ApiBooking>>(`/api/bookings?page=${page}&size=100`, { token });
-      all.push(...result.content);
-      if (page + 1 >= result.totalPages || result.content.length === 0) return all;
-    }
-  },
   booking: (id: string, token: string) => apiRequest<ApiBooking>(`/api/bookings/${encodeURIComponent(id)}`, { token }),
-  createBooking: (request: { accommodationId: string; roomId: string; checkIn: string; checkOut: string; quantity: number; guests: number }, token: string) =>
+  createBooking: (request: { accommodationId: string; roomId: string; checkIn: string; checkOut: string; quantity: number; guests: number; voucherId?: string }, token: string) =>
     apiRequest<ApiBooking>('/api/bookings', { method: 'POST', token, body: request }),
   cancelBooking: (id: string, token: string) => apiRequest<ApiBooking>(`/api/bookings/${encodeURIComponent(id)}/cancel`, { method: 'POST', token }),
   payments: (bookingId: string, token: string) => apiRequest<ApiPayment[]>(`/api/bookings/${encodeURIComponent(bookingId)}/payments`, { token }),

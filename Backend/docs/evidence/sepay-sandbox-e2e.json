@@ -1,0 +1,82 @@
+{
+  "observed_utc": "2026-11-19T13:10:09.192310+00:00",
+  "provider": "SePay Test mode sandbox",
+  "cli_version": "0.1.9",
+  "method": "Official SePay CLI sandbox simulate -> webhook listen preserves provider signed raw body/headers -> isolated backend loopback58092",
+  "authentication": "HMAC-SHA256 timestamp.rawBody using independently configured shared secret; no local signing for these events",
+  "paycode_structure": "SF + 26 NumberAndLetter; simulated full content override, no code truncation",
+  "test_data": "Synthetic bank account and disposable stayfinder_benchmark_test; no real money or live bank linked",
+  "cases": {
+    "valid": {
+      "booking": "CONFIRMED",
+      "payment": "SUCCESS",
+      "transactionAssigned": true,
+      "amount": 380000,
+      "anomalies": [],
+      "relay_http_statuses": [
+        200,
+        200
+      ]
+    },
+    "wrong-amount": {
+      "booking": "PENDING",
+      "payment": "PENDING",
+      "transactionAssigned": false,
+      "amount": 380000,
+      "anomalies": [
+        {
+          "reason": "AMOUNT_MISMATCH",
+          "count": 1
+        }
+      ],
+      "relay_http_statuses": [
+        400
+      ]
+    },
+    "cancelled": {
+      "booking": "CANCELLED",
+      "payment": "PENDING",
+      "transactionAssigned": false,
+      "amount": 380000,
+      "anomalies": [
+        {
+          "reason": "BOOKING_NOT_PAYABLE",
+          "count": 1
+        }
+      ],
+      "relay_http_statuses": [
+        409
+      ]
+    },
+    "expired": {
+      "booking": "PENDING",
+      "payment": "PENDING",
+      "transactionAssigned": false,
+      "amount": 380000,
+      "anomalies": [
+        {
+          "reason": "BOOKING_NOT_PAYABLE",
+          "count": 1
+        }
+      ],
+      "relay_http_statuses": [
+        409
+      ]
+    }
+  },
+  "expiry_control": "For expired case only, expiresAt moved into past on that synthetic pending booking; scheduling disabled; endpoint refuses confirmation and records anomaly. Scheduler/availability expiry covered separately by automated tests.",
+  "cleanup": {
+    "isolated_listener_and_backend_stopped": true,
+    "cli_server_revocation_and_local_logout_exit": 0
+  },
+  "limitations": [
+    "No real-bank transfer or production delivery tested",
+    "SePay concurrency/replay races tested separately in PostgreSQL integration; this provider test replays sequentially",
+    "Webhook is sandbox listen-only; no public HTTPS deployment tested"
+  ],
+  "sources": [
+    "https://developer.sepay.vn/vi/tien-ich-khac/test-mode/cau-hinh",
+    "https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc",
+    "https://github.com/sepayvn/sepay-cli"
+  ]
+}

@@ -1,17 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { ApiAccommodationDetail, ApiReview, ApiRoom, stayApi } from '../../services/api';
 import { useLiveState } from '../../state/LiveState';
 import { validTravelDates } from '../../utils/frontendState';
 import { COLORS, TYPOGRAPHY } from '../../constants/tokens';
 import { LiveButton, LiveField, LiveMessage, LiveScreen, LiveStayCard, formatVnd } from './LiveUi';
 
-function CatalogList({ query = '' }: { query?: string }) {
-  const { catalog, catalogError, catalogLoading, favoriteIds, token, toggleFavorite, refreshCatalog } = useLiveState();
+function CatalogList() {
+  const { catalog, catalogError, catalogLoading, catalogHasMore, loadMoreCatalog, favoriteIds, token, toggleFavorite, refreshCatalog } = useLiveState();
   const [error, setError] = useState('');
-  const matches = useMemo(() => catalog.filter((stay) =>
-    `${stay.name} ${stay.address ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())), [catalog, query]);
+  const matches = catalog;
   if (catalogLoading) return <LiveMessage text="Đang tải chỗ ở…" loading />;
   if (catalogError) return <View><LiveMessage text={catalogError} /><LiveButton title="Thử lại" onPress={() => void refreshCatalog()} /></View>;
   return <View>
@@ -23,11 +22,13 @@ function CatalogList({ query = '' }: { query?: string }) {
           if (!token) { router.push('/auth/demo?mode=login' as never); return; }
           void toggleFavorite(stay.id).catch((failure) => setError(failure instanceof Error ? failure.message : 'Không thể cập nhật wishlist.'));
         }} />)}
+    {catalogHasMore && <LiveButton secondary title="Tải thêm chỗ ở" onPress={() => void loadMoreCatalog()} />}
   </View>;
 }
 
 export function LiveHomeScreen() {
   const { refreshCatalog } = useLiveState();
+  useFocusEffect(useCallback(() => { void refreshCatalog({}); }, [refreshCatalog]));
   return <LiveScreen title="StayFinder" refresh={() => void refreshCatalog()}>
     <Text style={styles.subheading}>Tìm nơi lưu trú từ dữ liệu thật</Text>
     <LiveButton title="Tìm kiếm và chọn ngày" onPress={() => router.push('/(tabs)/search')} />
@@ -36,8 +37,13 @@ export function LiveHomeScreen() {
 }
 
 export function LiveSearchScreen() {
-  const { trip, setTrip } = useLiveState();
+  const { trip, setTrip, refreshCatalog } = useLiveState();
   const [query, setQuery] = useState('');
+  useFocusEffect(useCallback(() => {
+    if (!validTravelDates(trip.checkIn, trip.checkOut) || trip.guests < 1) return;
+    const timer = setTimeout(() => { void refreshCatalog({ q: query, checkIn: trip.checkIn, checkOut: trip.checkOut, guests: trip.guests }); }, 300);
+    return () => clearTimeout(timer);
+  }, [query, trip.checkIn, trip.checkOut, trip.guests, refreshCatalog]));
   return <LiveScreen title="Tìm chỗ ở">
     <LiveField label="Tên hoặc địa chỉ" value={query} onChangeText={setQuery} placeholder="Bạn muốn đi đâu?" />
     <View style={styles.row}>
@@ -49,7 +55,8 @@ export function LiveSearchScreen() {
     {!validTravelDates(trip.checkIn, trip.checkOut) || trip.guests < 1 ?
       <LiveMessage text="Chọn ngày hợp lệ và ít nhất một khách trước khi chọn phòng." /> :
       <Text style={styles.hint}>Phòng trống được kiểm tra theo ngày ở bước chọn phòng.</Text>}
-    <View style={styles.section}><CatalogList query={query} /></View>
+    {validTravelDates(trip.checkIn, trip.checkOut) && trip.guests > 0 &&
+      <View style={styles.section}><CatalogList /></View>}
   </LiveScreen>;
 }
 

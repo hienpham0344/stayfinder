@@ -6,6 +6,7 @@ import io.github.hienpham0344.stayfinder.booking.service.BookingService;
 import io.github.hienpham0344.stayfinder.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +35,7 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<BookingResponse>>> list(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(service.list(PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)))));
+        return ResponseEntity.ok(ApiResponse.success(service.list(PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(Sort.Direction.DESC, "createdAt", "id")))));
     }
 
     @GetMapping("/{id}")
