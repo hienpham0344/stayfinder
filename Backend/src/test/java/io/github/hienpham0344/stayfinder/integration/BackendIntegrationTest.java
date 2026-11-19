@@ -600,6 +600,10 @@ class BackendIntegrationTest {
         assertEquals(1, own.path("cancelledBookings").asInt());
         assertEquals(0, own.path("pendingBookings").asInt());
         assertEquals(200000, own.path("receivedRevenue").asInt());
+        assertEquals(2, result(get("/api/partner/bookings").param("size", "1"), PARTNER, 200)
+                .path("totalElements").asInt());
+        assertEquals(1, result(get("/api/partner/bookings").param("status", "CONFIRMED"), PARTNER, 200)
+                .path("totalElements").asInt());
         JsonNode ownPayments = result(get("/api/partner/payments").param("size", "1"), PARTNER, 200);
         assertEquals(1, ownPayments.path("totalElements").asInt());
         assertEquals(first.toString(), ownPayments.path("content").get(0).path("bookingId").asText());
@@ -610,6 +614,16 @@ class BackendIntegrationTest {
         JsonNode global = result(get("/api/admin/statistics"), ADMIN, 200);
         assertEquals(3, global.path("totalBookings").asInt());
         assertEquals(400000, global.path("receivedRevenue").asInt());
+        assertEquals(3, result(get("/api/admin/bookings").param("size", "1"), ADMIN, 200)
+                .path("totalElements").asInt());
+        assertEquals(2, result(get("/api/admin/bookings").param("userId", USER.toString()), ADMIN, 200)
+                .path("totalElements").asInt());
+        assertEquals(1, result(get("/api/admin/bookings").param("status", "CANCELLED"), ADMIN, 200)
+                .path("totalElements").asInt());
+        assertEquals(1, result(get("/api/admin/bookings").param("status", "CANCELLED")
+                .param("userId", USER.toString()), ADMIN, 200).path("totalElements").asInt());
+        assertEquals(1, result(get("/api/admin/bookings").param("status", "CONFIRMED")
+                .param("userId", USER.toString()), ADMIN, 200).path("totalElements").asInt());
         for (UUID actor : List.of(ADMIN, PARTNER)) {
             boolean admin = actor.equals(ADMIN);
             String route = admin ? "/api/admin/payments" : "/api/partner/payments";
