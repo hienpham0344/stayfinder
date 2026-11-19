@@ -114,6 +114,41 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void catalogPaginationIsStableAndNameAddressTypeFiltersIntersect() throws Exception {
+        // Equal names/timestamps must still produce deterministic, disjoint pages.
+        for (int page = 0; page < 2; page++) {
+            UUID expected = page == 0 ? OTHER_STAY : STAY;
+            JsonNode first = result(get("/api/accommodations").param("page", Integer.toString(page))
+                    .param("size", "1").param("sort", "name").param("direction", "asc"), null, 200);
+            assertEquals(2, first.path("totalElements").asInt());
+            assertEquals(1, first.path("content").size());
+            assertEquals(expected.toString(), first.path("content").get(0).path("id").asText());
+            assertEquals(first, result(get("/api/accommodations").param("page", Integer.toString(page))
+                    .param("size", "1").param("sort", "name").param("direction", "asc"), null, 200));
+        }
+        JsonNode outside = result(get("/api/accommodations").param("page", "2").param("size", "1"), null, 200);
+        assertEquals(0, outside.path("content").size());
+        assertEquals(2, outside.path("totalElements").asInt());
+        assertEquals(OTHER_STAY.toString(), result(get("/api/accommodations").param("sort", "passwordHash")
+                .param("size", "1"), null, 200).path("content").get(0).path("id").asText());
+
+        UUID villa = id(32);
+        jdbc.update("insert into accommodation_type(id,name) values(?,'Villa')", villa);
+        jdbc.update("update accommodations set name='Lotus Resort',address='Đà Nẵng' where id=?", STAY);
+        jdbc.update("update accommodations set name='Mountain Lodge',address='Huế',type_id=? where id=?", villa, OTHER_STAY);
+        JsonNode byName = result(get("/api/accommodations").param("q", "Lotus").param("typeId", TYPE.toString()), null, 200);
+        assertEquals(1, byName.path("content").size());
+        assertEquals(STAY.toString(), byName.path("content").get(0).path("id").asText());
+        JsonNode byAddress = result(get("/api/accommodations").param("q", "Huế").param("typeId", villa.toString()), null, 200);
+        assertEquals(1, byAddress.path("content").size());
+        assertEquals(OTHER_STAY.toString(), byAddress.path("content").get(0).path("id").asText());
+        JsonNode mismatch = result(get("/api/accommodations").param("q", "Đà Nẵng").param("typeId", villa.toString()), null, 200);
+        assertEquals(0, mismatch.path("totalElements").asInt());
+        assertEquals(0, mismatch.path("content").size());
+        assertEquals(0, result(get("/api/accommodations").param("q", "%"), null, 200).path("totalElements").asInt());
+    }
+
+    @Test
     void ownershipCapacityAndConcurrentBookingAreEnforcedByPostgres() throws Exception {
         result(post("/api/bookings").contentType("application/json").content(bookingBody(ROOM, 5, null)), USER, 409);
         List<MvcResult> raced = concurrent(2, () -> mvc.perform(post("/api/bookings").header("Authorization", bearer(USER))
@@ -186,6 +221,58 @@ class BackendIntegrationTest {
         lifecycle.expire(booking);
         assertEquals("EXPIRED", jdbc.queryForObject("select cancellation_reason from bookings where id=?", String.class, booking));
         assertEquals("AVAILABLE", jdbc.queryForObject("select status from reward_vouchers where id=?", String.class, voucher));
+    }
+
+    @Test
+    void webhookRacingExpiryCannotConfirmAnExpiredHoldOrConsumeItsVoucher() throws Exception {
+        UUID voucher = redeem();
+        UUID booking = UUID.fromString(result(post("/api/bookings").contentType("application/json")
+                .content(bookingBody(ROOM, 2, voucher)), USER, 200).path("id").asText());
+        JsonNode payment = result(post("/api/bookings/" + booking + "/payments"), USER, 200);
+        // Freeze exactly at expiry before starting either worker; no process-wide clock changes in flight.
+        clock.set(clock.instant().plusSeconds(900));
+        String payload = webhook(payment.path("paymentCode").asText(), 190000, 1011);
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<?> blocker = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .executeWithoutResult(status -> {
+                        jdbc.queryForObject("select id from bookings where id=? for update", UUID.class, booking);
+                        locked.countDown();
+                        try { assertTrue(release.await(15, TimeUnit.SECONDS)); }
+                        catch (InterruptedException ex) { Thread.currentThread().interrupt(); throw new IllegalStateException(ex); }
+                    }));
+            try {
+                assertTrue(locked.await(10, TimeUnit.SECONDS));
+                Future<?> expiry = executor.submit(() -> lifecycle.expire(booking));
+                Future<MvcResult> callback = executor.submit(() -> signedWebhook(payload));
+                try {
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                    int waiting = 0;
+                    while (System.nanoTime() < deadline) {
+                        waiting = jdbc.queryForObject("select count(*) from pg_stat_activity where datname=current_database() "
+                                + "and pid<>pg_backend_pid() and wait_event_type='Lock'", Integer.class);
+                        if (waiting >= 2) break;
+                        Thread.sleep(20);
+                    }
+                    assertTrue(waiting >= 2, "Both expiry and webhook must contend for the held booking lock");
+                    assertFalse(expiry.isDone());
+                    assertFalse(callback.isDone());
+                } finally { release.countDown(); }
+                blocker.get(20, TimeUnit.SECONDS);
+                expiry.get(20, TimeUnit.SECONDS);
+                assertEquals(409, callback.get(20, TimeUnit.SECONDS).getResponse().getStatus());
+            } finally { release.countDown(); }
+        }
+        assertEquals("cancelled", jdbc.queryForObject("select status from bookings where id=?", String.class, booking));
+        assertEquals("EXPIRED", jdbc.queryForObject("select cancellation_reason from bookings where id=?", String.class, booking));
+        assertEquals("pending", jdbc.queryForObject("select status from payments where booking_id=?", String.class, booking));
+        assertNull(jdbc.queryForObject("select transaction_id from payments where booking_id=?", String.class, booking));
+        assertEquals("AVAILABLE", jdbc.queryForObject("select status from reward_vouchers where id=?", String.class, voucher));
+        assertEquals(409, signedWebhook(payload).getResponse().getStatus());
+        assertEquals(1, jdbc.queryForObject("select count(*) from payment_anomalies where booking_id=? "
+                + "and reason='BOOKING_NOT_PAYABLE'", Integer.class, booking));
+        assertEquals(1000, jdbc.queryForObject("select loyalty_points from users where id=?", Integer.class, USER));
     }
 
     @Test
@@ -373,6 +460,34 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void approvedRoomPriceChangesPreserveExistingBookingSnapshotsAndPaymentAmount() throws Exception {
+        UUID booking = UUID.fromString(result(post("/api/bookings").contentType("application/json")
+                .content(bookingBody(ROOM, 2, null)), USER, 200).path("id").asText());
+        JsonNode before = result(get("/api/bookings/" + booking), USER, 200);
+        assertEquals(200000, before.path("totalPrice").asInt());
+        UUID snapshot = UUID.fromString(before.path("details").get(0).path("roomSnapshotId").asText());
+        String edit = "{\"roomTypeId\":\"" + TYPE + "\",\"name\":\"Family repriced\",\"description\":\"Updated\","
+                + "\"price\":150000,\"capacity\":4,\"status\":\"AVAILABLE\",\"version\":0}";
+        result(put("/api/partner/accommodations/" + STAY + "/rooms/" + ROOM).contentType("application/json")
+                .content(edit), PARTNER, 200);
+        result(get("/api/accommodations/" + STAY), null, 404);
+        result(post("/api/admin/accommodations/" + STAY + "/moderation").contentType("application/json")
+                .content("{\"status\":\"ACTIVE\",\"reason\":\"approved revised rate\",\"version\":1}"), ADMIN, 200);
+
+        assertEquals(before, result(get("/api/bookings/" + booking), USER, 200));
+        assertEquals(100000, jdbc.queryForObject("select price from room_snapshot where id=?", java.math.BigDecimal.class, snapshot).intValueExact());
+        JsonNode payment = result(post("/api/bookings/" + booking + "/payments"), USER, 200);
+        assertEquals(200000, payment.path("amount").asInt());
+        assertEquals(200, signedWebhook(webhook(payment.path("paymentCode").asText(), 200000, 1012)).getResponse().getStatus());
+        assertEquals("CONFIRMED", result(get("/api/bookings/" + booking), USER, 200).path("status").asText());
+
+        String later = bookingBody(ROOM, 2, null).replace("2027-01-02", "2027-02-02").replace("2027-01-04", "2027-02-04");
+        JsonNode fresh = result(post("/api/bookings").contentType("application/json").content(later), USER, 200);
+        assertEquals(300000, fresh.path("totalPrice").asInt());
+        assertEquals("Family repriced", fresh.path("details").get(0).path("roomName").asText());
+    }
+
+    @Test
     void partnerApplicationApprovalIsIdempotentAndInvalidatesOldToken() throws Exception {
         JsonNode application = result(post("/api/partner-applications").contentType("application/json")
                 .content("{\"businessName\":\"Test partner\",\"description\":\"Small hotel\"}"), USER, 200);
@@ -495,6 +610,26 @@ class BackendIntegrationTest {
         JsonNode global = result(get("/api/admin/statistics"), ADMIN, 200);
         assertEquals(3, global.path("totalBookings").asInt());
         assertEquals(400000, global.path("receivedRevenue").asInt());
+        for (UUID actor : List.of(ADMIN, PARTNER)) {
+            boolean admin = actor.equals(ADMIN);
+            String route = admin ? "/api/admin/payments" : "/api/partner/payments";
+            int visible = admin ? 2 : 1;
+            assertEquals(visible, result(get(route).param("size", "1"), actor, 200).path("totalElements").asInt());
+            assertEquals(visible, result(get(route).param("size", "1").param("status", "SUCCESS"), actor, 200)
+                    .path("totalElements").asInt());
+            assertEquals(0, result(get(route).param("size", "1").param("status", "PENDING"), actor, 200)
+                    .path("totalElements").asInt());
+            assertEquals(1, result(get(route).param("size", "1").param("bookingId", first.toString()), actor, 200)
+                    .path("totalElements").asInt());
+            assertEquals(1, result(get(route).param("size", "1").param("status", "SUCCESS")
+                    .param("bookingId", first.toString()), actor, 200).path("totalElements").asInt());
+            assertEquals(0, result(get(route).param("size", "1").param("status", "PENDING")
+                    .param("bookingId", first.toString()), actor, 200).path("totalElements").asInt());
+            assertEquals(admin ? 1 : 0, result(get(route).param("size", "1").param("bookingId", second.toString()), actor, 200)
+                    .path("totalElements").asInt());
+            assertEquals(admin ? 1 : 0, result(get(route).param("size", "1").param("status", "SUCCESS")
+                    .param("bookingId", second.toString()), actor, 200).path("totalElements").asInt());
+        }
         jdbc.update("update users set role='partner' where id=?", USER);
         JsonNode empty = result(get("/api/partner/statistics"), USER, 200);
         assertEquals(0, empty.path("totalBookings").asInt());

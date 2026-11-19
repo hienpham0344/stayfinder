@@ -1,28 +1,20 @@
 {
-  "tests": 138,
+  "tests": 141,
   "failures": 0,
   "errors": 0,
   "skipped": 0,
-  "observed_utc": "2026-11-18T06:19:21.236517+00:00",
-  "command": "bash ./mvnw -o -B -ntp -Dmaven.repo.local=target/verification-runtime/m2 -Dstayfinder.integration=true verify",
+  "observed_utc": "2026-11-19T13:43:52.424613+00:00",
+  "command": "JAVA_HOME=JDK21 bash ./mvnw -o -B -ntp -Dmaven.repo.local=target/verification-runtime/m2 -Dstayfinder.integration=true verify",
   "java": 21,
   "database": "PostgreSQL 16.15 disposable stayfinder_test",
   "suites": [
     {
-      "suite": "io.github.hienpham0344.stayfinder.admin.AdminAccountServiceTest",
-      "tests": 3,
+      "suite": "io.github.hienpham0344.stayfinder.StayfinderApplicationTests",
+      "tests": 1,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.016
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.common.exception.ErrorCodeContractTest",
-      "tests": 13,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.207
+      "seconds": 22.507
     },
     {
       "suite": "io.github.hienpham0344.stayfinder.accommodation.AccommodationSearchTest",
@@ -30,151 +22,15 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
+      "seconds": 0.004
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.admin.AdminAccountServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
       "seconds": 0.012
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.payment.PaymentServiceTest",
-      "tests": 3,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.312
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.integration.BackendIntegrationTest",
-      "tests": 23,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 53.783
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.common.exception.GlobalExceptionHandlerTest",
-      "tests": 5,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.014
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.partner.PartnerPropertyServiceTest",
-      "tests": 3,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 1.378
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.review.ReviewServiceTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.264
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.user.UserMapperTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.008
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.user.UserServiceTest",
-      "tests": 6,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.462
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingPaymentLockTest",
-      "tests": 3,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.367
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.payment.SepayWebhookServiceTest",
-      "tests": 6,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.374
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.payment.SepayPaymentProviderTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.006
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.security.JwtAuthenticationFilterTest",
-      "tests": 3,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.222
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingPolicyTest",
-      "tests": 2,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.027
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.config.PublicCacheTest",
-      "tests": 2,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.015
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingDomainQueryServiceTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.023
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.rewards.RewardsServiceTest",
-      "tests": 9,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.719
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.security.JwtServiceTest",
-      "tests": 4,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.182
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.management.OperationsQueryServiceTest",
-      "tests": 2,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.738
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.common.response.ApiResponseContractTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.005
     },
     {
       "suite": "io.github.hienpham0344.stayfinder.admin.AdminModerationServiceTest",
@@ -182,15 +38,55 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.533
+      "seconds": 0.44
     },
     {
-      "suite": "io.github.hienpham0344.stayfinder.security.SecurityHttpTest",
-      "tests": 6,
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingDomainQueryServiceTest",
+      "tests": 1,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 2.093
+      "seconds": 0.018
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingLifecycleSchedulerTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.217
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingLifecycleServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.907
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingPaymentLockTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.233
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingPolicyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.033
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.booking.BookingServiceTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.627
     },
     {
       "suite": "io.github.hienpham0344.stayfinder.common.exception.BusinessExceptionTest",
@@ -201,100 +97,36 @@
       "seconds": 0.003
     },
     {
-      "suite": "io.github.hienpham0344.stayfinder.security.AuthRateLimiterTest",
-      "tests": 3,
+      "suite": "io.github.hienpham0344.stayfinder.common.exception.ErrorCodeContractTest",
+      "tests": 13,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.042
+      "seconds": 0.272
     },
     {
-      "suite": "io.github.hienpham0344.stayfinder.recommendation.RecommendationServiceTest",
-      "tests": 2,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.31
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.payment.SepayReconciliationTest",
-      "tests": 4,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.285
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.payment.PaymentCodeTest",
-      "tests": 2,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.01
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.StayfinderApplicationTests",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 41.199
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingLifecycleServiceTest",
-      "tests": 3,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.692
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.persistence.EntityTableMappingTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.01
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingLifecycleSchedulerTest",
-      "tests": 1,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 0.341
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.security.AuthServiceTest",
+      "suite": "io.github.hienpham0344.stayfinder.common.exception.GlobalExceptionHandlerTest",
       "tests": 5,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.758
+      "seconds": 0.036
     },
     {
-      "suite": "io.github.hienpham0344.stayfinder.room.RoomAvailabilityServiceTest",
-      "tests": 3,
+      "suite": "io.github.hienpham0344.stayfinder.common.response.ApiResponseContractTest",
+      "tests": 1,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 3.499
+      "seconds": 0.006
     },
     {
-      "suite": "io.github.hienpham0344.stayfinder.partner.PartnerApplicationServiceTest",
+      "suite": "io.github.hienpham0344.stayfinder.config.PublicCacheTest",
       "tests": 2,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.437
-    },
-    {
-      "suite": "io.github.hienpham0344.stayfinder.booking.BookingServiceTest",
-      "tests": 8,
-      "failures": 0,
-      "errors": 0,
-      "skipped": 0,
-      "seconds": 1.247
+      "seconds": 0.013
     },
     {
       "suite": "io.github.hienpham0344.stayfinder.favorite.FavoriteServiceTest",
@@ -302,7 +134,176 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "seconds": 0.243
+      "seconds": 0.266
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.integration.BackendIntegrationTest",
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 54.847
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.management.OperationsQueryServiceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.663
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.partner.PartnerApplicationServiceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.555
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.partner.PartnerPropertyServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.365
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.payment.PaymentCodeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.008
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.payment.PaymentServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.293
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.payment.SepayPaymentProviderTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.005
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.payment.SepayReconciliationTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.229
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.payment.SepayWebhookServiceTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.381
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.persistence.EntityTableMappingTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.008
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.recommendation.RecommendationServiceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.237
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.review.ReviewServiceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.381
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.rewards.RewardsServiceTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.502
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.room.RoomAvailabilityServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 3.641
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.security.AuthRateLimiterTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.06
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.security.AuthServiceTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.524
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.security.JwtAuthenticationFilterTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.384
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.security.JwtServiceTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.233
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.security.SecurityHttpTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.729
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.user.UserMapperTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.003
+    },
+    {
+      "suite": "io.github.hienpham0344.stayfinder.user.UserServiceTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.266
     }
-  ]
+  ],
+  "jar_sha256": "aa7d1ce01f536c308751d717809811d5d19d1df53bce8ee5a24f660543257909"
 }

@@ -2,7 +2,7 @@
 
 Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spring Boot hiện tại, PostgreSQL, CUSTOMER/PARTNER/ADMIN, SePay Test mode, một phòng vật lý mỗi đơn. Không triển khai production hoặc chạy migration trên database đang sử dụng.
 
-**Trạng thái bàn giao mã nguồn:** code chức năng đã triển khai; Maven `verify` cuối có **138 test, 0 failure/error/skipped**, trong đó **23 test tích hợp PostgreSQL**. Migration có **6 test riêng đạt**. Frontend typecheck, 9 test và web export đạt. Bộ đo cache bật/tắt đã đủ sáu lượt, đạt budget trên workload đã đo; không dùng kết quả phiên bị ngắt. Toàn bộ **36 operation quản trị** đã được kiểm tra từ chối anonymous/sai role qua SecurityFilterChain thực.
+**Trạng thái bàn giao mã nguồn:** code chức năng đã triển khai; Maven `verify` cuối có **141 test, 0 failure/error/skipped**, trong đó **26 test tích hợp PostgreSQL**. Migration có **6 test riêng đạt**. Frontend typecheck, 9 test và web export đạt. Bộ đo cache bật/tắt đã đủ sáu lượt, đạt budget trên workload đã đo; không dùng kết quả phiên bị ngắt. Toàn bộ **36 operation quản trị** đã được kiểm tra từ chối anonymous/sai role qua SecurityFilterChain thực.
 
 ## 1. Cách đọc bằng chứng
 
@@ -23,7 +23,7 @@ Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spr
 - Script `scripts/test-database.sh` giới hạn localhost và database `stayfinder_test`. Fixture tích hợp kiểm tra lại tên database trước khi reset đúng nhóm bảng test.
 - `scripts/test-migrations.py` dùng database khác `stayfinder_migration_test`, yêu cầu marker riêng trước khi reset schema; kiểm tra dữ liệu cũ, replay và rollback.
 - Hợp đồng [OpenAPI](docs/openapi.yaml): 60 path, 71 operation; generator stdlib và test đối chiếu route Spring thực. Có request/response DTO, role, phân trang và lỗi; không thêm thư viện tài liệu.
-- CI PostgreSQL 16 + Java 21 chạy migration, Maven verify, regression migration và lưu test reports. Chưa chạy hosted GitHub Actions từ phiên này.
+- CI PostgreSQL 16 + Java 21 chạy migration, Maven verify, regression migration và lưu test reports. Hosted GitHub Actions [run44531199680](https://github.com/hienpham0344/stayfinder/actions/runs/44531199680) đã SUCCESS trên commit `5005412`; artifact xác nhận138test +6migrationtest, không failure/error/skipped. [Bằng chứng CI](docs/evidence/ci-hosted.json).
 
 **Kiểm chứng:** PostgreSQL **16.15**, Java **21.0.13**; dựng mới hai database test/benchmark từ migration `000`–`003`; không kết nối database thật. Bộ fixture benchmark: 1.000 accommodation, 10.000 room, 100.000 booking/payment/ledger, 10.000 review. Kết quả legacy migration tại [migrations.json](docs/evidence/migrations.json).
 
@@ -31,11 +31,11 @@ Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spr
 
 | Phần | Kết luận | Giới hạn cần giữ rõ |
 | --- | --- | --- |
-| 0 — môi trường/schema/API | Đạt trên database test mới và legacy fixture | Database thật và hosted CI chưa xác minh |
+| 0 — môi trường/schema/API | Đạt trên database test mới và legacy fixture | Hosted CI đạt; database thật ngoài phạm vi, chưa xác minh |
 | 1 — bảo mật/tài khoản | Đạt automated auth/RBAC/ownership | Chưa pentest bên ngoài hoặc kiểm tra reverse proxy thực |
 | 2 — dữ liệu CUSTOMER | Đạt backend test và frontend build/checks | Chưa thao tác trên thiết bị thật |
-| 3 — PARTNER | Đạt API/ownership/moderation/concurrency | Chưa có UI hoặc HTTP load test riêng |
-| 4 — ADMIN | Đạt API/RBAC/audit/last-admin | Chưa có UI hoặc HTTP load test riêng |
+| 3 — PARTNER | Đạt API/ownership/moderation/concurrency | Không xây UI theo phạm vi; Full HTTP baseline chưa đạt; đang tối ưu và kiểm thử lại |
+| 4 — ADMIN | Đạt API/RBAC/audit/last-admin | Không xây UI theo phạm vi; Full HTTP baseline chưa đạt; đang tối ưu và kiểm thử lại |
 | 5 — booking/payment/review | Đạt PostgreSQL và SePay sandbox E2E qua CLI chính thức | Chưa kiểm tra chuyển khoản thật/public HTTPS production |
 | 6 — rewards/voucher | Đạt nghiệp vụ, concurrency và legacy migration | Chính sách không hoàn điểm voucher hết hạn được giữ rõ |
 | 7 — recommendations | Đạt heuristic/batch/filter trong fixture | Chưa đánh giá chất lượng trên dữ liệu người dùng thật |
@@ -178,7 +178,25 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 
 **Kết luận cache:** correctness và giảm query metadata khi hit đã được test; benchmark HTTP có biến thiên đáng kể, chưa chứng minh cache tăng tốc ổn định. Không quy nguyên nhân biến thiên cho hạ tầng hoặc cache khi chưa có bằng chứng. Không loại lượt chậm để làm đẹp số liệu.
 
-Đây là sáu workload catalog/detail/availability/booking page/wishlist PUT trên loopback; **không** chứng minh SLA cho mọi API ghi, mạng di động, kết nối SePay hoặc deployment khác. Admin/partner có smoke HTTP riêng: không lỗi hợp đồng nhưng p95 vượt budget; đang tối ưu và đo lại đầy đủ. Không gộp kết quả này vào sáu workload đã đạt. Không dùng round bị ngắt của phiên trước để nghiệm thu.
+Đây là sáu workload catalog/detail/availability/booking page/wishlist PUT trên loopback; **không** chứng minh SLA cho mọi API ghi, mạng di động, kết nối SePay hoặc deployment khác. Admin/partner đã có3lượt HTTP riêng: không lỗi hợp đồng nhưng p95 vượt budget; đang tối ưu và kiểm thử lại. Không gộp kết quả này vào sáu workload đã đạt. Không dùng round bị ngắt của phiên trước để nghiệm thu.
+
+### HTTP ADMIN/PARTNER và booking/payment ghi — baseline chưa đạt
+
+Đã chạy20client,30giây warm-up +300giây đo ×3lượt trên JAR `81371f5c…`; **32.970 request,0lỗi đo/warm-up**, nhưng **không đạt budget**. Throughput35,88/37,94/35,74request/s. Giữ nguyên pool10 và cấu hình trong cả ba lượt; index thử nghiệm đã ROLLBACK trước đo, không có migration mới. Tạo và hủy4.068booking cùng4.068pendingpayment kể cả warm-up; giữ lịch sử fixture. [Raw results](docs/evidence/performance-operations.json).
+
+| Workload | p95 cao nhất trong3lượt(ms) | Budget(ms) |
+| --- | ---: | ---: |
+| admin-bookings | 760.70 | 300 |
+| admin-payments | 766.96 | 300 |
+| admin-statistics | 921.85 | 300 |
+| booking-cancel | 708.70 | 700 |
+| booking-create | 799.62 | 700 |
+| partner-bookings | 1036.46 | 300 |
+| partner-payments | 2662.71 | 300 |
+| partner-statistics | 1469.55 | 300 |
+| payment-create | 709.71 | 700 |
+
+Đây là baseline trước tối ưu filter nullable; kết quả sai budget vẫn được giữ. PREPARE với force_generic_plan tái hiện count payment nullable bookingId mất908,12ms, trong khi câu không bookingId157,45ms và câu bookingId cụ thể0,159ms. Repository tách trường hợp có/không bookingId, giữ status/ownership và response cũ. [Raw prepared plans](docs/evidence/operations-prepared-plan-investigation.json). Chưa coi0HTTPerror hoặc cải thiện SQL là đã đạt HTTP budget.
 
 ## 11. Bảo trì và phát triển
 
@@ -187,7 +205,7 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 - Transaction và lock order được ghi rõ, optimistic version cho edit, unique constraint cho dữ liệu cần idempotency, regression test cho các race tìm thấy.
 - SQL tham số hóa, allowlist sort và giới hạn trang/candidate; booking response giữ batch snapshot lookup. Migration có preflight/backfill và rollback bằng transaction khi dữ liệu không hợp lệ.
 - Frontend chỉ chỉnh client, state và live screens cần tích hợp; không thiết kế lại giao diện. Giữ API cũ khi có thể; OpenAPI và test route giúp phát hiện thiếu hợp đồng.
-- CI đã cấu hình nhưng chưa chạy hosted. Chưa có SAST/DAST/pentest ngoài máy test hoặc kiểm định vận hành production; không suy diễn kết quả unit test thành chứng nhận an toàn.
+- Hosted CI đã đạt trên commit được ghi trong bằng chứng; chưa có SAST/DAST/pentest ngoài máy test hoặc kiểm định vận hành production; không suy diễn kết quả unit test thành chứng nhận an toàn.
 
 ## 12. Vòng kiểm tra → sửa → kiểm thử lại
 
@@ -198,6 +216,9 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 | Partner có thể tự lộ nội dung mới | PENDING + admin approval + version | Partner ownership/moderation integration |
 | Cache đọc metadata chưa duyệt sau concurrent edit | Snapshot REPEATABLE_READ | Latch test trước FAIL, sau PASS |
 | Booking chờ room lock dùng phòng vừa sửa chưa duyệt | Khóa accommodation trước room | PostgreSQL trước HTTP200 sai, sau HTTP404 |
+| Webhook đua expiry tại đúng ranh giới | Đối soát sau rollback, booking lock và voucher release | Hai worker thực chờ khóa PostgreSQL; CANCELLED/unpaid/voucher AVAILABLE |
+| Partner sửa giá sau booking | Snapshot giữ giá/room name cũ, booking mới dùng giá mới | HTTP partner→admin approve→payment cũ SUCCESS |
+| Catalog phân trang/filter thiếu bằng chứng | Thêm regression stable tie-breaker, trang rỗng, name/address/type | PostgreSQL/HTTP regression đạt |
 | Webhook lỗi giữ nested connection | Kết thúc processing transaction trước anomaly transaction | 20 webhook lỗi đồng thời, không pool exhaustion |
 | Provider transaction ID đua giữa hai đơn | DB unique + rollback/anomaly sau commit failure | Chỉ một payment/booking thành công |
 | Voucher/điểm bị retry hoặc tiêu đồng thời | Row lock + ledger key + unique | Redemption/booking/voucher concurrency |
@@ -212,9 +233,9 @@ Review độc lập đã đọc auth, ownership, transaction, rewards, migration
 
 | Nhóm | Kết luận hiện tại |
 | --- | --- |
-| CUSTOMER | Chức năng MVP đã triển khai, automated flow đạt; benchmark workload đã đạt, thiết bị thật và SePay E2E chưa xác minh |
+| CUSTOMER | Chức năng MVP đã triển khai, automated flow đạt; benchmark workload đã đạt, SePay sandbox E2E đạt; thiết bị thật/public HTTPS chưa xác minh |
 | PARTNER | API và ownership/moderation đã triển khai, automated tests đạt; không xây giao diện quản trị |
-| ADMIN | API và role/audit/last-admin protection đã triển khai, automated tests đạt; hosted CI và kiểm tra vận hành ngoài máy test chưa xác minh |
-| Hiệu năng/cache | SQL budget/cache regression và sáu lượt HTTP benchmark đạt trên workload nêu ở phần 10; chưa có HTTP load test riêng cho admin/partner và mọi API ghi |
+| ADMIN | API và role/audit/last-admin protection đã triển khai, automated tests đạt; hosted CI đạt; kiểm tra vận hành ngoài máy test chưa xác minh |
+| Hiệu năng/cache | SQL budget/cache regression và sáu lượt HTTP benchmark đạt trên workload nêu ở phần 10; Full HTTP admin/partner và booking/payment ghi chưa đạt budget; đang tối ưu và kiểm thử lại |
 
 Triển khai và kiểm chứng tự động tại máy test đã hoàn thành trong phạm vi nêu trên; SePay E2E chỉ được xác minh trong sandbox qua relay chính thức, chưa xác nhận production. Chưa kiểm tra schema/database thật, triển khai production, hoàn tiền, nhiều phòng/đơn, OAuth/email, storage upload, Redis/multi-instance hoặc AI ngoài. Hướng chạy lại chính xác trong [OPERATIONS.md](docs/OPERATIONS.md); bằng chứng đã hoàn thành lưu trong repository để không phụ thuộc `/tmp`.
