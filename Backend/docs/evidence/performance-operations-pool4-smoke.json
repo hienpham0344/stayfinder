@@ -1,0 +1,216 @@
+{
+  "clients": 20,
+  "warmup_seconds": 15,
+  "measured_seconds_per_round": 45,
+  "started_at_utc": "2026-11-19T13:50:37.102491+00:00",
+  "updated_at_utc": "2026-11-19T13:51:39.762634+00:00",
+  "cpu_count": 16,
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "artifact_sha256": "aa7d1ce01f536c308751d717809811d5d19d1df53bce8ee5a24f660543257909",
+  "initial_statistics": {
+    "totalBookings": 104937,
+    "pendingBookings": 2,
+    "cancelledBookings": 4934,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "final_statistics": {
+    "totalBookings": 105174,
+    "pendingBookings": 2,
+    "cancelledBookings": 5171,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "dataset_effect": {
+    "generated_bookings_including_warmup": 237,
+    "generated_payments_including_warmup": 237,
+    "cancelled_bookings_including_warmup": 237,
+    "booking_count_delta": 237,
+    "payment_count_delta": 237,
+    "history_deleted": false
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "requests": 1641,
+      "rps": 36.08,
+      "actual_elapsed_seconds": 45.48,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 182,
+          "p50": 457.09,
+          "p95": 725.22,
+          "p99": 862.15,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.164835,
+          "within_budget_wilson95_iid": [
+            0.117971,
+            0.225556
+          ]
+        },
+        "admin-payments": {
+          "count": 183,
+          "p50": 440.79,
+          "p95": 789.09,
+          "p99": 955.4,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.245902,
+          "within_budget_wilson95_iid": [
+            0.18916,
+            0.313092
+          ]
+        },
+        "admin-statistics": {
+          "count": 180,
+          "p50": 547.79,
+          "p95": 878.69,
+          "p99": 1047.25,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.066667,
+          "within_budget_wilson95_iid": [
+            0.038544,
+            0.112899
+          ]
+        },
+        "booking-cancel": {
+          "count": 183,
+          "p50": 399.88,
+          "p95": 668.53,
+          "p99": 780.27,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.95082,
+          "within_budget_wilson95_iid": [
+            0.909188,
+            0.973913
+          ]
+        },
+        "booking-create": {
+          "count": 183,
+          "p50": 477.26,
+          "p95": 765.73,
+          "p99": 1042.95,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.863388,
+          "within_budget_wilson95_iid": [
+            0.806109,
+            0.905725
+          ]
+        },
+        "partner-bookings": {
+          "count": 181,
+          "p50": 595.93,
+          "p95": 880.07,
+          "p99": 1128.26,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.016575,
+          "within_budget_wilson95_iid": [
+            0.005653,
+            0.04759
+          ]
+        },
+        "partner-payments": {
+          "count": 184,
+          "p50": 654.14,
+          "p95": 927.1,
+          "p99": 1064.85,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.01087,
+          "within_budget_wilson95_iid": [
+            0.002986,
+            0.038759
+          ]
+        },
+        "partner-statistics": {
+          "count": 182,
+          "p50": 853.9,
+          "p95": 1195.47,
+          "p99": 1274.0,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.020671
+          ]
+        },
+        "payment-create": {
+          "count": 183,
+          "p50": 459.18,
+          "p95": 742.45,
+          "p99": 840.19,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.901639,
+          "within_budget_wilson95_iid": [
+            0.849889,
+            0.936874
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 1.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 15.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        },
+        {
+          "hikaricp.connections.active": 4.0,
+          "hikaricp.connections.pending": 16.0,
+          "hikaricp.connections.max": 4.0
+        }
+      ],
+      "latency_budget_met": false
+    }
+  ],
+  "passed": false,
+  "limitations": [
+    "Local synthetic fixture; no production/WAN SLA",
+    "No real transfer or SePay webhook",
+    "Workload adds retained cancelled bookings and pending payment history",
+    "Wilson intervals are descriptive and assume IID; closed-loop samples are correlated"
+  ],
+  "experimental_configuration": {
+    "hikari_maximum_pool_size": 4,
+    "postgres_parallel_workers_per_gather": 0,
+    "heap_mb": [
+      256,
+      768
+    ],
+    "cache": "enabled",
+    "scheduler": "disabled",
+    "phase": "short A/B smoke, not full acceptance",
+    "same_fixture_retained_history": true,
+    "runtime_only": true
+  }
+}

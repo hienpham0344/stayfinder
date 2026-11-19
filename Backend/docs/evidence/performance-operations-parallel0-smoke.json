@@ -1,0 +1,221 @@
+{
+  "clients": 20,
+  "warmup_seconds": 15,
+  "measured_seconds_per_round": 45,
+  "started_at_utc": "2026-11-19T13:46:22.844264+00:00",
+  "updated_at_utc": "2026-11-19T13:47:26.060634+00:00",
+  "cpu_count": 16,
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "artifact_sha256": "aa7d1ce01f536c308751d717809811d5d19d1df53bce8ee5a24f660543257909",
+  "initial_statistics": {
+    "totalBookings": 104568,
+    "pendingBookings": 2,
+    "cancelledBookings": 4565,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "final_statistics": {
+    "totalBookings": 104937,
+    "pendingBookings": 2,
+    "cancelledBookings": 4934,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "dataset_effect": {
+    "generated_bookings_including_warmup": 369,
+    "generated_payments_including_warmup": 369,
+    "cancelled_bookings_including_warmup": 369,
+    "booking_count_delta": 369,
+    "payment_count_delta": 369,
+    "history_deleted": false
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "requests": 2616,
+      "rps": 57.27,
+      "actual_elapsed_seconds": 45.678,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 289,
+          "p50": 191.96,
+          "p95": 393.03,
+          "p99": 474.47,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.806228,
+          "within_budget_wilson95_iid": [
+            0.756764,
+            0.847659
+          ]
+        },
+        "admin-payments": {
+          "count": 290,
+          "p50": 183.56,
+          "p95": 379.26,
+          "p99": 467.22,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.848276,
+          "within_budget_wilson95_iid": [
+            0.802452,
+            0.884994
+          ]
+        },
+        "admin-statistics": {
+          "count": 290,
+          "p50": 308.8,
+          "p95": 515.03,
+          "p99": 602.23,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.451724,
+          "within_budget_wilson95_iid": [
+            0.39545,
+            0.509261
+          ]
+        },
+        "booking-cancel": {
+          "count": 292,
+          "p50": 173.88,
+          "p95": 377.85,
+          "p99": 484.01,
+          "budget_ms": 700,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.987015,
+            1.0
+          ]
+        },
+        "booking-create": {
+          "count": 292,
+          "p50": 203.11,
+          "p95": 425.56,
+          "p99": 610.16,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.996575,
+          "within_budget_wilson95_iid": [
+            0.98086,
+            0.999395
+          ]
+        },
+        "partner-bookings": {
+          "count": 289,
+          "p50": 475.72,
+          "p95": 699.83,
+          "p99": 777.93,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.044983,
+          "within_budget_wilson95_iid": [
+            0.026474,
+            0.075429
+          ]
+        },
+        "partner-payments": {
+          "count": 291,
+          "p50": 462.94,
+          "p95": 673.01,
+          "p99": 798.49,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.041237,
+          "within_budget_wilson95_iid": [
+            0.023744,
+            0.070684
+          ]
+        },
+        "partner-statistics": {
+          "count": 291,
+          "p50": 832.36,
+          "p95": 1065.95,
+          "p99": 1147.28,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0.0,
+            0.013029
+          ]
+        },
+        "payment-create": {
+          "count": 292,
+          "p50": 165.84,
+          "p95": 356.78,
+          "p99": 492.41,
+          "budget_ms": 700,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.987015,
+            1.0
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        }
+      ],
+      "latency_budget_met": false
+    }
+  ],
+  "passed": false,
+  "limitations": [
+    "Local synthetic fixture; no production/WAN SLA",
+    "No real transfer or SePay webhook",
+    "Workload adds retained cancelled bookings and pending payment history",
+    "Wilson intervals are descriptive and assume IID; closed-loop samples are correlated"
+  ],
+  "experimental_configuration": {
+    "hikari_maximum_pool_size": 10,
+    "postgres_parallel_workers_per_gather": 0,
+    "heap_mb": [
+      256,
+      768
+    ],
+    "cache": "enabled",
+    "scheduler": "disabled",
+    "phase": "short A/B smoke, not full acceptance",
+    "same_fixture_retained_history": true,
+    "runtime_only": true
+  }
+}

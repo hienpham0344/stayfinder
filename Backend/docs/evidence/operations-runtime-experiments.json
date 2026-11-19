@@ -1,0 +1,101 @@
+{
+  "purpose": "A/B fixture configuration after payment query fix; short probes do not replace full acceptance",
+  "artifact_sha256": "aa7d1ce01f536c308751d717809811d5d19d1df53bce8ee5a24f660543257909",
+  "server_config": "application-benchmark.yaml; default pool10; no permanent PostgreSQL changes",
+  "experiments": [
+    {
+      "file": "performance-operations-optimized-smoke.json",
+      "configuration": {
+        "hikari_maximum_pool_size": 10,
+        "postgres_parallel_workers_per_gather": "server default, not overridden",
+        "heap_mb": [
+          256,
+          768
+        ],
+        "cache": "enabled",
+        "scheduler": "disabled",
+        "phase": "short smoke, not full acceptance",
+        "same_fixture_retained_history": true
+      },
+      "requests": 2403,
+      "errors": 0,
+      "p95_ms": {
+        "admin-bookings": 450.44,
+        "admin-payments": 467.55,
+        "admin-statistics": 627.67,
+        "booking-cancel": 434.23,
+        "booking-create": 484.71,
+        "partner-bookings": 746.31,
+        "partner-payments": 736.77,
+        "partner-statistics": 1149.48,
+        "payment-create": 433.23
+      },
+      "passed": false
+    },
+    {
+      "file": "performance-operations-parallel0-smoke.json",
+      "configuration": {
+        "hikari_maximum_pool_size": 10,
+        "postgres_parallel_workers_per_gather": 0,
+        "heap_mb": [
+          256,
+          768
+        ],
+        "cache": "enabled",
+        "scheduler": "disabled",
+        "phase": "short A/B smoke, not full acceptance",
+        "same_fixture_retained_history": true,
+        "runtime_only": true
+      },
+      "requests": 2616,
+      "errors": 0,
+      "p95_ms": {
+        "admin-bookings": 393.03,
+        "admin-payments": 379.26,
+        "admin-statistics": 515.03,
+        "booking-cancel": 377.85,
+        "booking-create": 425.56,
+        "partner-bookings": 699.83,
+        "partner-payments": 673.01,
+        "partner-statistics": 1065.95,
+        "payment-create": 356.78
+      },
+      "passed": false
+    },
+    {
+      "file": "performance-operations-pool4-smoke.json",
+      "configuration": {
+        "hikari_maximum_pool_size": 4,
+        "postgres_parallel_workers_per_gather": 0,
+        "heap_mb": [
+          256,
+          768
+        ],
+        "cache": "enabled",
+        "scheduler": "disabled",
+        "phase": "short A/B smoke, not full acceptance",
+        "same_fixture_retained_history": true,
+        "runtime_only": true
+      },
+      "requests": 1641,
+      "errors": 0,
+      "p95_ms": {
+        "admin-bookings": 725.22,
+        "admin-payments": 789.09,
+        "admin-statistics": 878.69,
+        "booking-cancel": 668.53,
+        "booking-create": 765.73,
+        "partner-bookings": 880.07,
+        "partner-payments": 927.1,
+        "partner-statistics": 1195.47,
+        "payment-create": 742.45
+      },
+      "passed": false
+    }
+  ],
+  "decision": "Keep default pool10/parallel settings for final full comparison; neither short experiment met read budget",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-prepare.html",
+    "https://www.postgresql.org/docs/16/runtime-config-resource.html"
+  ]
+}

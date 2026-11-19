@@ -1,0 +1,26 @@
+{
+  "observed_utc": "2026-11-19T14:18:46.546306+00:00",
+  "device": {
+    "model": "22081212C",
+    "android": "15",
+    "api": 35,
+    "adb_state": "device",
+    "serial_omitted": true
+  },
+  "expo_sdk": "57.0.20",
+  "expo_go_release": "57.0.9",
+  "official_apk": {
+    "source": "https://github.com/expo/expo-go-releases/releases/download/Expo-Go-57.0.9/Expo-Go-57.0.9.apk",
+    "size": 208916626,
+    "sha256": "14c18828a3d04e43922245920bd941b978fd1c7a5aec88a0188032f0bb4972ce",
+    "hash_and_zip_verified": true
+  },
+  "installation": {
+    "status": "blocked",
+    "adb_result": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user"
+  },
+  "application_flows_verified": false,
+  "status": "Blocked by device installation restriction, then USB disconnected; user installation reply pending",
+  "last_observed_utc": "2026-11-19T14:20:20.269181+00:00",
+  "latest_adb_state": "Previously connected and authorized; now device not found"
+}
