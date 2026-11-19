@@ -1,0 +1,238 @@
+{
+  "clients": 20,
+  "warmup_seconds": 10,
+  "measured_seconds_per_round": 60,
+  "started_at_utc": "2026-11-19T15:44:54.671582+00:00",
+  "updated_at_utc": "2026-11-19T15:46:06.803192+00:00",
+  "cpu_count": 16,
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "artifact_sha256": "a675a7aaf87c2fa4713f33fa0881c0f64afe7f10a46db9bb846fd7262da38350",
+  "initial_statistics": {
+    "totalBookings": 100000,
+    "pendingBookings": 0,
+    "cancelledBookings": 0,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000000000
+  },
+  "final_statistics": {
+    "totalBookings": 100506,
+    "pendingBookings": 0,
+    "cancelledBookings": 506,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000000000
+  },
+  "dataset_effect": {
+    "generated_bookings_including_warmup": 506,
+    "generated_payments_including_warmup": 506,
+    "cancelled_bookings_including_warmup": 506,
+    "booking_count_delta": 506,
+    "payment_count_delta": 506,
+    "history_deleted": false
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "requests": 3994,
+      "rps": 65.88,
+      "actual_elapsed_seconds": 60.63,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 441,
+          "p50": 80.0,
+          "p95": 151.9,
+          "p99": 206.25,
+          "budget_ms": 300,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.991364,
+            1
+          ]
+        },
+        "admin-payments": {
+          "count": 441,
+          "p50": 66.36,
+          "p95": 131.89,
+          "p99": 168.35,
+          "budget_ms": 300,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.991364,
+            1
+          ]
+        },
+        "admin-statistics": {
+          "count": 446,
+          "p50": 292.4,
+          "p95": 465.48,
+          "p99": 539.31,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.526906,
+          "within_budget_wilson95_iid": [
+            0.480538,
+            0.572815
+          ]
+        },
+        "booking-cancel": {
+          "count": 443,
+          "p50": 48.04,
+          "p95": 101.48,
+          "p99": 141.66,
+          "budget_ms": 700,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.991403,
+            1.0
+          ]
+        },
+        "booking-create": {
+          "count": 443,
+          "p50": 62.38,
+          "p95": 153.82,
+          "p99": 230.74,
+          "budget_ms": 700,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.991403,
+            1.0
+          ]
+        },
+        "partner-bookings": {
+          "count": 444,
+          "p50": 446.52,
+          "p95": 875.07,
+          "p99": 1097.85,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.051802,
+          "within_budget_wilson95_iid": [
+            0.034763,
+            0.076529
+          ]
+        },
+        "partner-payments": {
+          "count": 444,
+          "p50": 468.69,
+          "p95": 855.55,
+          "p99": 1001.72,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.063063,
+          "within_budget_wilson95_iid": [
+            0.043988,
+            0.089634
+          ]
+        },
+        "partner-statistics": {
+          "count": 449,
+          "p50": 976.34,
+          "p95": 1669.35,
+          "p99": 1947.37,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0.0,
+            0.008483
+          ]
+        },
+        "payment-create": {
+          "count": 443,
+          "p50": 49.67,
+          "p95": 124.71,
+          "p99": 157.75,
+          "budget_ms": 700,
+          "fraction_within_budget": 1.0,
+          "within_budget_wilson95_iid": [
+            0.991403,
+            1.0
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 1.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 20.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 18.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 18.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 16.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 20.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 19.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 20.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 18.0,
+          "hikaricp.connections.pending": 1.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 20.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 19.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        },
+        {
+          "hikaricp.connections.active": 18.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 20.0
+        }
+      ],
+      "latency_budget_met": false
+    }
+  ],
+  "passed": false,
+  "limitations": [
+    "Local synthetic fixture; no production/WAN SLA",
+    "No real transfer or SePay webhook",
+    "Workload adds retained cancelled bookings and pending payment history",
+    "Wilson intervals are descriptive and assume IID; closed-loop samples are correlated"
+  ],
+  "server_configuration": {
+    "source": "application-benchmark.yaml",
+    "hikari_maximum_pool_size": 20,
+    "heap_mb": [
+      256,
+      768
+    ],
+    "cache_enabled": "default @Value setting",
+    "scheduler_enabled": false,
+    "database": "fresh stayfinder_benchmark_pool20 synthetic fixture; 100000 bookings and payments before run"
+  },
+  "diagnostic": {
+    "max_pool_pending": 1.0,
+    "decision": "Do not promote pool20: partner reads and statistics exceed 300ms despite only one transient pending connection sample (max 1); retain pool10 until deeper SQL/model changes are measured."
+  }
+}
