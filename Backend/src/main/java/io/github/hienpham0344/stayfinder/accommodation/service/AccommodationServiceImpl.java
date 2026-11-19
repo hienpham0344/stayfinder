@@ -2,17 +2,10 @@ package io.github.hienpham0344.stayfinder.accommodation.service;
 
 import io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationDetailResponse;
 import io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationResponse;
-import io.github.hienpham0344.stayfinder.accommodation.dto.FeatureResponse;
-import io.github.hienpham0344.stayfinder.accommodation.dto.ImageResponse;
 import io.github.hienpham0344.stayfinder.accommodation.entity.Accommodation;
-import io.github.hienpham0344.stayfinder.accommodation.entity.AccommodationFeature;
-import io.github.hienpham0344.stayfinder.accommodation.entity.Feature;
 import io.github.hienpham0344.stayfinder.accommodation.mapper.AccommodationMapper;
-import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationFeatureRepository;
 import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationRepository;
 import io.github.hienpham0344.stayfinder.accommodation.repository.AccommodationSnapshotRepository;
-import io.github.hienpham0344.stayfinder.accommodation.repository.FeatureRepository;
-import io.github.hienpham0344.stayfinder.accommodation.repository.ImageRepository;
 import io.github.hienpham0344.stayfinder.common.enums.AccommodationStatus;
 import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
 import io.github.hienpham0344.stayfinder.common.exception.ErrorCode;
@@ -21,31 +14,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class AccommodationServiceImpl implements AccommodationService, AccommodationLookup {
     private final AccommodationRepository accommodationRepository;
-    private final ImageRepository imageRepository;
-    private final AccommodationFeatureRepository accommodationFeatureRepository;
-    private final FeatureRepository featureRepository;
     private final AccommodationSnapshotRepository accommodationSnapshotRepository;
     private final AccommodationMapper mapper;
+    private final AccommodationDetailCache detailCache;
 
     public AccommodationServiceImpl(AccommodationRepository accommodationRepository,
-                                     ImageRepository imageRepository,
-                                     AccommodationFeatureRepository accommodationFeatureRepository,
-                                     FeatureRepository featureRepository,
                                      AccommodationSnapshotRepository accommodationSnapshotRepository,
-                                     AccommodationMapper mapper) {
+                                     AccommodationMapper mapper, AccommodationDetailCache detailCache) {
         this.accommodationRepository = accommodationRepository;
-        this.imageRepository = imageRepository;
-        this.accommodationFeatureRepository = accommodationFeatureRepository;
-        this.featureRepository = featureRepository;
         this.accommodationSnapshotRepository = accommodationSnapshotRepository;
         this.mapper = mapper;
+        this.detailCache = detailCache;
     }
 
     @Override
@@ -63,23 +48,26 @@ public class AccommodationServiceImpl implements AccommodationService, Accommoda
     }
 
     @Override
+    @Transactional
+    public Optional<AccommodationBookingView> findBookingViewForUpdate(UUID accommodationId) {
+        return accommodationRepository.findForBooking(accommodationId)
+                .filter(item -> item.getStatus() == AccommodationStatus.ACTIVE)
+                .map(item -> new AccommodationBookingView(item.getId(), item.getBasePrice(), item.getName(), item.getAddress()));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean snapshotBelongsToAccommodation(UUID snapshotId, UUID accommodationId) {
         return accommodationSnapshotRepository.existsByIdAndAccommodationId(snapshotId, accommodationId);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public AccommodationDetailResponse get(UUID id) {
+        // The state/version check and cache-miss metadata reads must share one committed snapshot.
         Accommodation accommodation = accommodationRepository.findById(id)
-                .filter(item -> item.getStatus() == null || item.getStatus() == AccommodationStatus.ACTIVE)
+                .filter(item -> item.getStatus() == AccommodationStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND));
-        List<ImageResponse> images = imageRepository.findByAccommodationId(id).stream()
-                .map(mapper::toImageResponse).toList();
-        List<UUID> featureIds = accommodationFeatureRepository.findByIdAccommodationId(id).stream()
-                .map(AccommodationFeature::getId).map(key -> key.getFeaturesId()).toList();
-        List<FeatureResponse> features = featureRepository.findAllById(featureIds).stream()
-                .map(mapper::toFeatureResponse).toList();
-        return new AccommodationDetailResponse(mapper.toResponse(accommodation), images, features);
+        return detailCache.load(accommodation);
     }
 }

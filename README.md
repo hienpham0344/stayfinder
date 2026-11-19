@@ -56,7 +56,7 @@ Without `EXPO_PUBLIC_API_BASE_URL`, the interactive frontend uses one USD demo c
 
 Copy `Frontend/.env.example` to `Frontend/.env` and set `EXPO_PUBLIC_API_BASE_URL` to a backend address reachable from the device. Restart Expo after changing it. For web, add the exact frontend origin to `CORS_ALLOWED_ORIGINS` in `Backend/.env` (the example includes local ports 8081 and 8082). The receiving account is configured once as `SEPAY_BANK_ACCOUNT_NUMBER` on the backend and returned with a payment. Keep database credentials and webhook secrets only in the backend environment.
 
-API mode uses PostgreSQL-backed accounts, accommodations, room availability, wishlist, bookings, reviews and SePay payment status. Prices are displayed in VND. Booking creation is limited to one room; checkout creates a pending booking and SePay payment code, then waits for the signed webhook before showing confirmation. It does not offer the demo's card, wallet, reward redemption or external-provider quotes as real transactions. The JWT is kept in memory, so refreshing the app requires signing in again. Backend setup and the manual schema migration are in `Backend/README.md`. Live end-to-end testing requires a working PostgreSQL database and SePay sandbox configuration.
+API mode uses PostgreSQL-backed accounts, accommodations, room availability, wishlist, bookings, reviews and SePay payment status. Prices are displayed in VND. Booking creation is limited to one room; checkout creates a pending booking and SePay payment code, then waits for the signed webhook before showing confirmation. Backend rewards use a persistent points ledger and single-use VND discount vouchers; demo card/wallet payments and external-provider quotes remain simulations. The JWT is kept in memory, so refreshing the app requires signing in again. Backend setup and the manual schema migration are in `Backend/README.md`. Live end-to-end testing requires a working PostgreSQL database and SePay sandbox configuration.
 
 ## Frontend implementation notes
 
@@ -73,10 +73,10 @@ Use Java 21 and a PostgreSQL database. From `Backend/`:
 ```bash
 cp .env.example .env
 # Replace the sample database connection and set JWT, CORS, and SePay test-mode values in .env
-./mvnw spring-boot:run
+bash ./mvnw spring-boot:run
 ```
 
-Spring Boot reads `Backend/.env` locally and validates the database schema on startup; it does not create or migrate tables. Review the prerequisites and manual migration in [Backend/README.md](Backend/README.md) before starting against an existing database. Run backend tests with `./mvnw test` from `Backend/`.
+Spring Boot reads `Backend/.env` locally and validates the database schema on startup; it does not create or migrate tables. Review the prerequisites and manual migration in [Backend/README.md](Backend/README.md) before starting against an existing database. Run backend unit/HTTP tests with `bash ./mvnw test` from `Backend/`; use `bash scripts/test-database.sh` for the isolated PostgreSQL integration suite. The backend also exposes scoped PARTNER/ADMIN APIs, documented in `Backend/docs/openapi.yaml`; their management screens are not included.
 
 ## Manual frontend verification
 

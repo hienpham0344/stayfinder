@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import { ApiBooking, ApiPayment, ApiRoom, stayApi } from '../../services/api';
+import { ApiBooking, ApiPayment, ApiRoom, ApiRewardVoucher, stayApi } from '../../services/api';
 import { useLiveState } from '../../state/LiveState';
 import { travelNights, validTravelDates } from '../../utils/frontendState';
 import { COLORS, TYPOGRAPHY } from '../../constants/tokens';
@@ -22,10 +22,22 @@ export function LiveCheckoutScreen() {
   const [room, setRoom] = useState<ApiRoom | null>(null);
   const [bookingId, setBookingId] = useState(existingBookingId || '');
   const [payment, setPayment] = useState<ApiPayment | null>(null);
+  const [vouchers, setVouchers] = useState<ApiRewardVoucher[]>([]);
+  const [voucherId, setVoucherId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const validTrip = validTravelDates(trip.checkIn, trip.checkOut) && trip.guests > 0 && !!trip.roomId && !!trip.accommodationId;
   const loginRoute = existingBookingId ? '/auth/demo?mode=login' : '/auth/demo?mode=login&returnTo=%2Fbooking%2Fcheckout';
+
+  useEffect(() => {
+    setVoucherId(''); setVouchers([]);
+    if (!token || existingBookingId) return;
+    let active = true;
+    void stayApi.rewardVouchers(token).then((page) => {
+      if (active) setVouchers(page.content.filter((voucher) => voucher.status === 'AVAILABLE' && Date.parse(voucher.expiresAt) > Date.now()));
+    }).catch((failure) => { if (active) setError(failure instanceof Error ? failure.message : 'Không thể tải voucher.'); });
+    return () => { active = false; };
+  }, [token, existingBookingId]);
 
   useEffect(() => {
     setBookingId(existingBookingId || '');
@@ -73,7 +85,7 @@ export function LiveCheckoutScreen() {
       if (!id) {
         if (!validTrip || !room) throw new Error('Chọn một phòng còn trống trước khi đặt.');
         const booking = await stayApi.createBooking({ accommodationId: trip.accommodationId, roomId: trip.roomId,
-          checkIn: trip.checkIn, checkOut: trip.checkOut, quantity: 1, guests: trip.guests }, token);
+          checkIn: trip.checkIn, checkOut: trip.checkOut, quantity: 1, guests: trip.guests, voucherId: voucherId || undefined }, token);
         id = booking.id; setBookingId(id);
         await refreshBookings();
       }
@@ -85,6 +97,9 @@ export function LiveCheckoutScreen() {
   return <LiveScreen title="Thanh toán SePay" back>
     {!token ? <><LiveMessage text="Đăng nhập để đặt phòng." /><LiveButton title="Đăng nhập" onPress={() => router.push(loginRoute as never)} /></> : <>
       {!!error && <LiveMessage text={error} />}
+      {!bookingId && vouchers.map((voucher) => <LiveButton key={voucher.id} secondary
+        title={`${voucherId === voucher.id ? 'Đã chọn · ' : ''}Voucher giảm ${formatVnd(voucher.discountAmount)}`}
+        disabled={busy} onPress={() => setVoucherId((current) => current === voucher.id ? '' : voucher.id)} />)}
       {!bookingId && !validTrip && <LiveMessage text="Chọn phòng và ngày ở hợp lệ trước khi thanh toán." />}
       {!bookingId && validTrip && <View style={styles.card}>
         <Text style={styles.heading}>{room?.name || 'Đang kiểm tra phòng…'}</Text>
@@ -134,7 +149,7 @@ export function LiveConfirmationScreen() {
 }
 
 export function LiveBookingsScreen() {
-  const { token, user, bookings, refreshBookings, refreshPrivate, cancelBooking, privateLoading, privateError } = useLiveState();
+  const { token, user, bookings, bookingsHasMore, loadMoreBookings, refreshBookings, refreshPrivate, cancelBooking, privateLoading, privateError } = useLiveState();
   const [error, setError] = useState('');
   const [confirmCancel, setConfirmCancel] = useState('');
   const [reviewId, setReviewId] = useState('');
@@ -190,6 +205,7 @@ export function LiveBookingsScreen() {
             : <LiveButton secondary title={busy ? 'Đang tải…' : 'Viết / sửa đánh giá'} disabled={busy} onPress={() => void openReview(booking)} />}
         </>}
       </View>))}
+      {bookingsHasMore && <LiveButton secondary title="Tải thêm booking" onPress={() => void loadMoreBookings().catch((failure) => setError(failure instanceof Error ? failure.message : 'Không thể tải thêm.'))} />}
     </>}
   </LiveScreen>;
 }

@@ -1,0 +1,27 @@
+{
+  "observed_utc": "2026-11-17T13:36:22.661009+00:00",
+  "node": "22.23.3",
+  "working_directory": "Frontend",
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 9,
+      "failures": 0,
+      "skipped": 0
+    },
+    {
+      "command": "npm exec -- expo export --platform web --max-workers 1",
+      "exit_code": 0,
+      "observed": "Exported: dist"
+    }
+  ],
+  "limitations": [
+    "No real-device/manual end-to-end test claimed",
+    "API mode requires configured backend; default in-memory demo remains separate"
+  ]
+}

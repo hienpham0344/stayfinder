@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, TYPOGRAPHY } from '../../constants/tokens';
 import { useLiveState } from '../../state/LiveState';
 import { LiveButton, LiveField, LiveMessage, LiveScreen, LiveStayCard } from './LiveUi';
+import { ApiAccommodation, ApiRewardAccount, ApiRewardCatalog, stayApi } from '../../services/api';
 
 export function LiveAuthScreen() {
   const { mode, returnTo } = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
@@ -36,11 +37,41 @@ export function LiveAuthScreen() {
 }
 
 export function LiveWishlistScreen() {
-  const { token, catalog, favoriteIds, toggleFavorite, privateLoading, privateError, refreshPrivate } = useLiveState();
+  const { token, favoriteIds, toggleFavorite, privateLoading, privateError, refreshPrivate } = useLiveState();
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState<ApiAccommodation[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
+  const moreBusy = useRef(false);
+  useEffect(() => {
+    const currentGeneration = ++generation.current;
+    if (!token) { setSaved([]); return; }
+    let active = true;
+    setLoading(true); setError('');
+    void stayApi.wishlistPage(token).then((result) => {
+      if (active) { setSaved(result.content); setPage(result.number); setHasMore(result.number + 1 < result.totalPages); }
+    }).catch((failure) => { if (active) setError(failure instanceof Error ? failure.message : 'Không thể tải wishlist.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; if (generation.current === currentGeneration) generation.current += 1; };
+  }, [token, favoriteIds]);
+  const more = async () => {
+    if (!token || loading || moreBusy.current) return;
+    const currentGeneration = generation.current;
+    moreBusy.current = true;
+    setLoading(true);
+    try {
+      const result = await stayApi.wishlistPage(token, page + 1);
+      if (generation.current !== currentGeneration) return;
+      setSaved((current) => [...current, ...result.content.filter((item) => !current.some((old) => old.id === item.id))]);
+      setPage(result.number); setHasMore(result.number + 1 < result.totalPages);
+    } catch (failure) {
+      if (generation.current === currentGeneration) setError(failure instanceof Error ? failure.message : 'Không thể tải thêm wishlist.');
+    } finally { moreBusy.current = false; if (generation.current === currentGeneration) setLoading(false); }
+  };
   if (!token) return <LiveScreen title="Wishlist"><LiveMessage text="Đăng nhập để xem các chỗ ở đã lưu." />
     <LiveButton title="Đăng nhập" onPress={() => router.push('/auth/demo?mode=login' as never)} /></LiveScreen>;
-  const saved = catalog.filter((item) => favoriteIds.includes(item.id));
   return <LiveScreen title="Wishlist" refresh={() => void refreshPrivate()}>
     {privateLoading && <LiveMessage text="Đang tải wishlist…" loading />}
     {!!privateError && <LiveMessage text={privateError} />}
@@ -48,12 +79,16 @@ export function LiveWishlistScreen() {
     {!privateLoading && !privateError && (saved.length === 0 ? <LiveMessage text="Chưa có chỗ ở đã lưu." /> : saved.map((item) =>
       <LiveStayCard key={item.id} stay={item} saved onPress={() => router.push(`/room/${item.id}` as never)}
         onSave={() => void toggleFavorite(item.id).catch((failure) => setError(failure instanceof Error ? failure.message : 'Không thể bỏ lưu.'))} />))}
+    {loading && <LiveMessage text="Đang tải…" loading />}
+    {hasMore && <LiveButton secondary title="Tải thêm wishlist" disabled={loading} onPress={() => void more()} />}
   </LiveScreen>;
 }
 
 export function LiveProfileScreen() {
   const { user, logout } = useLiveState();
+  const [error, setError] = useState('');
   return <LiveScreen title="Tài khoản">
+    {!!error && <LiveMessage text={error} />}
     {!user ? <><LiveMessage text="Đăng nhập để xem tài khoản và các chuyến đi." />
       <LiveButton title="Đăng nhập" onPress={() => router.push('/auth/demo?mode=login' as never)} /></> : <>
       <View style={styles.profile}><Text style={styles.name}>{user.fullName}</Text><Text style={styles.meta}>{user.email}</Text>
@@ -61,16 +96,57 @@ export function LiveProfileScreen() {
         <Text style={styles.meta}>Điểm hiện có: {user.loyaltyPoints ?? 0}</Text></View>
       <LiveButton title="Booking của tôi" onPress={() => router.push('/(tabs)/bookings')} />
       <LiveButton title="Wishlist" secondary onPress={() => router.push('/(tabs)/wishlist')} />
-      <LiveButton title="Đăng xuất" secondary onPress={() => { logout(); router.replace('/(tabs)/profile'); }} />
+      <LiveButton title="Đăng xuất" secondary onPress={() => void logout().then(() => router.replace('/(tabs)/profile')).catch((failure) => setError(failure instanceof Error ? failure.message : 'Không thể đăng xuất.'))} />
     </>}
   </LiveScreen>;
 }
 
 export function LiveRewardsScreen() {
-  const { user } = useLiveState();
+  const { token } = useLiveState();
+  const [account, setAccount] = useState<ApiRewardAccount | null>(null);
+  const [catalog, setCatalog] = useState<ApiRewardCatalog[]>([]);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const retryKeys = useRef<Record<string, string>>({});
+  useEffect(() => {
+    if (!token) { setAccount(null); setCatalog([]); return; }
+    let active = true;
+    void Promise.all([stayApi.rewardAccount(token), stayApi.rewardCatalog(token)]).then(([balance, rewards]) => {
+      if (active) { setAccount(balance); setCatalog(rewards.content); }
+    }).catch((failure) => { if (active) setError(failure instanceof Error ? failure.message : 'Không thể tải điểm thưởng.'); });
+    return () => { active = false; };
+  }, [token]);
+  const redeem = async (item: ApiRewardCatalog) => {
+    if (!token || busy) return;
+    setBusy(true); setError(''); setMessage('');
+    // These UUIDs identify retries; they are not authentication secrets.
+    const key = retryKeys.current[item.id] ?? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+      const value = Math.floor(Math.random() * 16);
+      return (character === 'x' ? value : (value & 3) | 8).toString(16);
+    });
+    retryKeys.current[item.id] = key;
+    try {
+      const voucher = await stayApi.redeemReward(item.id, key, token);
+      delete retryKeys.current[item.id];
+      setAccount((current) => current ? { ...current, points: current.points - item.pointsCost } : current);
+      setMessage(`Đã đổi voucher giảm ${voucher.discountAmount.toLocaleString('vi-VN')} VND, hạn ${new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}.`);
+      setAccount(await stayApi.rewardAccount(token));
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Không thể đổi thưởng.'); }
+    finally { setBusy(false); }
+  };
   return <LiveScreen title="Điểm thưởng" back>
-    <Text style={styles.name}>{user?.loyaltyPoints ?? 0} điểm</Text>
-    <LiveMessage text="API hiện chỉ hỗ trợ xem điểm. Đổi thưởng chưa được kết nối." />
+    {!token ? <LiveMessage text="Đăng nhập để xem và đổi điểm thưởng." /> : <>
+      <Text style={styles.name}>{account?.points ?? 0} điểm</Text>
+      <LiveMessage text="Điểm được cộng sau khi hoàn tất lưu trú. Voucher áp dụng cho một booking, theo điều kiện trong danh mục." />
+      {!!error && <LiveMessage text={error} />}
+      {!!message && <LiveMessage text={message} />}
+      {catalog.map((item) => <View key={item.id} style={styles.profile}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.meta}>{item.pointsCost} điểm · đơn tối thiểu {item.minSpend.toLocaleString('vi-VN')} VND · {item.validityDays} ngày</Text>
+        <LiveButton title="Đổi voucher" disabled={busy || !account || account.points < item.pointsCost} onPress={() => void redeem(item)} />
+      </View>)}
+    </>}
   </LiveScreen>;
 }
 

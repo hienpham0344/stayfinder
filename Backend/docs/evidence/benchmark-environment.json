@@ -1,0 +1,27 @@
+{
+  "observed_utc": "2026-11-17T13:33:45.073396+00:00",
+  "java": "openjdk version \"21.0.13\" 2026-10-20 LTS",
+  "artifact_sha256": "a72e81f725eddc1722aa7299d0b47f34d66b7f0a6ba504952cb2c3290c5759a4",
+  "heap_mb": {
+    "min": 256,
+    "max": 768
+  },
+  "connection_pool_max": 10,
+  "postgresql": "16.15",
+  "database": "stayfinder_benchmark_test",
+  "initial_fixture": {
+    "accommodations": 1000,
+    "rooms": 10000,
+    "bookings": 100000,
+    "payments": 100000,
+    "ledger": 100000,
+    "reviews": 10000
+  },
+  "network": "127.0.0.1 only",
+  "scheduler_enabled": false,
+  "main_code_changed_during_measurement": false,
+  "cpu_model": "12th Gen Intel(R) Core(TM) i7-12650H",
+  "cpu_count": 16,
+  "cpu_affinity_count": 16,
+  "memory_total_kib": 7818552
+}

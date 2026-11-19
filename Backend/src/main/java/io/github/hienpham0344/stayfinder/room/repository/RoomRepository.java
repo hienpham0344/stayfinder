@@ -10,8 +10,10 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 
 import java.util.UUID;
+import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room, UUID> {
+    List<Room> findByAccommodationIdAndStatusAndCapacityGreaterThanEqual(UUID accommodationId, RoomStatus status, int guests);
     java.util.List<Room> findByAccommodationIdAndStatus(UUID accommodationId, RoomStatus status);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Room r where r.id = :roomId")

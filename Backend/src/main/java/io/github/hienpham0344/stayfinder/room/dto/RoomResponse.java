@@ -6,5 +6,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record RoomResponse(UUID id, UUID accommodationId, UUID roomTypeId, String name,
-                           BigDecimal price, String description, RoomStatus status) {
+                           BigDecimal price, String description, RoomStatus status, Integer capacity) {
+    public RoomResponse(UUID id, UUID accommodationId, UUID roomTypeId, String name,
+                        BigDecimal price, String description, RoomStatus status) {
+        this(id, accommodationId, roomTypeId, name, price, description, status, 1);
+    }
 }

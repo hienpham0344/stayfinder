@@ -27,7 +27,7 @@ class AuthServiceTest {
     void registerStoresOnlyPasswordHashAndReturnsToken() {
         when(passwordEncoder.encode("password123")).thenReturn("bcrypt-hash");
         when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(jwtService.generateToken(any(), eq("user@example.com"), eq(UserRole.CUSTOMER)))
+        when(jwtService.generateToken(any(), eq("user@example.com"), eq(UserRole.CUSTOMER), eq(0L)))
                 .thenReturn("jwt-token");
 
         var response = service.register("  User  ", " User@Example.com ", "password123");
@@ -50,11 +50,46 @@ class AuthServiceTest {
         user.setRole(UserRole.CUSTOMER);
         when(users.findByEmailIgnoreCase("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "bcrypt-hash")).thenReturn(true);
-        when(jwtService.generateToken(user.getId(), user.getEmail(), UserRole.CUSTOMER))
+        when(jwtService.generateToken(user.getId(), user.getEmail(), UserRole.CUSTOMER, 0))
                 .thenReturn("jwt-token");
 
         assertEquals("jwt-token", service.login(" User@Example.com ", "password123").token());
         assertEquals("UNAUTHORIZED", assertThrows(BusinessException.class,
                 () -> service.login("missing@example.com", "password123")).getErrorCode().getCode());
+    }
+
+    @Test
+    void unknownAndDisabledAccountsStillPerformOnePasswordCheck() {
+        assertThrows(BusinessException.class, () -> service.login("missing@example.com", "password123"));
+        verify(passwordEncoder).matches(org.mockito.ArgumentMatchers.eq("password123"), org.mockito.ArgumentMatchers.startsWith("$2a$10$"));
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void disabledAccountCannotLoginOrReceiveToken() {
+        User user = new User();
+        user.setId(java.util.UUID.randomUUID());
+        user.setEmail("user@example.com");
+        user.setPasswordHash("hash");
+        user.setRole(UserRole.CUSTOMER);
+        user.setEnabled(false);
+        when(users.findByEmailIgnoreCase("user@example.com")).thenReturn(Optional.of(user));
+
+        assertEquals("UNAUTHORIZED", assertThrows(BusinessException.class,
+                () -> service.login("user@example.com", "password123")).getErrorCode().getCode());
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void loginRejectsOversizedUtf8PasswordsBeforeCallingBcrypt() {
+        User user = new User();
+        user.setId(java.util.UUID.randomUUID());
+        user.setEmail("user@example.com");
+        user.setRole(UserRole.CUSTOMER);
+        user.setPasswordHash("hash");
+        when(users.findByEmailIgnoreCase("user@example.com")).thenReturn(Optional.of(user));
+        assertEquals("UNAUTHORIZED", assertThrows(BusinessException.class,
+                () -> service.login("user@example.com", "ế".repeat(30))).getErrorCode().getCode());
+        verifyNoInteractions(passwordEncoder, jwtService);
     }
 }

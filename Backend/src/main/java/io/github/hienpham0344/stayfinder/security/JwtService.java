@@ -27,6 +27,9 @@ public class JwtService {
     private final long expirationMinutes;
 
     public JwtService(String secretBase64, long expirationMinutes) {
+        if (expirationMinutes < 1 || expirationMinutes > Long.MAX_VALUE / 60) {
+            throw new IllegalArgumentException("JWT expiration must be positive and fit seconds");
+        }
         byte[] secret = decodeSecret(secretBase64);
         SecretKey key = new SecretKeySpec(secret, "HmacSHA256");
         this.encoder = new NimbusJwtEncoder(new ImmutableSecret<>(key));
@@ -35,11 +38,16 @@ public class JwtService {
     }
 
     public String generateToken(UUID userId, String username, UserRole role) {
+        return generateToken(userId, username, role, 0);
+    }
+
+    public String generateToken(UUID userId, String username, UserRole role, long authVersion) {
         Instant issuedAt = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .subject(userId.toString())
                 .claim("username", username)
                 .claim("role", role.getValue())
+                .claim("auth_version", authVersion)
                 .issuedAt(issuedAt)
                 .expiresAt(issuedAt.plusSeconds(expirationMinutes * 60))
                 .build();

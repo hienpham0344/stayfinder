@@ -25,4 +25,10 @@ public class Booking {
     @Column(name = "total_price") private BigDecimal totalPrice;
     @Convert(converter = BookingStatusConverter.class) private BookingStatus status;
     @Column(name = "created_at") private Instant createdAt;
+    @Column(name = "expires_at") private Instant expiresAt;
+    @Column(name = "cancellation_reason", length = 32) private String cancellationReason;
+    @Column(precision = 19, scale = 0) private BigDecimal subtotal;
+    @Column(name = "discount_amount", precision = 19, scale = 0) private BigDecimal discountAmount = BigDecimal.ZERO;
+    @Column(name = "voucher_id") private UUID voucherId;
+    @Column(name = "voucher_policy", length = 255) private String voucherPolicy;
 }

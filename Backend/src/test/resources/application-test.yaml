@@ -1,0 +1,34 @@
+# Test-only configuration: no import of .env or production application.yaml.
+spring:
+  application:
+    name: stayfinder-test
+  datasource:
+    url: ${STAYFINDER_TEST_DATABASE_URL:jdbc:postgresql://127.0.0.1:55439/stayfinder_test}
+    username: ${STAYFINDER_TEST_DATABASE_USER:stayfinder_test}
+    password: ${STAYFINDER_TEST_DATABASE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        generate_statistics: true
+  security:
+    jwt:
+      # Public fixture key; never use outside tests.
+      secret-base64: c3RheWZpbmRlci10ZXN0LXNlY3JldC13aXRoLWF0LWxlYXN0LTI1Ni1iaXRzLTEyMzQ1Ng==
+  web:
+    cors:
+      allowed-origins: http://localhost:8081
+stayfinder:
+  scheduling:
+    enabled: false
+  auth:
+    rate-limit:
+      enabled: false
+SEPAY_BANK_ACCOUNT_NUMBER: '00000000'
+SEPAY_WEBHOOK_SECRET: test-only-webhook-fixture
+logging:
+  level:
+    org.hibernate.stat: WARN
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN

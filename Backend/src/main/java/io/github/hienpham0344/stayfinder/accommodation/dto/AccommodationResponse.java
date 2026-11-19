@@ -7,5 +7,10 @@ import java.util.UUID;
 
 public record AccommodationResponse(UUID id, String name, String address, BigDecimal latitude,
                                     BigDecimal longitude, String description, BigDecimal basePrice,
-                                    AccommodationStatus status, UUID typeId) {
+                                    AccommodationStatus status, UUID typeId, UUID matchedRoomId, BigDecimal matchedPrice) {
+    public AccommodationResponse(UUID id, String name, String address, BigDecimal latitude,
+                                 BigDecimal longitude, String description, BigDecimal basePrice,
+                                 AccommodationStatus status, UUID typeId) {
+        this(id, name, address, latitude, longitude, description, basePrice, status, typeId, null, null);
+    }
 }

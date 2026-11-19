@@ -24,11 +24,13 @@ import io.github.hienpham0344.stayfinder.security.CurrentUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import io.github.hienpham0344.stayfinder.rewards.service.BookingRewards;
+import io.github.hienpham0344.stayfinder.rewards.dto.RewardDtos;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +48,17 @@ public class BookingServiceImpl implements BookingService {
     private final RoomLookup roomLookup;
     private final RoomBookingAvailability roomBookingAvailability;
     private final BookingMapper mapper;
+    private final BookingRewards rewards;
+    private final BookingPolicy policy;
+    private final BookingLifecycleService lifecycle;
 
+    @Autowired
     public BookingServiceImpl(BookingRepository bookingRepository, BookingDetailRepository bookingDetailRepository,
                               AccommodationSnapshotRepository accommodationSnapshotRepository,
-                              RoomSnapshotRepository roomSnapshotRepository,
-                              AccommodationLookup accommodationLookup, RoomLookup roomLookup,
-                              RoomBookingAvailability roomBookingAvailability,
-                              BookingMapper mapper) {
+                              RoomSnapshotRepository roomSnapshotRepository, AccommodationLookup accommodationLookup,
+                              RoomLookup roomLookup, RoomBookingAvailability roomBookingAvailability, BookingMapper mapper,
+                              BookingRewards rewards, BookingPolicy policy, BookingLifecycleService lifecycle) {
+        this.rewards = rewards; this.policy = policy; this.lifecycle = lifecycle;
         this.bookingRepository = bookingRepository;
         this.bookingDetailRepository = bookingDetailRepository;
         this.accommodationSnapshotRepository = accommodationSnapshotRepository;
@@ -87,12 +93,16 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponse create(CreateBookingRequest request) {
         validateDates(request.checkIn(), request.checkOut(), request.quantity(), request.guests());
-        AccommodationBookingView accommodation = accommodationLookup.findBookingView(request.accommodationId())
+        // Match partner's lock order: property before physical room. Approval and room data stay atomic.
+        AccommodationBookingView accommodation = accommodationLookup.findBookingViewForUpdate(request.accommodationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND));
         RoomBookingView room = roomLookup.findBookingViewForUpdate(request.roomId())
                 .filter(item -> request.accommodationId().equals(item.accommodationId()))
                 .filter(item -> item.status() == RoomStatus.AVAILABLE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROOM_NOT_AVAILABLE));
+        if (room.capacity() == null || room.capacity() < request.guests()) {
+            throw new BusinessException(ErrorCode.ROOM_NOT_AVAILABLE);
+        }
         if (room.price() == null || room.price().signum() <= 0
                 || room.price().stripTrailingZeros().scale() > 0
                 || roomBookingAvailability.hasOverlap(room.id(), request.checkIn(), request.checkOut())) {
@@ -122,10 +132,17 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = new Booking();
         booking.setUserId(CurrentUser.require().id());
+        booking.setSubtotal(subtotal);
         booking.setTotalPrice(subtotal);
         booking.setStatus(BookingStatus.PENDING);
-        booking.setCreatedAt(Instant.now());
+        booking.setCreatedAt(policy.now());
+        booking.setExpiresAt(policy.newExpiry());
         booking = bookingRepository.save(booking);
+        if (request.voucherId() != null) {
+            RewardDtos.Discount discount = rewards.reserve(request.voucherId(), booking.getUserId(), booking.getId(), subtotal, booking.getExpiresAt());
+            booking.setVoucherId(discount.voucherId()); booking.setDiscountAmount(discount.amount());
+            booking.setVoucherPolicy(discount.policy()); booking.setTotalPrice(subtotal.subtract(discount.amount()));
+        }
 
         BookingDetail detail = new BookingDetail();
         detail.setBookingId(booking.getId());
@@ -134,6 +151,7 @@ public class BookingServiceImpl implements BookingService {
         detail.setCheckInDate(request.checkIn());
         detail.setCheckOutDate(request.checkOut());
         detail.setQuantity(request.quantity());
+        detail.setGuests(request.guests());
         detail.setSubtotal(subtotal);
         bookingDetailRepository.save(detail);
         return toResponse(booking);
@@ -144,11 +162,11 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse cancel(UUID id) {
         Booking booking = bookingRepository.findOwnedForPaymentUpdate(id, CurrentUser.require().id())
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
-        }
-        booking.setStatus(BookingStatus.CANCELLED);
-        return toResponse(bookingRepository.save(booking));
+        if (booking.getStatus() == BookingStatus.CANCELLED) return toResponse(booking);
+        if (booking.getStatus() != BookingStatus.PENDING) throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
+        String reason = policy.expired(booking) ? "EXPIRED" : "USER_CANCELLED";
+        lifecycle.cancelLocked(booking, reason);
+        return toResponse(booking);
     }
 
     private Booking owned(UUID id) {
@@ -183,19 +201,20 @@ public class BookingServiceImpl implements BookingService {
                             accommodation == null ? null : accommodation.getAccommodationId(),
                             accommodation == null ? null : accommodation.getName(),
                             room == null ? null : room.getRoomId(),
-                            room == null ? null : room.getName());
+                            room == null ? null : room.getName(), detail.getGuests());
                 }, Collectors.toList())));
     }
 
     private BookingResponse toResponse(Booking booking, List<BookingDetailResponse> details) {
         return new BookingResponse(booking.getId(), booking.getUserId(), booking.getTotalPrice(), booking.getStatus(),
-                booking.getCreatedAt(), details);
+                booking.getCreatedAt(), details, policy.expiresAt(booking), booking.getCancellationReason(),
+                booking.getSubtotal()==null?booking.getTotalPrice():booking.getSubtotal(), booking.getDiscountAmount(), booking.getVoucherId(), booking.getVoucherPolicy());
     }
 
     private void validateDates(LocalDate checkIn, LocalDate checkOut, int quantity, int guests) {
-        if (checkIn == null || checkOut == null || checkIn.isBefore(LocalDate.now())
+        if (checkIn == null || checkOut == null || checkIn.isBefore(policy.today())
                 || !checkIn.isBefore(checkOut)
-                || quantity != 1 || guests < 1) {
+                || quantity != 1 || guests < 1 || guests > 100 || checkOut.isAfter(checkIn.plusDays(365))) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR);
         }
     }

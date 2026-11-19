@@ -19,12 +19,14 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final AccommodationLookup accommodationLookup;
     private final FavoriteMapper mapper;
+    private final io.github.hienpham0344.stayfinder.accommodation.mapper.AccommodationMapper accommodationMapper;
 
     public FavoriteServiceImpl(FavoriteRepository favoriteRepository, AccommodationLookup accommodationLookup,
-                               FavoriteMapper mapper) {
+                               FavoriteMapper mapper, io.github.hienpham0344.stayfinder.accommodation.mapper.AccommodationMapper accommodationMapper) {
         this.favoriteRepository = favoriteRepository;
         this.accommodationLookup = accommodationLookup;
         this.mapper = mapper;
+        this.accommodationMapper = accommodationMapper;
     }
 
     @Override
@@ -48,6 +50,18 @@ public class FavoriteServiceImpl implements FavoriteService {
                     return favoriteRepository.save(created);
                 });
         return mapper.toResponse(favorite);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<FavoriteResponse> page(org.springframework.data.domain.Pageable page) {
+        return favoriteRepository.findByUserId(CurrentUser.require().id(), page).map(mapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<io.github.hienpham0344.stayfinder.accommodation.dto.AccommodationResponse> accommodations(org.springframework.data.domain.Pageable page) {
+        return favoriteRepository.accommodations(CurrentUser.require().id(), page).map(accommodationMapper::toResponse);
     }
 
     @Override

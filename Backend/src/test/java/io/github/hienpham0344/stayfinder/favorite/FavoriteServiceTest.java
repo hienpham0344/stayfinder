@@ -25,7 +25,7 @@ class FavoriteServiceTest {
     private final FavoriteRepository favoriteRepository = mock(FavoriteRepository.class);
     private final AccommodationLookup accommodationLookup = mock(AccommodationLookup.class);
     private final FavoriteServiceImpl service = new FavoriteServiceImpl(favoriteRepository, accommodationLookup,
-            Mappers.getMapper(FavoriteMapper.class));
+            Mappers.getMapper(FavoriteMapper.class), Mappers.getMapper(io.github.hienpham0344.stayfinder.accommodation.mapper.AccommodationMapper.class));
 
     @AfterEach
     void clearSecurityContext() { SecurityContextHolder.clearContext(); }

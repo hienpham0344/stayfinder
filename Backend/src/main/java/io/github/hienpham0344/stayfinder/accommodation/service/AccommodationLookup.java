@@ -5,5 +5,6 @@ import java.util.Optional;
 
 public interface AccommodationLookup {
     Optional<AccommodationBookingView> findBookingView(UUID accommodationId);
+    Optional<AccommodationBookingView> findBookingViewForUpdate(UUID accommodationId);
     boolean snapshotBelongsToAccommodation(UUID snapshotId, UUID accommodationId);
 }

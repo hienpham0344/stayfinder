@@ -33,22 +33,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
+        if (header == null || !header.regionMatches(true, 0, "Bearer ", 0, 7)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         UUID userId;
+        long authVersion;
         try {
             Jwt jwt = jwtService.parseToken(header.substring(7));
             userId = UUID.fromString(jwt.getSubject());
+            Object version = jwt.getClaims().get("auth_version");
+            if (version == null) {
+                authVersion = 0;
+            } else if (version instanceof Number number && number.longValue() >= 0
+                    && number.doubleValue() == number.longValue()) {
+                authVersion = number.longValue();
+            } else {
+                throw new IllegalArgumentException("Invalid authentication version");
+            }
         } catch (JwtException | IllegalArgumentException exception) {
             authenticationEntryPoint.commence(request, response,
                     new BadCredentialsException("Invalid bearer token"));
             return;
         }
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null || user.getRole() == null) {
+        if (user == null || user.getRole() == null || !user.isEnabled() || user.getAuthVersion() != authVersion) {
             authenticationEntryPoint.commence(request, response,
                     new BadCredentialsException("Invalid bearer token"));
             return;

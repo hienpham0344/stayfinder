@@ -10,6 +10,8 @@ import io.github.hienpham0344.stayfinder.payment.repository.PaymentRepository;
 import io.github.hienpham0344.stayfinder.payment.service.PaymentCode;
 import io.github.hienpham0344.stayfinder.payment.service.PaymentProvider;
 import io.github.hienpham0344.stayfinder.payment.service.SepayWebhookService;
+import io.github.hienpham0344.stayfinder.payment.service.SepayWebhookProcessor;
+import io.github.hienpham0344.stayfinder.payment.service.PaymentAnomalyRecorder;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -27,7 +29,8 @@ class SepayWebhookServiceTest {
     private final BookingPaymentOperations bookings = mock(BookingPaymentOperations.class);
     private final PaymentProvider provider = mock(PaymentProvider.class);
     private final SepayWebhookService service = new SepayWebhookService(
-            payments, bookings, provider, JsonMapper.builder().build(), "1234567890");
+            provider, JsonMapper.builder().build(), new SepayWebhookProcessor(payments,bookings,"1234567890",java.time.Clock.systemUTC()),
+            mock(PaymentAnomalyRecorder.class));
 
     @Test
     void matchingIncomingTransactionConfirmsBookingOnce() {
@@ -35,6 +38,7 @@ class SepayWebhookServiceTest {
         Payment payment = payment(bookingId);
         byte[] body = body(payment.getId(), 500000, "1234567890");
         when(provider.verifySignedWebhook(body, "123", "sha256=valid")).thenReturn(true);
+        when(payments.findBookingIdById(payment.getId())).thenReturn(Optional.of(payment.getBookingId()));
         when(payments.findById(payment.getId())).thenReturn(Optional.of(payment));
         when(bookings.findForUpdate(bookingId)).thenReturn(Optional.of(
                 new BookingPaymentView(bookingId, UUID.randomUUID(), new BigDecimal("500000"), BookingStatus.PENDING)));
@@ -65,6 +69,7 @@ class SepayWebhookServiceTest {
         payment.setTransactionId("92704");
         byte[] body = body(payment.getId(), 500000, "1234567890");
         when(provider.verifySignedWebhook(body, "123", "sha256=valid")).thenReturn(true);
+        when(payments.findBookingIdById(payment.getId())).thenReturn(Optional.of(payment.getBookingId()));
         when(payments.findById(payment.getId())).thenReturn(Optional.of(payment));
         when(bookings.findForUpdate(bookingId)).thenReturn(Optional.of(
                 new BookingPaymentView(bookingId, UUID.randomUUID(), new BigDecimal("500000"), BookingStatus.CONFIRMED)));
@@ -82,6 +87,7 @@ class SepayWebhookServiceTest {
         Payment payment = payment(bookingId);
         byte[] body = body(payment.getId(), 499999, "1234567890");
         when(provider.verifySignedWebhook(body, "123", "sha256=valid")).thenReturn(true);
+        when(payments.findBookingIdById(payment.getId())).thenReturn(Optional.of(payment.getBookingId()));
         when(payments.findById(payment.getId())).thenReturn(Optional.of(payment));
         when(bookings.findForUpdate(bookingId)).thenReturn(Optional.of(
                 new BookingPaymentView(bookingId, UUID.randomUUID(), new BigDecimal("500000"), BookingStatus.PENDING)));
@@ -97,6 +103,7 @@ class SepayWebhookServiceTest {
         Payment payment = payment(bookingId);
         byte[] body = body(payment.getId(), 500000, "1234567890");
         when(provider.verifySignedWebhook(body, "123", "sha256=valid")).thenReturn(true);
+        when(payments.findBookingIdById(payment.getId())).thenReturn(Optional.of(payment.getBookingId()));
         when(payments.findById(payment.getId())).thenReturn(Optional.of(payment));
         when(bookings.findForUpdate(bookingId)).thenReturn(Optional.of(
                 new BookingPaymentView(bookingId, UUID.randomUUID(), new BigDecimal("500000"), BookingStatus.CANCELLED)));

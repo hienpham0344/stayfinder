@@ -38,6 +38,14 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(service.create(accommodationId, request)));
     }
 
+    @GetMapping("/api/accommodations/{accommodationId}/reviews/page")
+    public ApiResponse<org.springframework.data.domain.Page<ReviewResponse>> page(@PathVariable UUID accommodationId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(service.page(accommodationId,
+                io.github.hienpham0344.stayfinder.common.validation.Paging.newest(page, size)));
+    }
+
     @PatchMapping("/api/reviews/{reviewId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> update(@PathVariable UUID reviewId,
                                                                @Valid @RequestBody UpdateReviewRequest request) {

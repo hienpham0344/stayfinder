@@ -8,15 +8,19 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.Clock;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Arrays;
 import java.util.HexFormat;
 
 @Component
 public class SepayPaymentProvider implements PaymentProvider {
     private final String webhookSecret;
+    private final Clock clock;
 
-    public SepayPaymentProvider(@Value("${SEPAY_WEBHOOK_SECRET:}") String webhookSecret) {
-        this.webhookSecret = webhookSecret;
+    @Autowired
+    public SepayPaymentProvider(@Value("${SEPAY_WEBHOOK_SECRET:}") String webhookSecret, Clock clock) {
+        this.webhookSecret = webhookSecret; this.clock = clock;
     }
 
     @Override
@@ -27,7 +31,7 @@ public class SepayPaymentProvider implements PaymentProvider {
         }
         try {
             long sentAt = Long.parseLong(timestamp);
-            long now = Instant.now().getEpochSecond();
+            long now = clock.instant().getEpochSecond();
             if (sentAt < now - 300 || sentAt > now + 300) return false;
             byte[] prefix = (timestamp + ".").getBytes(StandardCharsets.UTF_8);
             byte[] signed = Arrays.copyOf(prefix, prefix.length + rawBody.length);

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public interface ReviewService {
     List<ReviewResponse> list(UUID accommodationId);
+    org.springframework.data.domain.Page<ReviewResponse> page(UUID accommodationId, org.springframework.data.domain.Pageable page);
     ReviewResponse create(UUID accommodationId, CreateReviewRequest request);
     ReviewResponse update(UUID reviewId, UpdateReviewRequest request);
     void delete(UUID reviewId);

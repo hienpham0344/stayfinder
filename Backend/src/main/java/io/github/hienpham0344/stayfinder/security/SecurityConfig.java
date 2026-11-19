@@ -8,6 +8,7 @@ import tools.jackson.databind.json.JsonMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -58,6 +59,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(JwtAuthenticationFilter filter) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                              JwtAuthenticationFilter jwtAuthenticationFilter,
                                              AuthenticationEntryPoint authenticationEntryPoint,
@@ -71,7 +79,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/register", "/api/auth/login",
                                 "/api/payments/webhook/sepay", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/accommodations", "/api/accommodations/**").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/partner/**").hasRole("PARTNER")
+                        .requestMatchers(HttpMethod.GET, "/api/accommodations", "/api/accommodations/**",
+                                "/api/recommendations").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

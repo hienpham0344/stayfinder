@@ -1,82 +1,39 @@
 package io.github.hienpham0344.stayfinder.payment.service;
-
-import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentOperations;
-import io.github.hienpham0344.stayfinder.booking.service.BookingPaymentView;
-import io.github.hienpham0344.stayfinder.common.enums.BookingStatus;
-import io.github.hienpham0344.stayfinder.common.enums.PaymentStatus;
-import io.github.hienpham0344.stayfinder.common.exception.BusinessException;
-import io.github.hienpham0344.stayfinder.common.exception.ErrorCode;
-import io.github.hienpham0344.stayfinder.payment.entity.Payment;
-import io.github.hienpham0344.stayfinder.payment.repository.PaymentRepository;
-import org.springframework.beans.factory.annotation.Value;
+import io.github.hienpham0344.stayfinder.common.exception.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
 @Service
 public class SepayWebhookService {
-    private final PaymentRepository paymentRepository;
-    private final BookingPaymentOperations bookingPaymentOperations;
     private final PaymentProvider paymentProvider;
     private final JsonMapper jsonMapper;
-    private final String receivingAccountNumber;
-
-    public SepayWebhookService(PaymentRepository paymentRepository,
-                               BookingPaymentOperations bookingPaymentOperations,
-                               PaymentProvider paymentProvider, JsonMapper jsonMapper,
-                               @Value("${SEPAY_BANK_ACCOUNT_NUMBER:}") String receivingAccountNumber) {
-        this.paymentRepository = paymentRepository;
-        this.bookingPaymentOperations = bookingPaymentOperations;
-        this.paymentProvider = paymentProvider;
-        this.jsonMapper = jsonMapper;
-        this.receivingAccountNumber = receivingAccountNumber;
+    private final SepayWebhookProcessor processor;
+    private final PaymentAnomalyRecorder anomalies;
+    public SepayWebhookService(PaymentProvider paymentProvider,JsonMapper jsonMapper,
+                               SepayWebhookProcessor processor,PaymentAnomalyRecorder anomalies) {
+        this.paymentProvider=paymentProvider;this.jsonMapper=jsonMapper;this.processor=processor;this.anomalies=anomalies;
     }
-
-    @Transactional
-    public void handle(byte[] rawBody, String timestamp, String signature) {
-        if (!paymentProvider.verifySignedWebhook(rawBody, timestamp, signature)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-        JsonNode event = parseEvent(rawBody);
-        if (!"in".equals(event.path("transferType").asText())
-                || receivingAccountNumber.isBlank()
-                || !receivingAccountNumber.equals(event.path("accountNumber").asText())) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
-        }
-        UUID paymentId;
+    @Transactional(propagation=Propagation.NEVER)
+    public void handle(byte[] rawBody,String timestamp,String signature) {
+        if (!paymentProvider.verifySignedWebhook(rawBody,timestamp,signature)) throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        JsonNode event=parseEvent(rawBody);
         try {
-            paymentId = PaymentCode.toId(event.path("code").asText());
-        } catch (IllegalArgumentException exception) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
-        }
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
-        BookingPaymentView booking = bookingPaymentOperations.findForUpdate(payment.getBookingId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
-        BigDecimal amount = BigDecimal.valueOf(event.path("transferAmount").longValue());
-        if (payment.getAmount() == null || booking.totalPrice() == null
-                || payment.getAmount().compareTo(amount) != 0
-                || booking.totalPrice().compareTo(amount) != 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
-        }
-        String transactionId = Long.toString(event.path("id").longValue());
-        Payment existingTransaction = paymentRepository.findByTransactionId(transactionId).orElse(null);
-        if (existingTransaction != null) {
-            if (paymentId.equals(existingTransaction.getId())
-                    && existingTransaction.getStatus() == PaymentStatus.SUCCESS) return;
+            processor.process(event);
+        } catch (SepayWebhookProcessor.Rejection rejection) {
+            // The processor proxy has already rolled back and released its connection before reconciliation starts.
+            anomalies.record(rejection.paymentId(),rejection.bookingId(),rejection.transactionId(),rejection.amount(),rejection.reason());
+            throw rejection;
+        } catch (org.springframework.dao.DataIntegrityViolationException conflict) {
+            // A concurrent transaction can win a provider transaction ID on another booking.
+            java.util.UUID paymentId = null;
+            try { paymentId = PaymentCode.toId(event.path("code").asText()); }
+            catch (IllegalArgumentException ignored) { /* Unknown reference is retained as null. */ }
+            anomalies.record(paymentId, null, Long.toString(event.path("id").longValue()),
+                    java.math.BigDecimal.valueOf(event.path("transferAmount").longValue()), "TRANSACTION_CONFLICT");
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE);
         }
-        if (payment.getStatus() != PaymentStatus.PENDING || booking.status() != BookingStatus.PENDING) {
-            throw new BusinessException(ErrorCode.BOOKING_INVALID_STATE);
-        }
-        payment.setTransactionId(transactionId);
-        payment.setStatus(PaymentStatus.SUCCESS);
-        paymentRepository.save(payment);
-        bookingPaymentOperations.confirm(booking.id());
     }
 
     private JsonNode parseEvent(byte[] rawBody) {

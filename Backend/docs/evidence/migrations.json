@@ -1,0 +1,29 @@
+{
+  "database": "stayfinder_migration_test",
+  "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "observed_utc": "2026-11-17T14:03:49.278618+00:00",
+  "tests": 6,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "successful": true,
+  "cases": [
+    "test_existing_ledger_mismatch_fails_without_rewriting_history",
+    "test_legacy_balance_is_preserved_once",
+    "test_negative_balance_rolls_back",
+    "test_pending_expiry_and_snapshot_are_backfilled_once",
+    "test_pending_unknown_creation_rolls_back",
+    "test_replay_does_not_duplicate_an_earned_balance"
+  ],
+  "scope": "Fresh and legacy synthetic data; only marked local stayfinder_migration_test is reset",
+  "regressions_before_fix": [
+    {
+      "test": "test_replay_does_not_duplicate_an_earned_balance",
+      "observed": "FAIL: expected total ledger delta 250, observed 500 after replay"
+    },
+    {
+      "test": "test_existing_ledger_mismatch_fails_without_rewriting_history",
+      "observed": "FAIL: expected migration rejection, observed exit code 0"
+    }
+  ]
+}

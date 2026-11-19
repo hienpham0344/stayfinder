@@ -1,0 +1,48 @@
+name: Backend verification
+on:
+  push:
+    paths: ['Backend/**', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['Backend/**', '.github/workflows/backend.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: stayfinder_test
+          POSTGRES_DB: stayfinder_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Check API contract is current
+        run: |
+          python3 Backend/scripts/generate-openapi.py
+          git diff --exit-code -- Backend/docs/openapi.yaml
+      - name: Migrate disposable database and verify
+        env:
+          PGPORT: '5432'
+        run: bash Backend/scripts/test-database.sh
+      - name: Verify legacy migrations and rollback
+        env:
+          PGPORT: '5432'
+        run: python3 Backend/scripts/test-migrations.py
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: |
+            Backend/target/surefire-reports
+            Backend/docs/evidence/migrations.json

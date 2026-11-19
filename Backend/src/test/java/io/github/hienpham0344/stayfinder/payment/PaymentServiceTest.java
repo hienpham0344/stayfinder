@@ -33,7 +33,7 @@ class PaymentServiceTest {
     private final PaymentMethodRepository methods = mock(PaymentMethodRepository.class);
     private final BookingPaymentOperations bookings = mock(BookingPaymentOperations.class);
     private final PaymentServiceImpl service = new PaymentServiceImpl(
-            payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "123456789");
+            payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "123456789", java.time.Clock.systemUTC());
 
     @AfterEach
     void clearSecurityContext() {
@@ -58,7 +58,7 @@ class PaymentServiceTest {
         when(bookings.findOwnedForUpdate(bookingId, userId)).thenReturn(Optional.of(
                 new BookingPaymentView(bookingId, userId, BigDecimal.TEN, BookingStatus.PENDING)));
         PaymentServiceImpl unconfigured = new PaymentServiceImpl(
-                payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "");
+                payments, methods, bookings, Mappers.getMapper(PaymentMapper.class), "", java.time.Clock.systemUTC());
 
         assertThrows(IllegalStateException.class, () -> unconfigured.create(bookingId, null));
         verify(payments, never()).save(any());

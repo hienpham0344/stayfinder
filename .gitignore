@@ -9,6 +9,14 @@
 
 # Local documentation/agent notes
 docs/
+!Backend/docs/
+Backend/docs/*
+!Backend/docs/OPERATIONS.md
+!Backend/docs/openapi.yaml
+!Backend/docs/evidence/
+Backend/docs/evidence/*
+!Backend/docs/evidence/*.json
+!Backend/docs/evidence/*.md
 
 # Environment
 .env
