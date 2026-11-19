@@ -220,7 +220,7 @@ Giữ mọi kết quả fail; không thay budget hoặc xóa lịch sử để �
 
 ### Thiết bị Android thật — chưa xác minh luồng app
 
-Đã nhận Android15/API35 qua ADB ở trạng thái `device`. Expo Go chưa có; APK57.0.9 từ release chính thức được kiểm tra đủ208.916.626byte, SHA256 và ZIP hợp lệ. Android từ chối cài qua USB với `INSTALL_FAILED_USER_RESTRICTED`; sau đó thiết bị rời ADB. Metro/API fixture localhost đã sẵn sàng nhưng **chưa mở/chạy bất kỳ luồng CUSTOMER nào trên thiết bị**. Đang chờ người dùng tự cài Expo Go và kết nối lại; không vượt qua hạn chế cài đặt của điện thoại. [Evidence](docs/evidence/android-smoke.json).
+Đã nhận Android15/API35 qua ADB ở trạng thái `device`. Expo Go chưa có; APK57.0.9 từ release chính thức được kiểm tra đủ208.916.626byte, SHA256 và ZIP hợp lệ. Android từ chối cài qua USB với `INSTALL_FAILED_USER_RESTRICTED`. Sau khi kết nối lại, bản Expo Go Google PlaySDK58 mở màn hình lỗi không tương thích với dự án SDK57. Đã chuyển APK57 chính thức vào Downloads, người dùng đang tự cài; lần kiểm tra cuối package vẫn chưa xuất hiện. Metro/API fixture localhost đã sẵn sàng nhưng **chưa chạy bất kỳ luồng CUSTOMER nào trên thiết bị**; không vượt qua hạn chế cài đặt của điện thoại. [Evidence](docs/evidence/android-smoke.json).
 
 ## 11. Bảo trì và phát triển
 

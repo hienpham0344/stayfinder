@@ -17,10 +17,14 @@
   },
   "installation": {
     "status": "blocked",
-    "adb_result": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user"
+    "adb_result": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user",
+    "play_store_sdk": "58",
+    "observed_application_error": "Project is incompatible with this version of Expo Go; installed SDK58, project SDK57",
+    "compatible_sdk57_apk_copied_to_device": true,
+    "current_package_detected": false
   },
   "application_flows_verified": false,
-  "status": "Blocked by device installation restriction, then USB disconnected; user installation reply pending",
-  "last_observed_utc": "2026-11-19T14:20:20.269181+00:00",
-  "latest_adb_state": "Previously connected and authorized; now device not found"
+  "status": "Android reconnected; incompatible Expo GoSDK58 removed by user; waiting for user to install verified SDK57 APK in Downloads. No StayFinder application flow verified.",
+  "last_observed_utc": "2026-11-19T14:30:29.618787+00:00",
+  "latest_adb_state": "device reconnected"
 }
