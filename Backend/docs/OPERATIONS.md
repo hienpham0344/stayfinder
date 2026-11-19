@@ -17,7 +17,7 @@ For integration tests, create a **disposable local database named `stayfinder_te
 bash scripts/test-database.sh
 ```
 
-The script accepts local hosts only and applies `000`–`003` only when the schema is empty. It then runs `verify -Dstayfinder.integration=true`. Integration fixtures check `current_database()` before truncating their explicit table set. Never give this database name to a database containing valuable data. The GitHub workflow checks the generated API contract and provisions a fresh PostgreSQL service on each job; no hosted workflow run has been claimed from this local session.
+The script accepts local hosts only and applies `000`–`003` only when the schema is empty. It then runs `verify -Dstayfinder.integration=true`. Integration fixtures check `current_database()` before truncating their explicit table set. Never give this database name to a database containing valuable data. The GitHub workflow checks the generated API contract and provisions a fresh PostgreSQL service on each job; hosted run [44531199680](https://github.com/hienpham0344/stayfinder/actions/runs/44531199680) succeeded on commit5005412 with138 Maven tests and6 migration tests. `docs/evidence/ci-hosted.json` records the exact commit and artifact counts.
 
 ## Schema migration
 

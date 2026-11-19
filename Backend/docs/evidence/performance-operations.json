@@ -1,0 +1,1207 @@
+{
+  "clients": 20,
+  "warmup_seconds": 30,
+  "measured_seconds_per_round": 300,
+  "started_at_utc": "2026-11-19T13:14:52.471362+00:00",
+  "updated_at_utc": "2026-11-19T13:31:31.980598+00:00",
+  "cpu_count": 16,
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "artifact_sha256": "81371f5c3ca05e1688642e08edd3ea34a346394cbafe560c4f6531d94defac0b",
+  "initial_statistics": {
+    "totalBookings": 100143,
+    "pendingBookings": 2,
+    "cancelledBookings": 140,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "final_statistics": {
+    "totalBookings": 104211,
+    "pendingBookings": 2,
+    "cancelledBookings": 4208,
+    "completedBookings": 100000,
+    "receivedRevenue": 29000380000
+  },
+  "dataset_effect": {
+    "generated_bookings_including_warmup": 4068,
+    "generated_payments_including_warmup": 4068,
+    "cancelled_bookings_including_warmup": 4068,
+    "booking_count_delta": 4068,
+    "payment_count_delta": 4068,
+    "history_deleted": false
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "requests": 10800,
+      "rps": 35.88,
+      "actual_elapsed_seconds": 301.038,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 1198,
+          "p50": 271.51,
+          "p95": 706.86,
+          "p99": 1024.85,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.558431,
+          "within_budget_wilson95_iid": [
+            0.530169,
+            0.586319
+          ]
+        },
+        "admin-payments": {
+          "count": 1202,
+          "p50": 278.98,
+          "p95": 720.4,
+          "p99": 1001.98,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.542429,
+          "within_budget_wilson95_iid": [
+            0.514175,
+            0.570414
+          ]
+        },
+        "admin-statistics": {
+          "count": 1198,
+          "p50": 393.21,
+          "p95": 921.85,
+          "p99": 1215.06,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.297162,
+          "within_budget_wilson95_iid": [
+            0.271965,
+            0.323656
+          ]
+        },
+        "booking-cancel": {
+          "count": 1199,
+          "p50": 241.9,
+          "p95": 708.7,
+          "p99": 1044.13,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.94829,
+          "within_budget_wilson95_iid": [
+            0.934263,
+            0.959454
+          ]
+        },
+        "booking-create": {
+          "count": 1199,
+          "p50": 265.79,
+          "p95": 758.36,
+          "p99": 1073.42,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.934112,
+          "within_budget_wilson95_iid": [
+            0.918637,
+            0.946814
+          ]
+        },
+        "partner-bookings": {
+          "count": 1201,
+          "p50": 508.64,
+          "p95": 1029.64,
+          "p99": 1404.46,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.120733,
+          "within_budget_wilson95_iid": [
+            0.103505,
+            0.140379
+          ]
+        },
+        "partner-payments": {
+          "count": 1204,
+          "p50": 1460.21,
+          "p95": 2662.71,
+          "p99": 3176.29,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.00318
+          ]
+        },
+        "partner-statistics": {
+          "count": 1200,
+          "p50": 796.07,
+          "p95": 1469.55,
+          "p99": 1886.61,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0.0,
+            0.003191
+          ]
+        },
+        "payment-create": {
+          "count": 1199,
+          "p50": 247.62,
+          "p95": 708.8,
+          "p99": 969.87,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.94829,
+          "within_budget_wilson95_iid": [
+            0.934263,
+            0.959454
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 5.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        }
+      ],
+      "latency_budget_met": false
+    },
+    {
+      "round": 2,
+      "requests": 11415,
+      "rps": 37.94,
+      "actual_elapsed_seconds": 300.897,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 1266,
+          "p50": 263.03,
+          "p95": 736.09,
+          "p99": 960.37,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.577409,
+          "within_budget_wilson95_iid": [
+            0.550005,
+            0.604345
+          ]
+        },
+        "admin-payments": {
+          "count": 1270,
+          "p50": 244.72,
+          "p95": 740.16,
+          "p99": 951.79,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.611811,
+          "within_budget_wilson95_iid": [
+            0.58471,
+            0.638238
+          ]
+        },
+        "admin-statistics": {
+          "count": 1267,
+          "p50": 359.5,
+          "p95": 831.36,
+          "p99": 1097.45,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.356748,
+          "within_budget_wilson95_iid": [
+            0.33084,
+            0.383522
+          ]
+        },
+        "booking-cancel": {
+          "count": 1268,
+          "p50": 220.52,
+          "p95": 684.06,
+          "p99": 927.29,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.955047,
+          "within_budget_wilson95_iid": [
+            0.942203,
+            0.965143
+          ]
+        },
+        "booking-create": {
+          "count": 1268,
+          "p50": 254.26,
+          "p95": 721.15,
+          "p99": 965.51,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.942429,
+          "within_budget_wilson95_iid": [
+            0.928222,
+            0.953964
+          ]
+        },
+        "partner-bookings": {
+          "count": 1268,
+          "p50": 469.47,
+          "p95": 958.59,
+          "p99": 1186.7,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.133281,
+          "within_budget_wilson95_iid": [
+            0.115677,
+            0.1531
+          ]
+        },
+        "partner-payments": {
+          "count": 1272,
+          "p50": 1415.44,
+          "p95": 2414.52,
+          "p99": 2867.92,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.003011
+          ]
+        },
+        "partner-statistics": {
+          "count": 1268,
+          "p50": 749.24,
+          "p95": 1250.6,
+          "p99": 1470.08,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.00302
+          ]
+        },
+        "payment-create": {
+          "count": 1268,
+          "p50": 247.33,
+          "p95": 649.01,
+          "p99": 911.13,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.961356,
+          "within_budget_wilson95_iid": [
+            0.949279,
+            0.970647
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 3.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 7.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 7.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        }
+      ],
+      "latency_budget_met": false
+    },
+    {
+      "round": 3,
+      "requests": 10755,
+      "rps": 35.74,
+      "actual_elapsed_seconds": 300.894,
+      "error_count": 0,
+      "errors": [],
+      "warmup_error_count": 0,
+      "latency_ms": {
+        "admin-bookings": {
+          "count": 1195,
+          "p50": 262.09,
+          "p95": 760.7,
+          "p99": 1086.98,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.571548,
+          "within_budget_wilson95_iid": [
+            0.543306,
+            0.599332
+          ]
+        },
+        "admin-payments": {
+          "count": 1196,
+          "p50": 253.7,
+          "p95": 766.96,
+          "p99": 1039.88,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.576923,
+          "within_budget_wilson95_iid": [
+            0.548721,
+            0.604633
+          ]
+        },
+        "admin-statistics": {
+          "count": 1193,
+          "p50": 402.22,
+          "p95": 882.32,
+          "p99": 1213.38,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.325231,
+          "within_budget_wilson95_iid": [
+            0.299245,
+            0.352338
+          ]
+        },
+        "booking-cancel": {
+          "count": 1194,
+          "p50": 234.88,
+          "p95": 697.16,
+          "p99": 1005.05,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.950586,
+          "within_budget_wilson95_iid": [
+            0.936783,
+            0.9615
+          ]
+        },
+        "booking-create": {
+          "count": 1194,
+          "p50": 265.11,
+          "p95": 799.62,
+          "p99": 1106.05,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.91876,
+          "within_budget_wilson95_iid": [
+            0.901888,
+            0.932947
+          ]
+        },
+        "partner-bookings": {
+          "count": 1196,
+          "p50": 486.78,
+          "p95": 1036.46,
+          "p99": 1393.24,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.102843,
+          "within_budget_wilson95_iid": [
+            0.08688,
+            0.121349
+          ]
+        },
+        "partner-payments": {
+          "count": 1198,
+          "p50": 1452.43,
+          "p95": 2616.38,
+          "p99": 3407.78,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.003196
+          ]
+        },
+        "partner-statistics": {
+          "count": 1195,
+          "p50": 788.38,
+          "p95": 1427.05,
+          "p99": 1851.85,
+          "budget_ms": 300,
+          "fraction_within_budget": 0.0,
+          "within_budget_wilson95_iid": [
+            0,
+            0.003204
+          ]
+        },
+        "payment-create": {
+          "count": 1194,
+          "p50": 239.55,
+          "p95": 709.71,
+          "p99": 1049.84,
+          "budget_ms": 700,
+          "fraction_within_budget": 0.943886,
+          "within_budget_wilson95_iid": [
+            0.929352,
+            0.955573
+          ]
+        }
+      },
+      "metric_samples": [
+        {
+          "hikaricp.connections.active": 1.0,
+          "hikaricp.connections.pending": 0.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 8.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 9.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 10.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 9.0,
+          "hikaricp.connections.pending": 8.0,
+          "hikaricp.connections.max": 10.0
+        },
+        {
+          "hikaricp.connections.active": 10.0,
+          "hikaricp.connections.pending": 11.0,
+          "hikaricp.connections.max": 10.0
+        }
+      ],
+      "latency_budget_met": false
+    }
+  ],
+  "passed": false,
+  "limitations": [
+    "Local synthetic fixture; no production/WAN SLA",
+    "No real transfer or SePay webhook",
+    "Workload adds retained cancelled bookings and pending payment history",
+    "Wilson intervals are descriptive and assume IID; closed-loop samples are correlated"
+  ]
+}
