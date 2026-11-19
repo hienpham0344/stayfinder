@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { View, type ViewStyle } from 'react-native';
+import type { ViewInstance } from 'react-native';
 import type { MotionProps } from './motionTypes';
 import { observeMotion } from './webMotionObserver';
 import { MOTION } from '../../constants/tokens';
 
 export function MotionView({ children, style, delay = 0, duration = MOTION.reveal, preset = 'rise', testID }: MotionProps) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   useEffect(() => {
     const element = ref.current as unknown as HTMLElement | null;
     if (!element) return;

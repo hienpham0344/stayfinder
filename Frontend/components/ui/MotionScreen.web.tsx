@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
+import type { ViewInstance } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import type { MotionProps } from './motionTypes';
 
 export function MotionScreen({ children, style, testID }: MotionProps) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   useFocusEffect(useCallback(() => {
     const element = ref.current as unknown as HTMLElement | null;
     if (!element) return;

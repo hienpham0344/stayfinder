@@ -5,6 +5,7 @@ import { useWishlist, useReservations } from '../../state/AppState';
 import { formatMoney } from '../../utils/frontendState';
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, Star } from '../../constants/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -78,7 +79,7 @@ function EmptyWishlist() {
 export function WishlistExperience() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const tabsRef = useRef<ScrollView>(null);
+  const tabsRef = useRef<ScrollViewInstance>(null);
   const infoOpacity = useRef(new Animated.Value(0)).current;
   const [tab, setTab] = useState<Tab>('all');
   const { savedIds, toggleWishlist } = useWishlist();

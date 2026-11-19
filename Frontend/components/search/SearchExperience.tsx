@@ -2,6 +2,7 @@ import { MotionScreen } from '../ui/MotionScreen';
 import { useUserWindowDimensions } from '../ui/useUserWindowDimensions';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, PanResponder, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { ScrollViewInstance, ViewInstance } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, Map, MapPin, Search, SlidersHorizontal, Star, X } from '../../constants/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,10 +101,10 @@ export function SearchExperience() {
   }, [category]);
   const appliedPositions = useRef({ min: 0, max: 100 });
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
-  const filterScrollRef = useRef<ScrollView>(null);
+  const filterScrollRef = useRef<ScrollViewInstance>(null);
   const priceTrackWidth = useRef(334);
   const priceTrackX = useRef(28);
-  const priceTrackRef = useRef<View>(null);
+  const priceTrackRef = useRef<ViewInstance>(null);
   const pricePositions = useRef({ min: 0, max: 100 });
   const activePriceThumb = useRef<'min' | 'max'>('min');
   const setPriceAt = (pageX: number) => {

@@ -1,6 +1,7 @@
 import { StayImage } from '../ui/StayImage';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ImageSourcePropType, ImageStyle, ScrollView, Pressable, StyleSheet } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { ImageOff } from '../../constants/icons';
 import { COLORS, RADII } from '../../constants/tokens';
 
@@ -20,7 +21,7 @@ function CarouselSlide({ source, width, index, count, transform, onOpen }: { sou
 export const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, imageSources, imageTransforms, onOpen }) => {
   const [galleryWidth, setGalleryWidth] = useState(390);
   const [activeIndex, setActiveIndex] = useState(0);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const pendingPage = useRef<number | null>(null);
 
   useEffect(() => {
