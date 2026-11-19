@@ -78,5 +78,11 @@
     "https://developer.sepay.vn/vi/tien-ich-khac/test-mode/cau-hinh",
     "https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc",
     "https://github.com/sepayvn/sepay-cli"
-  ]
+  ],
+  "artifact_traceability": {
+    "jar_sha256": null,
+    "reason": "Not recorded at the moment provider callbacks were received; do not infer a binary hash from later builds",
+    "source_scope": "Payment controller/provider/processor/code were unchanged by the subsequent operations repository query optimization; latest full PostgreSQL suite was run separately",
+    "latest_jar_claim": false
+  }
 }

@@ -23,7 +23,7 @@ Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spr
 - Script `scripts/test-database.sh` giới hạn localhost và database `stayfinder_test`. Fixture tích hợp kiểm tra lại tên database trước khi reset đúng nhóm bảng test.
 - `scripts/test-migrations.py` dùng database khác `stayfinder_migration_test`, yêu cầu marker riêng trước khi reset schema; kiểm tra dữ liệu cũ, replay và rollback.
 - Hợp đồng [OpenAPI](docs/openapi.yaml): 60 path, 71 operation; generator stdlib và test đối chiếu route Spring thực. Có request/response DTO, role, phân trang và lỗi; không thêm thư viện tài liệu.
-- CI PostgreSQL 16 + Java 21 chạy migration, Maven verify, regression migration và lưu test reports. Hosted GitHub Actions [run44531199680](https://github.com/hienpham0344/stayfinder/actions/runs/44531199680) đã SUCCESS trên commit `5005412`; artifact xác nhận138test +6migrationtest, không failure/error/skipped. [Bằng chứng CI](docs/evidence/ci-hosted.json).
+- CI PostgreSQL 16 + Java 21 chạy migration, Maven verify, regression migration và lưu test reports. Hosted GitHub Actions [run44536539225](https://github.com/hienpham0344/stayfinder/actions/runs/44536539225) đã SUCCESS trên commit `4fadfcc`; artifact xác nhận141test +6migrationtest, không failure/error/skipped. [Bằng chứng CI](docs/evidence/ci-hosted.json).
 
 **Kiểm chứng:** PostgreSQL **16.15**, Java **21.0.13**; dựng mới hai database test/benchmark từ migration `000`–`003`; không kết nối database thật. Bộ fixture benchmark: 1.000 accommodation, 10.000 room, 100.000 booking/payment/ledger, 10.000 review. Kết quả legacy migration tại [migrations.json](docs/evidence/migrations.json).
 
@@ -34,8 +34,8 @@ Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spr
 | 0 — môi trường/schema/API | Đạt trên database test mới và legacy fixture | Hosted CI đạt; database thật ngoài phạm vi, chưa xác minh |
 | 1 — bảo mật/tài khoản | Đạt automated auth/RBAC/ownership | Chưa pentest bên ngoài hoặc kiểm tra reverse proxy thực |
 | 2 — dữ liệu CUSTOMER | Đạt backend test và frontend build/checks | Chưa thao tác trên thiết bị thật |
-| 3 — PARTNER | Đạt API/ownership/moderation/concurrency | Không xây UI theo phạm vi; Full HTTP baseline chưa đạt; đang tối ưu và kiểm thử lại |
-| 4 — ADMIN | Đạt API/RBAC/audit/last-admin | Không xây UI theo phạm vi; Full HTTP baseline chưa đạt; đang tối ưu và kiểm thử lại |
+| 3 — PARTNER | Đạt API/ownership/moderation/concurrency | Không xây UI theo phạm vi; HTTP sau tối ưu nhóm đọc vẫn chưa đạt300ms; nhóm ghi đã đạt700ms |
+| 4 — ADMIN | Đạt API/RBAC/audit/last-admin | Không xây UI theo phạm vi; HTTP sau tối ưu nhóm đọc vẫn chưa đạt300ms; nhóm ghi đã đạt700ms |
 | 5 — booking/payment/review | Đạt PostgreSQL và SePay sandbox E2E qua CLI chính thức | Chưa kiểm tra chuyển khoản thật/public HTTPS production |
 | 6 — rewards/voucher | Đạt nghiệp vụ, concurrency và legacy migration | Chính sách không hoàn điểm voucher hết hạn được giữ rõ |
 | 7 — recommendations | Đạt heuristic/batch/filter trong fixture | Chưa đánh giá chất lượng trên dữ liệu người dùng thật |
@@ -116,7 +116,7 @@ Ngày kiểm tra: **19/11/2026**, giờ Việt Nam. Phạm vi: một backend Spr
 
 **Kiểm thử PostgreSQL:** nhiều booking cùng phòng, expiry đúng ranh giới 900 giây, late webhook replay, 20 signed invalid transfer không làm cạn pool, cùng transaction ID cho hai đơn, webhook đua cancel, rollback/voucher state và complete/earn chạy lại. Clock test được kiểm soát; chữ ký fixture dùng raw bytes.
 
-**Đạt SePay sandbox E2E ngày 19/11:** CLI chính thức 0.1.9 mô phỏng giao dịch trên tài khoản ngân hàng giả; relay giữ nguyên raw body/header HMAC từ provider vào backend riêng. Đúng tiền 380.000 VND → payment SUCCESS/booking CONFIRMED, replay cùng giao dịch HTTP 200 không ghi nhận lần hai; sai tiền HTTP 400/AMOUNT_MISMATCH; đơn hủy hoặc quá expiresAt HTTP 409/BOOKING_NOT_PAYABLE, payment vẫn PENDING và có anomaly. Ca hết hạn điều chỉnh expiresAt của đúng đơn fixture, scheduler tắt nên chưa đổi status sang CANCELLED trong ca này. Cấu trúc mã SF + 26 ký tự được SePay nhận diện từ nội dung đầy đủ. Đã dừng relay/backend riêng và revoke/logout CLI. [Bằng chứng đã lược dữ liệu riêng tư](docs/evidence/sepay-sandbox-e2e.json); [công thức HMAC chính thức](https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc). Chưa xác minh chuyển tiền thật hoặc public HTTPS deployment. Không hoàn tiền hoặc hủy booking đã trả theo phạm vi.
+**Đạt SePay sandbox E2E ngày 19/11:** CLI chính thức 0.1.9 mô phỏng giao dịch trên tài khoản ngân hàng giả; relay giữ nguyên raw body/header HMAC từ provider vào backend riêng. Đúng tiền 380.000 VND → payment SUCCESS/booking CONFIRMED, replay cùng giao dịch HTTP 200 không ghi nhận lần hai; sai tiền HTTP 400/AMOUNT_MISMATCH; đơn hủy hoặc quá expiresAt HTTP 409/BOOKING_NOT_PAYABLE, payment vẫn PENDING và có anomaly. Ca hết hạn điều chỉnh expiresAt của đúng đơn fixture, scheduler tắt nên chưa đổi status sang CANCELLED trong ca này. Cấu trúc mã SF + 26 ký tự được SePay nhận diện từ nội dung đầy đủ. Đã dừng relay/backend riêng và revoke/logout CLI. Không ghi hash JAR tại thời điểm nhận callback; không suy diễn thành E2E của binary build sau đó. Code payment không thay đổi trong tối ưu operations sau ca này. [Bằng chứng đã lược dữ liệu riêng tư](docs/evidence/sepay-sandbox-e2e.json); [công thức HMAC chính thức](https://developer.sepay.vn/vi/sepay-webhooks/xac-thuc). Chưa xác minh chuyển tiền thật hoặc public HTTPS deployment. Không hoàn tiền hoặc hủy booking đã trả theo phạm vi.
 
 ## 8. Phần 6 — rewards và voucher
 
@@ -160,7 +160,7 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 
 ### HTTP benchmark
 
-**Đạt budget trên workload đã đo.** Hai chế độ cache bật/tắt, heap 256–768 MB, pool 10, 20 client; mỗi chế độ 30 giây warm-up + 300 giây đo × 3 lượt. Tổng **1.542.190 request**, **0 lỗi đo, 0 lỗi warm-up**. Cùng bản jar, cùng PostgreSQL và fixture; không chạy Maven test đồng thời với benchmark.
+**Đạt budget trên workload đã đo.** Hai chế độ cache bật/tắt, heap 256–768 MB, pool 10, 20 client; mỗi chế độ 30 giây warm-up + 300 giây đo × 3 lượt. Tổng **1.542.190 request**, **0 lỗi đo, 0 lỗi warm-up**. Cùng bản jar `a72e81f7…` trong sáu lượt lịch sử, cùng PostgreSQL và fixture; không chạy Maven test đồng thời với benchmark. JAR hiện tại `aa7d1ce0…` đã thay đổi query operations và thêm regression; sáu lượt cache này chưa được chạy lại trên JAR hiện tại, không coi đây là benchmark chính xác của binary mới.
 
 | Workload | Cache bật: p95 cao nhất trong 3 lượt (ms) | Cache tắt: p95 cao nhất trong 3 lượt (ms) | Budget p95 (ms) |
 | --- | ---: | ---: | ---: |
@@ -178,7 +178,7 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 
 **Kết luận cache:** correctness và giảm query metadata khi hit đã được test; benchmark HTTP có biến thiên đáng kể, chưa chứng minh cache tăng tốc ổn định. Không quy nguyên nhân biến thiên cho hạ tầng hoặc cache khi chưa có bằng chứng. Không loại lượt chậm để làm đẹp số liệu.
 
-Đây là sáu workload catalog/detail/availability/booking page/wishlist PUT trên loopback; **không** chứng minh SLA cho mọi API ghi, mạng di động, kết nối SePay hoặc deployment khác. Admin/partner đã có3lượt HTTP riêng: không lỗi hợp đồng nhưng p95 vượt budget; đang tối ưu và kiểm thử lại. Không gộp kết quả này vào sáu workload đã đạt. Không dùng round bị ngắt của phiên trước để nghiệm thu.
+Đây là sáu workload catalog/detail/availability/booking page/wishlist PUT trên loopback; **không** chứng minh SLA cho mọi API ghi, mạng di động, kết nối SePay hoặc deployment khác. Admin/partner và booking/payment có baseline3lượt và sau sửa3lượt hoàn chỉnh: không lỗi hợp đồng, ghi đạt700ms nhưng đọc vẫn vượt300ms. Không gộp kết quả này vào sáu workload đã đạt. Không dùng round bị ngắt của phiên trước để nghiệm thu.
 
 ### HTTP ADMIN/PARTNER và booking/payment ghi — baseline chưa đạt
 
@@ -197,6 +197,30 @@ Index giúp tránh sort/scan toàn bộ cho trang operations; không kết luậ
 | payment-create | 709.71 | 700 |
 
 Đây là baseline trước tối ưu filter nullable; kết quả sai budget vẫn được giữ. PREPARE với force_generic_plan tái hiện count payment nullable bookingId mất908,12ms, trong khi câu không bookingId157,45ms và câu bookingId cụ thể0,159ms. Repository tách trường hợp có/không bookingId, giữ status/ownership và response cũ. [Raw prepared plans](docs/evidence/operations-prepared-plan-investigation.json). Chưa coi0HTTPerror hoặc cải thiện SQL là đã đạt HTTP budget.
+
+### Sau sửa generic prepared plan — nhóm ghi đạt, nhóm đọc chưa đạt
+
+JAR `aa7d1ce0…`,20client,pool10,heap256–768MB,cache bật/scheduler tắt,giữ default parallel của PostgreSQL;30giây warm-up +300giây ×3lượt hoàn chỉnh. **57.725 request,0lỗi đo/warm-up**; throughput67,11/63,31/61,77request/s. Lượt thứ ba ban đầu bị ngắt, không dùng latency;1.525booking đã tạo trong lượt dở vẫn giữ trong fixture. Lượt thay thế chạy riêng đầy đủ thời lượng. [Summary và raw segment](docs/evidence/operations-optimized-summary.json) ghi rõ protocol, hash, dataset history và can thiệp giữa các segment. Có download APK trong lượt thay thế; không Maven/build/mobile UI đồng thời.
+
+| Workload | Trước: max p95(ms) | Sau: max p95(ms) | Budget(ms) | Kết luận sau |
+| --- | ---: | ---: | ---: | --- |
+| admin-bookings | 760.70 | 438.05 | 300 | Chưa đạt |
+| admin-payments | 766.96 | 438.15 | 300 | Chưa đạt |
+| admin-statistics | 921.85 | 588.27 | 300 | Chưa đạt |
+| booking-cancel | 708.70 | 411.54 | 700 | Đạt |
+| booking-create | 799.62 | 410.46 | 700 | Đạt |
+| partner-bookings | 1036.46 | 778.53 | 300 | Chưa đạt |
+| partner-payments | 2662.71 | 755.30 | 300 | Chưa đạt |
+| partner-statistics | 1469.55 | 1178.82 | 300 | Chưa đạt |
+| payment-create | 709.71 | 402.65 | 700 | Đạt |
+
+Giữ mọi kết quả fail; không thay budget hoặc xóa lịch sử để đạt số đo. Không cache authorization/statistics/booking/payment để né chi phí truy vấn. Smoke parallel0/pool4 chưa đạt, không áp dụng cấu hình repo. Hai covering-index thí nghiệm đã ROLLBACK, không thêm migration vì hiệu quả không nhất quán; [runtime experiments](docs/evidence/operations-runtime-experiments.json), [payload indexes](docs/evidence/operations-covering-payload-experiment.json).
+
+**Chưa hoàn tất nghiệm thu hiệu năng:** p95 đọc admin/partner vượt300ms trên workload này; các luồng ghi create booking/create payment/cancel unpaid đạt700ms. Bước tối ưu tiếp cần giảm chi phí aggregate/ownership count theo EXPLAIN và đo lại, giữ chính xác totalElements/doanh thu và tương thích API; chưa coi là đã được triển khai. Thử CTE materialized để tái dùng ownership còn chậm hơn(1.699–1.827ms), [raw plans](docs/evidence/operations-shared-ownership-experiment.json); không áp dụng.
+
+### Thiết bị Android thật — chưa xác minh luồng app
+
+Đã nhận Android15/API35 qua ADB ở trạng thái `device`. Expo Go chưa có; APK57.0.9 từ release chính thức được kiểm tra đủ208.916.626byte, SHA256 và ZIP hợp lệ. Android từ chối cài qua USB với `INSTALL_FAILED_USER_RESTRICTED`; sau đó thiết bị rời ADB. Metro/API fixture localhost đã sẵn sàng nhưng **chưa mở/chạy bất kỳ luồng CUSTOMER nào trên thiết bị**. Đang chờ người dùng tự cài Expo Go và kết nối lại; không vượt qua hạn chế cài đặt của điện thoại. [Evidence](docs/evidence/android-smoke.json).
 
 ## 11. Bảo trì và phát triển
 
@@ -236,6 +260,6 @@ Review độc lập đã đọc auth, ownership, transaction, rewards, migration
 | CUSTOMER | Chức năng MVP đã triển khai, automated flow đạt; benchmark workload đã đạt, SePay sandbox E2E đạt; thiết bị thật/public HTTPS chưa xác minh |
 | PARTNER | API và ownership/moderation đã triển khai, automated tests đạt; không xây giao diện quản trị |
 | ADMIN | API và role/audit/last-admin protection đã triển khai, automated tests đạt; hosted CI đạt; kiểm tra vận hành ngoài máy test chưa xác minh |
-| Hiệu năng/cache | SQL budget/cache regression và sáu lượt HTTP benchmark đạt trên workload nêu ở phần 10; Full HTTP admin/partner và booking/payment ghi chưa đạt budget; đang tối ưu và kiểm thử lại |
+| Hiệu năng/cache | SQL budget/cache regression và sáu lượt HTTP benchmark đạt trên workload nêu ở phần 10; HTTP admin/partner đọc chưa đạt300ms; create booking/payment/cancel đạt700ms |
 
-Triển khai và kiểm chứng tự động tại máy test đã hoàn thành trong phạm vi nêu trên; SePay E2E chỉ được xác minh trong sandbox qua relay chính thức, chưa xác nhận production. Chưa kiểm tra schema/database thật, triển khai production, hoàn tiền, nhiều phòng/đơn, OAuth/email, storage upload, Redis/multi-instance hoặc AI ngoài. Hướng chạy lại chính xác trong [OPERATIONS.md](docs/OPERATIONS.md); bằng chứng đã hoàn thành lưu trong repository để không phụ thuộc `/tmp`.
+**Chưa chốt toàn bộ kế hoạch hoàn tất:** nhóm đọc operations chưa đạt budget và mobile bị chặn cài đặt. Code chức năng và bộ kiểm thử141test đã đạt; SePay E2E chỉ được xác minh trong sandbox qua relay chính thức, chưa xác nhận production. Chưa kiểm tra schema/database thật, triển khai production, hoàn tiền, nhiều phòng/đơn, OAuth/email, storage upload, Redis/multi-instance hoặc AI ngoài. Hướng chạy lại chính xác trong [OPERATIONS.md](docs/OPERATIONS.md); bằng chứng đã hoàn thành lưu trong repository để không phụ thuộc `/tmp`.

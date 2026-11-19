@@ -1,15 +1,15 @@
 {
-  "observed_utc": "2026-11-19T13:16:14.897865+00:00",
+  "observed_utc": "2026-11-19T13:47:09.249963+00:00",
   "repository": "hienpham0344/stayfinder",
-  "run_id": 44531199680,
-  "url": "https://github.com/hienpham0344/stayfinder/actions/runs/44531199680",
-  "head_sha": "5005412dc5ec5756be586d45b104b06e1a344ff0",
+  "run_id": 44536539225,
+  "url": "https://github.com/hienpham0344/stayfinder/actions/runs/44536539225",
+  "head_sha": "4fadfcc29f3ddbabdbd3b125849f76a51e0a8bec",
   "branch": "codex/backend-verification",
   "status": "completed",
   "conclusion": "success",
   "source": "GitHub Actions API plus downloaded backend-test-results artifact",
   "tests": {
-    "tests": 138,
+    "tests": 141,
     "failures": 0,
     "errors": 0,
     "skipped": 0
@@ -75,8 +75,90 @@
       ]
     }
   ],
+  "prior_run": {
+    "observed_utc": "2026-11-19T13:16:14.897865+00:00",
+    "repository": "hienpham0344/stayfinder",
+    "run_id": 44531199680,
+    "url": "https://github.com/hienpham0344/stayfinder/actions/runs/44531199680",
+    "head_sha": "5005412dc5ec5756be586d45b104b06e1a344ff0",
+    "branch": "codex/backend-verification",
+    "status": "completed",
+    "conclusion": "success",
+    "source": "GitHub Actions API plus downloaded backend-test-results artifact",
+    "tests": {
+      "tests": 138,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "migration_tests": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0
+    },
+    "jobs": [
+      {
+        "name": "verify",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-java@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check API contract is current",
+            "conclusion": "success"
+          },
+          {
+            "name": "Migrate disposable database and verify",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify legacy migrations and rollback",
+            "conclusion": "success"
+          },
+          {
+            "name": "Preserve test evidence",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-java@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "Verifies the identified commit and hosted disposable PostgreSQL16; no production deployment",
+      "Historical cache-on/off benchmark used another JAR hash; operations benchmark is recorded separately"
+    ]
+  },
   "limitations": [
-    "Verifies the identified commit and hosted disposable PostgreSQL16; no production deployment",
-    "Historical cache-on/off benchmark used another JAR hash; operations benchmark is recorded separately"
+    "Identified commit only, no production deployment",
+    "Performance measurements use separately recorded JAR hashes and fixture configuration"
   ]
 }
