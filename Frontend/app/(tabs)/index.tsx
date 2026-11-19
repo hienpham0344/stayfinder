@@ -41,7 +41,7 @@ function DemoHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bgMain} />
+      <StatusBar barStyle="light-content" />
       <MotionScreen style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <MotionView delay={0} duration={700}><HomeHeader

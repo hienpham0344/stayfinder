@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
+import type { ViewInstance } from 'react-native';
 import type { MotionProps } from './motionTypes';
 import { observeMotion } from './webMotionObserver';
 
 export function AmbientPhoto({ children, style }: MotionProps) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   useEffect(() => {
     const element = ref.current as unknown as HTMLElement | null;
     if (!element) return;
