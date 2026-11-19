@@ -1,5 +1,5 @@
 {
-  "observed_utc": "2026-11-19T14:18:46.546306+00:00",
+  "observed_utc": "2026-11-19T16:16:53Z",
   "device": {
     "model": "22081212C",
     "android": "15",
@@ -7,24 +7,66 @@
     "adb_state": "device",
     "serial_omitted": true
   },
-  "expo_sdk": "57.0.20",
-  "expo_go_release": "57.0.9",
-  "official_apk": {
-    "source": "https://github.com/expo/expo-go-releases/releases/download/Expo-Go-57.0.9/Expo-Go-57.0.9.apk",
-    "size": 208916626,
-    "sha256": "14c18828a3d04e43922245920bd941b978fd1c7a5aec88a0188032f0bb4972ce",
-    "hash_and_zip_verified": true
-  },
+  "expo_sdk": "58.0.26",
+  "expo_go_release": "58.0.5 (observed on device)",
   "installation": {
-    "status": "blocked",
-    "adb_result": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user",
-    "play_store_sdk": "58",
-    "observed_application_error": "Project is incompatible with this version of Expo Go; installed SDK58, project SDK57",
-    "compatible_sdk57_apk_copied_to_device": true,
-    "current_package_detected": false
+    "status": "verified_sdk58",
+    "previous_sdk57_attempt": {
+      "status": "blocked",
+      "adb_result": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user",
+      "play_store_sdk": "58",
+      "compatible_sdk57_apk_copied_to_device": true,
+      "current_package_detected_at_last_device_check": false,
+      "installer_message_reported": "packageifo is null",
+      "adb_retry_status": "Blocked by automatic approval review quota; command was not executed",
+      "verified_sdk57_apk": {
+        "source": "https://github.com/expo/expo-go-releases/releases/download/Expo-Go-57.0.9/Expo-Go-57.0.9.apk",
+        "size": 208916626,
+        "sha256": "14c18828a3d04e43922245920bd941b978fd1c7a5aec88a0188032f0bb4972ce",
+        "hash_and_zip_verified": true
+      }
+    }
   },
-  "application_flows_verified": false,
-  "status": "Android reconnected; incompatible Expo GoSDK58 removed by user; waiting for user to install verified SDK57 APK in Downloads. No StayFinder application flow verified.",
-  "last_observed_utc": "2026-11-19T14:30:29.618787+00:00",
-  "latest_adb_state": "device reconnected"
+  "application_flows_verified": true,
+  "status": "Expo SDK58 project and Expo Go 58.0.5 passed a physical-device UI smoke test across Home, Search/filter, property detail, Wishlist, Bookings, and Profile. Backend API integration remains unverified on device.",
+  "last_observed_utc": "2026-11-19T16:16:53Z",
+  "latest_adb_state": "device reconnected",
+  "sdk_migration": {
+    "from": "57.0.20",
+    "to": "58.0.26",
+    "react_native": "0.88.1",
+    "dependency_check": "Dependencies match the local Expo SDK 58 map; network disabled, remote well-known versions endpoint not reached",
+    "typecheck": "passed",
+    "frontend_tests": "9 passed, 0 failed",
+    "android_export": "passed",
+    "expo_doctor": "not_run: npm registry DNS returned ENOTFOUND",
+    "device_check": "passed on physical Android via the authorized ADB runtime; the sandbox-only ADB attempt was blocked"
+  },
+  "device_ui_smoke": {
+    "status": "passed",
+    "transport": "USB ADB reverse to localhost:8081; temporary forward removed after the test",
+    "expo_go_version": "58.0.5",
+    "bundle": "Android Bundled in 150430 ms (2066 modules)",
+    "flows": [
+      "Opened StayFinder in Expo Go",
+      "Home rendered",
+      "Search displayed 8 demo stays",
+      "Hotel filter reduced results to 1 stay (Ivy Boutique Hotel)",
+      "Opened property detail",
+      "Saved Ivy Boutique Hotel; it appeared in Wishlist; temporary save was then removed",
+      "Bookings tab rendered",
+      "Profile tab rendered"
+    ],
+    "data_source": "Demo catalog and local UI state; backend API was not configured for this device run",
+    "app_process_alive_after_test": true,
+    "fatal_exceptions": 0,
+    "react_native_js_errors": 0,
+    "warnings": [
+      "React Native ImageBackground deprecation warning",
+      "Expo offline manifest asset resolution warning; the app still bundled and local images/icons rendered"
+    ]
+  },
+  "demo_ui_flows_verified": true,
+  "backend_api_flows_verified": false,
+  "application_flow_scope": "Demo UI only; backend API integration was not configured or verified on device."
 }
