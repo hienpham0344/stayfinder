@@ -1,6 +1,12 @@
 # IDE
 .idea/
 *.iml
+.vs/
+.vscode/
+
+# Build & Test Outputs
+outputs/
+pnpm-lock.yaml
 
 # Codex local project agents/config
 .codex/
