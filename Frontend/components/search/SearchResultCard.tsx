@@ -92,10 +92,10 @@ function SearchResultCardView({ stay, presentation, figmaProperty = 'villa', pre
 export const SearchResultCard = React.memo(SearchResultCardView);
 
 const styles = StyleSheet.create({
-  card: { height: 140, marginBottom: 14, backgroundColor: COLORS.bgSurface, borderRadius: RADII.lg },
-  surface: { flex: 1, flexDirection: 'row', borderRadius: RADII.xl, overflow: 'hidden' },
+  card: { height: 140, marginBottom: 18, backgroundColor: COLORS.bgSurface, borderRadius: 20, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
+  surface: { flex: 1, flexDirection: 'row', borderRadius: 20, overflow: 'hidden' },
   cardPressed: { opacity: 0.94, transform: [{ scale: 0.99 }] },
-  imageWrap: { flexBasis: '33.333%', maxWidth: 116.66, position: 'relative', backgroundColor: COLORS.bgSecondary },
+  imageWrap: { flexBasis: '33.333%', maxWidth: 120, position: 'relative', backgroundColor: COLORS.bgSecondary, borderTopLeftRadius: 19, borderBottomLeftRadius: 19, overflow: 'hidden' },
   image: { width: '100%', height: '100%', minHeight: 140 },
   imageFallback: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: COLORS.bgSecondary, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 8, left: 8, borderRadius: RADII.full, backgroundColor: COLORS.primary, paddingHorizontal: 8, paddingVertical: 3 },
