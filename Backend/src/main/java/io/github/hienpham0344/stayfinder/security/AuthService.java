@@ -34,6 +34,11 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(String fullName, String email, String password) {
+        return register(fullName, email, password, UserRole.CUSTOMER);
+    }
+
+    @Transactional
+    public AuthResponse register(String fullName, String email, String password, UserRole role) {
         String normalizedEmail = normalizeEmail(email);
         if (fullName == null || fullName.isBlank() || fullName.length() > 100 || !validPassword(password)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR);
@@ -46,7 +51,7 @@ public class AuthService {
         user.setFullName(fullName.trim());
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setRole(UserRole.CUSTOMER);
+        user.setRole(role != null ? role : UserRole.CUSTOMER);
         user.setLoyaltyPoints(0);
         user.setLoyaltyTier(1);
         user.setCreatedAt(Instant.now());
