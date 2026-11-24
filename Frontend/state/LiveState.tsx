@@ -9,7 +9,7 @@ type LiveStateValue = {
   favoriteIds: string[]; bookings: ApiBooking[]; privateLoading: boolean; privateError: string;
   trip: TripDraft; setTrip: React.Dispatch<React.SetStateAction<TripDraft>>;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: string) => Promise<void>;
   logout: () => Promise<void>; refreshCatalog: (filters?: AccommodationQuery) => Promise<void>; refreshBookings: () => Promise<void>;
   catalogHasMore: boolean; bookingsHasMore: boolean;
   loadMoreCatalog: () => Promise<void>; loadMoreBookings: () => Promise<void>;
@@ -93,7 +93,7 @@ export function LiveStateProvider({ children }: { children: React.ReactNode }) {
   }, [auth, refreshPrivate]);
 
   const login = useCallback(async (email: string, password: string) => setAuth(await stayApi.login(email, password)), []);
-  const register = useCallback(async (name: string, email: string, password: string) => setAuth(await stayApi.register(name, email, password)), []);
+  const register = useCallback(async (name: string, email: string, password: string, role?: string) => setAuth(await stayApi.register(name, email, password, role)), []);
   const logout = useCallback(async () => {
     if (auth) {
       try { await stayApi.logout(auth.token); }

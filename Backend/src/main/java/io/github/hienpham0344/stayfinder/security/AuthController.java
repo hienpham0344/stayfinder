@@ -29,7 +29,7 @@ public class AuthController {
                                                              HttpServletRequest httpRequest) {
         rateLimiter.checkRegistration(httpRequest.getRemoteAddr());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
-                authService.register(request.fullName(), request.email(), request.password())));
+                authService.register(request.fullName(), request.email(), request.password(), request.role())));
     }
 
     @PostMapping("/login")

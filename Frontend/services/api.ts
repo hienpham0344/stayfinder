@@ -84,10 +84,41 @@ export type ApiUser = {
 };
 export type ApiAuth = { token: string; user: ApiUser };
 export type ApiFavorite = { id: string; accommodationId: string };
-export type ApiReview = { id: string; userId: string; bookingId: string; accommodationId: string; rating: number; comment: string; createdAt: string };
+export type ApiReview = { id: string; userId: string; bookingId: string; accommodationId: string; rating: number; comment: string; createdAt: string; hidden?: boolean };
 export type ApiRewardAccount = { points: number; currency: string; earnVndPerPoint: number };
 export type ApiRewardCatalog = { id: string; name: string; pointsCost: number; discountAmount: number; minSpend: number; validityDays: number };
 export type ApiRewardVoucher = { id: string; catalogId: string; discountAmount: number; status: string; expiresAt: string };
+
+// Management / Admin / Partner Types
+export type ManagementAccount = {
+  id: string; fullName: string; email: string; phone: string | null;
+  role: 'CUSTOMER' | 'PARTNER' | 'ADMIN'; enabled: boolean; version: number;
+};
+export type ManagementApplication = {
+  id: string; userId: string; businessName: string; description: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'; reason: string | null;
+  reviewedBy: string | null; createdAt: string; reviewedAt: string | null; version: number;
+};
+export type ManagementAccommodation = {
+  id: string; partnerId: string; typeId: string | null; name: string;
+  address: string; description: string | null; latitude: number | null; longitude: number | null;
+  basePrice: number; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
+  createdAt: string; version: number;
+};
+export type ManagementRoom = {
+  id: string; accommodationId: string; roomTypeId: string | null; name: string;
+  description: string | null; price: number; capacity: number; status: 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
+  createdAt: string; version: number;
+};
+export type ManagementBooking = {
+  id: string; userId: string; subtotal: number; discountAmount: number;
+  totalPrice: number; status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+  createdAt: string; expiresAt: string | null; cancellationReason: string | null;
+};
+export type ManagementStatistics = {
+  totalBookings: number; pendingBookings: number; cancelledBookings: number;
+  completedBookings: number; receivedRevenue: number;
+};
 
 export const stayApi = {
   accommodationsPage: (page = 0, filters: AccommodationQuery = {}) => apiRequest<ApiPage<ApiAccommodation>>(`/api/accommodations?${pageQuery(page, filters)}`),
@@ -99,7 +130,8 @@ export const stayApi = {
   rewardVouchers: (token: string, page = 0) => apiRequest<ApiPage<ApiRewardVoucher>>(`/api/rewards/vouchers?${pageQuery(page)}`, { token }),
   redeemReward: (catalogId: string, idempotencyKey: string, token: string) => apiRequest<ApiRewardVoucher>('/api/rewards/redeem', { method: 'POST', token, body: { catalogId, idempotencyKey } }),
   login: (email: string, password: string) => apiRequest<ApiAuth>('/api/auth/login', { method: 'POST', body: { email, password } }),
-  register: (fullName: string, email: string, password: string) => apiRequest<ApiAuth>('/api/auth/register', { method: 'POST', body: { fullName, email, password } }),
+  register: (fullName: string, email: string, password: string, role?: string) =>
+    apiRequest<ApiAuth>('/api/auth/register', { method: 'POST', body: { fullName, email, password, ...(role ? { role } : {}) } }),
   me: (token: string) => apiRequest<ApiUser>('/api/users/me', { token }),
   accommodation: (id: string) => apiRequest<ApiAccommodationDetail>(`/api/accommodations/${encodeURIComponent(id)}`),
   rooms: (id: string, checkIn: string, checkOut: string, guests: number) =>
@@ -118,4 +150,38 @@ export const stayApi = {
     apiRequest<ApiReview>(`/api/accommodations/${encodeURIComponent(accommodationId)}/reviews`, { method: 'POST', token, body: { bookingId, rating, comment } }),
   updateReview: (reviewId: string, rating: number, comment: string, token: string) =>
     apiRequest<ApiReview>(`/api/reviews/${encodeURIComponent(reviewId)}`, { method: 'PATCH', token, body: { rating, comment } }),
+
+  // Admin APIs
+  adminStatistics: (token: string) => apiRequest<ManagementStatistics>('/api/admin/statistics', { token }),
+  adminUsers: (token: string, page = 0, role?: string) =>
+    apiRequest<ApiPage<ManagementAccount>>(`/api/admin/users?${new URLSearchParams({ page: String(page), size: '20', ...(role ? { role } : {}) }).toString()}`, { token }),
+  adminUpdateUser: (id: string, request: { role: string; enabled: boolean; reason: string; version: number }, token: string) =>
+    apiRequest<ManagementAccount>(`/api/admin/users/${id}`, { method: 'PATCH', token, body: request }),
+  adminApplications: (token: string, page = 0, status?: string) =>
+    apiRequest<ApiPage<ManagementApplication>>(`/api/admin/partner-applications?${new URLSearchParams({ page: String(page), size: '20', ...(status ? { status } : {}) }).toString()}`, { token }),
+  adminDecideApplication: (id: string, decision: { approved: boolean; reason: string; version: number }, token: string) =>
+    apiRequest<ManagementApplication>(`/api/admin/partner-applications/${id}/decision`, { method: 'POST', token, body: decision }),
+  adminAccommodations: (token: string, page = 0, status?: string) =>
+    apiRequest<ApiPage<ManagementAccommodation>>(`/api/admin/accommodations?${new URLSearchParams({ page: String(page), size: '20', ...(status ? { status } : {}) }).toString()}`, { token }),
+  adminModerateAccommodation: (id: string, request: { status: string; reason: string; version: number }, token: string) =>
+    apiRequest<ManagementAccommodation>(`/api/admin/accommodations/${id}/moderation`, { method: 'POST', token, body: request }),
+  adminReviews: (token: string, page = 0) =>
+    apiRequest<ApiPage<ApiReview>>(`/api/admin/reviews?page=${page}&size=20`, { token }),
+  adminModerateReview: (id: string, request: { hidden: boolean; reason: string; version: number }, token: string) =>
+    apiRequest<ApiReview>(`/api/admin/reviews/${id}/moderation`, { method: 'POST', token, body: request }),
+
+  // Partner APIs
+  partnerStatistics: (token: string) => apiRequest<ManagementStatistics>('/api/partner/statistics', { token }),
+  partnerAccommodations: (token: string, page = 0) =>
+    apiRequest<ApiPage<ManagementAccommodation>>(`/api/partner/accommodations?page=${page}&size=20`, { token }),
+  partnerCreateAccommodation: (data: unknown, token: string) =>
+    apiRequest<ManagementAccommodation>('/api/partner/accommodations', { method: 'POST', token, body: data }),
+  partnerRooms: (accommodationId: string, token: string, page = 0) =>
+    apiRequest<ApiPage<ManagementRoom>>(`/api/partner/accommodations/${accommodationId}/rooms?page=${page}&size=20`, { token }),
+  partnerCreateRoom: (accommodationId: string, data: unknown, token: string) =>
+    apiRequest<ManagementRoom>(`/api/partner/accommodations/${accommodationId}/rooms`, { method: 'POST', token, body: data }),
+  partnerBookings: (token: string, page = 0, status?: string) =>
+    apiRequest<ApiPage<ManagementBooking>>(`/api/partner/bookings?${new URLSearchParams({ page: String(page), size: '20', ...(status ? { status } : {}) }).toString()}`, { token }),
+  partnerPayments: (token: string, page = 0) =>
+    apiRequest<ApiPage<ApiPayment>>(`/api/partner/payments?page=${page}&size=20`, { token }),
 };
