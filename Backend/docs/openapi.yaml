@@ -10433,6 +10433,14 @@
           },
           "password": {
             "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "PARTNER",
+              "ADMIN"
+            ]
           }
         },
         "required": [
